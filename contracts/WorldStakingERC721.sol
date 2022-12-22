@@ -31,8 +31,11 @@ contract WorldStakingERC721 {
 
     mapping(uint256 => bool) usedNonces;
 
+    event NFTDeposited(address _collectionAddress, address _depositor,address _reciever, uint256 _tokenId);
+    event NFTWithdrawn(address _collectionAddress, address _reciever, uint256 _tokenId);
 
-    function depositNFTs(address _collectionAddress, uint256[] memory _tokenIds)
+
+    function depositNFTs(address _collectionAddress, address _reciever, uint256[] memory _tokenIds)
         public
     {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
@@ -52,7 +55,9 @@ contract WorldStakingERC721 {
             //Store it.
             collectionAddressToTokenIdToTokenStorageData[_collectionAddress][
                 _tokenIds[i]
-            ] = TokenStorageData(msg.sender, true);
+            ] = TokenStorageData(_reciever, true);
+
+            emit NFTDeposited(_collectionAddress, msg.sender, _reciever, _tokenIds[i]);
         }
     }
 
@@ -101,6 +106,8 @@ contract WorldStakingERC721 {
                     address(0),
                     false
                 );
+                
+                emit NFTWithdrawn( _collectionAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
             } else {
                 //Not stored
                 //Permissioned by admin
@@ -121,6 +128,8 @@ contract WorldStakingERC721 {
 
                 //Mint the token
                 INFTConsumer(_collectionAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);
+
+                emit NFTWithdrawn( _collectionAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
             }
         }
     }

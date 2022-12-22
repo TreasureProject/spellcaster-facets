@@ -27,9 +27,9 @@ var tokenIdToEmit = 100000;
 describe("Tests", function () {
   it("deposits and withdraws 20 tokens from world", async function () {
     await NFTConsumer.setApprovalForAll(WorldStakingERC721.address, true);
-    await WorldStakingERC721.depositNFTs(NFTConsumer.address, ids);
+    await WorldStakingERC721.depositNFTs(NFTConsumer.address, owner.address, ids);
 
-    const wrs = ids.map((a) => {
+    const withdrawRequests = ids.map((a) => {
       return {
         collectionAddress: NFTConsumer.address,
         reciever: owner.address,
@@ -46,13 +46,13 @@ describe("Tests", function () {
 
     expect(await NFTConsumer.balanceOf(owner.address)).to.equal(0)
 
-    await WorldStakingERC721.withdrawNFTs(wrs);
+    await WorldStakingERC721.withdrawNFTs(withdrawRequests);
 
     expect(await NFTConsumer.balanceOf(owner.address)).to.equal(20)
   });
 
   it("Withdraw 10 tokens that the signer allows it to", async function () {
-    const signedMessages = await Promise.mapSeries(ids, async (id, index) => {
+    const withdrawRequests = await Promise.mapSeries(ids, async (id, index) => {
       const message = ethers.utils.solidityPack(
         ["uint", "address", "uint", "address"],
         [signerNonce, NFTConsumer.address, tokenIdToEmit, owner.address]
@@ -67,7 +67,7 @@ describe("Tests", function () {
 
       const splitSig = ethers.utils.splitSignature(flatSig);
 
-      const obj = {
+      const withdrawRequest = {
         collectionAddress: NFTConsumer.address,
         reciever: owner.address,
         tokenId: tokenIdToEmit,
@@ -83,13 +83,11 @@ describe("Tests", function () {
       signerNonce++;
       tokenIdToEmit++;
 
-      return obj;
+      return withdrawRequest;
     });
 
-
-    await WorldStakingERC721.withdrawNFTs(signedMessages);
+    await WorldStakingERC721.withdrawNFTs(withdrawRequests);
 
     expect(await NFTConsumer.balanceOf(owner.address)).to.equal(40)
-
   });
 });
