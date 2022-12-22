@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/INFTConsumer.sol";
+import "hardhat/console.sol";
 
 struct TokenStorageData {
     address owner;
@@ -10,9 +11,9 @@ struct TokenStorageData {
 }
 
 struct Signature {
+    uint8 v;
     bytes32 r;
     bytes32 s;
-    uint8 v;
 }
 
 struct WithdrawRequest {
@@ -63,6 +64,7 @@ contract WorldStakingERC721 {
             abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)
         );
 
+
         return ecrecover(messageDigest, signature.v, signature.r, signature.s);
     }
 
@@ -81,14 +83,14 @@ contract WorldStakingERC721 {
                 require(
                     collectionAddressToTokenIdToTokenStorageData[
                         _collectionAddress
-                    ][_withdrawRequest.tokenId].owner == msg.sender,
+                    ][_withdrawRequest.tokenId].owner == _withdrawRequest.reciever,
                     "You didn't store this NFT."
                 );
 
                 //Send it back.
                 IERC721(_collectionAddress).transferFrom(
                     address(this),
-                    msg.sender,
+                    _withdrawRequest.reciever,
                     _withdrawRequest.tokenId
                 );
 
