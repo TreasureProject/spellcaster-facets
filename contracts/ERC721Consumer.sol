@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFTConsumer is ERC721Enumerable, Ownable {
+contract ERC721Consumer is ERC721Enumerable, Ownable {
     uint256 internal _counter;
     address public worldAddress;
 
     mapping(address => bool) public isAdmin;
 
-    constructor() ERC721("NFTConsumer", "NFTC") {}
+    constructor() ERC721("ERC721Consumer", "ERC721C") {}
 
     function setAdmin(address _address, bool _isAdmin) public onlyOwner {
         isAdmin[_address] = _isAdmin;

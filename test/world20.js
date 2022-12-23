@@ -2,38 +2,34 @@ const { ethers, waffle } = require("hardhat");
 const { expect } = require("chai");
 const Promise = require("bluebird");
 
-const ids = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-];
 
 before(async function () {
-  _NFTConsumer = await ethers.getContractFactory("NFTConsumer");
-  NFTConsumer = await _NFTConsumer.deploy();
+  _ERC20Consumer = await ethers.getContractFactory("ERC20Consumer");
+  ERC20Consumer = await _ERC20Consumer.deploy();
 
-  _WorldStakingERC721 = await ethers.getContractFactory("WorldStakingERC721");
-  WorldStakingERC721 = await _WorldStakingERC721.deploy();
+  _WorldStakingERC20 = await ethers.getContractFactory("WorldStakingERC20");
+  WorldStakingERC20 = await _WorldStakingERC20.deploy();
 
   [owner, signer1] = await ethers.getSigners();
 
-  await NFTConsumer.setAdmin(signer1.address, true);
-  await NFTConsumer.setWorldAddress(WorldStakingERC721.address);
+  await ERC20Consumer.setAdmin(signer1.address, true);
+  await ERC20Consumer.setWorldAddress(WorldStakingERC20.address);
 
-  await NFTConsumer.mintArbitrary(owner.address, 20);
+  await ERC20Consumer.mintArbitrary(owner.address, "20000000000000000");
 });
 
 var signerNonce = 1;
-var tokenIdToEmit = 100000;
 
 describe("Tests", function () {
-  it("deposits and withdraws 20 tokens from world", async function () {
-    await NFTConsumer.setApprovalForAll(WorldStakingERC721.address, true);
-    await WorldStakingERC721.depositNFTs(NFTConsumer.address, owner.address, ids);
+  it("deposits and withdraws 2000 tokens from world", async function () {
+    await ERC20Consumer.setApprovalForAll(WorldStakingERC20.address, true);
 
-    const withdrawRequests = ids.map((a) => {
-      return {
-        collectionAddress: NFTConsumer.address,
+    await WorldStakingERC20.depositERC20(ERC20Consumer.address, owner.address, "20000000000000000");
+
+    const withdrawRequest = {
+        tokenAddress: ERC20Consumer.address,
         reciever: owner.address,
-        tokenId: a,
+        quantity: "20000000000000000",
         nonce: 0,
         stored: true,
         signature: {
@@ -41,21 +37,22 @@ describe("Tests", function () {
           r: "0x0000000000000000000000000000000000000000000000000000000000000000",
           s: "0x0000000000000000000000000000000000000000000000000000000000000000",
         },
-      };
-    });
+      }
 
-    expect(await NFTConsumer.balanceOf(owner.address)).to.equal(0)
+    expect(await ERC20Consumer.balanceOf(owner.address)).to.equal(0)
 
-    await WorldStakingERC721.withdrawNFTs(withdrawRequests);
+    await WorldStakingERC20.withdrawERC20(withdrawRequests);
 
-    expect(await NFTConsumer.balanceOf(owner.address)).to.equal(20)
+    expect(await ERC20Consumer.balanceOf(owner.address)).to.equal("20000000000000000")
   });
+
+  /*
 
   it("Withdraw 10 tokens that the signer allows it to", async function () {
     const withdrawRequests = await Promise.mapSeries(ids, async (id, index) => {
       const message = ethers.utils.solidityPack(
         ["uint", "address", "uint", "address"],
-        [signerNonce, NFTConsumer.address, tokenIdToEmit, owner.address]
+        [signerNonce, ERC20Consumer.address, tokenIdToEmit, owner.address]
       );
 
       const messageHash = ethers.utils.keccak256(message);
@@ -68,7 +65,7 @@ describe("Tests", function () {
       const splitSig = ethers.utils.splitSignature(flatSig);
 
       const withdrawRequest = {
-        collectionAddress: NFTConsumer.address,
+        tokenAddress: ERC20Consumer.address,
         reciever: owner.address,
         tokenId: tokenIdToEmit,
         nonce: signerNonce,
@@ -86,8 +83,9 @@ describe("Tests", function () {
       return withdrawRequest;
     });
 
-    await WorldStakingERC721.withdrawNFTs(withdrawRequests);
+    await WorldStakingERC20.withdrawERC20s(withdrawRequests);
 
-    expect(await NFTConsumer.balanceOf(owner.address)).to.equal(40)
+    expect(await ERC20Consumer.balanceOf(owner.address)).to.equal(40)
   });
+  */
 });

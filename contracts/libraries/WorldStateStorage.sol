@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-struct TokenStorageData {
+struct ERC721TokenStorageData {
     address owner;
     bool stored;
 }
@@ -12,7 +12,8 @@ struct TokenStorageData {
 library WorldStateStorage {
 
     struct State {
-        mapping(address => mapping(uint256 => TokenStorageData)) collectionAddressToTokenIdToTokenStorageData;
+        mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
+        mapping(address => mapping(address => uint256)) tokenAddressToAddressToTokensStored;
         mapping(uint256 => bool) usedNonces;
     }
 
@@ -25,13 +26,22 @@ library WorldStateStorage {
         }
     }
 
-    function getTokenStorageData(address _collectionAddress, uint256 _tokenId) internal view returns (TokenStorageData memory) {
-        return getState().collectionAddressToTokenIdToTokenStorageData[_collectionAddress][_tokenId];
+    function getERC721TokenStorageData(address _tokenAddress, uint256 _tokenId) internal view returns (ERC721TokenStorageData memory) {
+        return getState().tokenAddressToTokenIdToERC721TokenStorageData[_tokenAddress][_tokenId];
     }
 
-    function setTokenStorageData(address _collectionAddress, uint256 _tokenId, TokenStorageData memory _tokenStorageData) internal {
-        getState().collectionAddressToTokenIdToTokenStorageData[_collectionAddress][_tokenId] = _tokenStorageData;
+    function setERC721TokenStorageData(address _tokenAddress, uint256 _tokenId, ERC721TokenStorageData memory _tokenStorageData) internal {
+        getState().tokenAddressToTokenIdToERC721TokenStorageData[_tokenAddress][_tokenId] = _tokenStorageData;
     }
+
+    function getERC20TokensStored(address _tokenAddress, address _user) internal view returns (uint256) {
+        return getState().tokenAddressToAddressToTokensStored[_tokenAddress][_user];
+    }
+
+    function setERC20TokensStored(address _tokenAddress, address _user, uint256 _amount) internal {
+        getState().tokenAddressToAddressToTokensStored[_tokenAddress][_user] = _amount;
+    }
+
 
     function getUsedNonce(uint256 _nonce) internal view returns(bool){
         return getState().usedNonces[_nonce];

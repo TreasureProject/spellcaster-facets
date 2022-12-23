@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./libraries/WorldStateStorage.sol";
-import "./interfaces/INFTConsumer.sol";
+import "./interfaces/IERC721Consumer.sol";
 import "hardhat/console.sol";
 
 
@@ -14,7 +14,7 @@ struct Signature {
 }
 
 struct WithdrawRequest {
-    address collectionAddress;
+    address tokenAddress;
     address reciever;
     uint256 tokenId;
     uint256 nonce;
@@ -24,31 +24,31 @@ struct WithdrawRequest {
 
 contract WorldStakingERC721 {
 
-    event NFTDeposited(address _collectionAddress, address _depositor,address _reciever, uint256 _tokenId);
-    event NFTWithdrawn(address _collectionAddress, address _reciever, uint256 _tokenId);
+    event ERC721Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId);
+    event ERC721Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId);
 
 
-    function depositNFTs(address _collectionAddress, address _reciever, uint256[] memory _tokenIds)
+    function depositERC721(address _tokenAddress, address _reciever, uint256[] memory _tokenIds)
         public
     {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             //Require dey own it.
             require(
-                IERC721(_collectionAddress).ownerOf(_tokenIds[i]) == msg.sender,
+                IERC721(_tokenAddress).ownerOf(_tokenIds[i]) == msg.sender,
                 "You don't own these tokens"
             );
 
             //Yoink it.
-            IERC721(_collectionAddress).transferFrom(
+            IERC721(_tokenAddress).transferFrom(
                 msg.sender,
                 address(this),
                 _tokenIds[i]
             );
 
             //Store it.
-            WorldStateStorage.setTokenStorageData(_collectionAddress, _tokenIds[i], TokenStorageData(_reciever, true));
+            WorldStateStorage.setERC721TokenStorageData(_tokenAddress, _tokenIds[i], ERC721TokenStorageData(_reciever, true));
 
-            emit NFTDeposited(_collectionAddress, msg.sender, _reciever, _tokenIds[i]);
+            emit ERC721Deposited(_tokenAddress, msg.sender, _reciever, _tokenIds[i]);
         }
     }
 
@@ -65,49 +65,49 @@ contract WorldStakingERC721 {
     }
 
 
-    function withdrawNFTs(
+    function withdrawERC721(
         WithdrawRequest[] calldata _withdrawRequests
     ) public {
         for (uint256 i = 0; i < _withdrawRequests.length; i++) {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
-            address _collectionAddress = _withdrawRequest.collectionAddress;
+            address _tokenAddress = _withdrawRequest.tokenAddress;
 
-            TokenStorageData memory _tokenStorageData = WorldStateStorage.getTokenStorageData(_collectionAddress, _withdrawRequest.tokenId);
+            ERC721TokenStorageData memory _ERC721TokenStorageData = WorldStateStorage.getERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId);
 
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
                 //Permissioned by chain
 
                 require(
-                    _tokenStorageData.owner == _withdrawRequest.reciever,
-                    "You didn't store this NFT."
+                    _ERC721TokenStorageData.owner == _withdrawRequest.reciever,
+                    "You didn't store this ERC721."
                 );
 
+                //Store it.
+                WorldStateStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
+                    address(0),
+                    false
+                ));
+
                 //Send it back.
-                IERC721(_collectionAddress).transferFrom(
+                IERC721(_tokenAddress).transferFrom(
                     address(this),
                     _withdrawRequest.reciever,
                     _withdrawRequest.tokenId
                 );
-
-                //Store it.
-                WorldStateStorage.setTokenStorageData(_collectionAddress, _withdrawRequest.tokenId, TokenStorageData(
-                    address(0),
-                    false
-                ));
                 
-                emit NFTWithdrawn( _collectionAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
+                emit ERC721Withdrawn( _tokenAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
             } else {
                 //Not stored
                 //Permissioned by admin
 
                 //Compute that sig is correct
                 //verifyHash returns the signer of this message.
-                //message is a hash of three pieces of data: nonce, collectionAddress, tokenId, and the user.
-                address _signer = verifyHash(keccak256(abi.encodePacked(_withdrawRequest.nonce, _withdrawRequest.collectionAddress, _withdrawRequest.tokenId, _withdrawRequest.reciever)), _withdrawRequest.signature);
+                //message is a hash of three pieces of data: nonce, tokenAddress, tokenId, and the user.
+                address _signer = verifyHash(keccak256(abi.encodePacked(_withdrawRequest.nonce, _withdrawRequest.tokenAddress, _withdrawRequest.tokenId, _withdrawRequest.reciever)), _withdrawRequest.signature);
 
                 //Require they are a valid signer.
-                require(INFTConsumer(_collectionAddress).isAdmin(_signer), "Not a valid signed message.");
+                require(IERC721Consumer(_tokenAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
                 require(!WorldStateStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
@@ -116,9 +116,9 @@ contract WorldStakingERC721 {
                 WorldStateStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
-                INFTConsumer(_collectionAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);
+                IERC721Consumer(_tokenAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);
 
-                emit NFTWithdrawn( _collectionAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
+                emit ERC721Withdrawn( _tokenAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
             }
         }
     }
