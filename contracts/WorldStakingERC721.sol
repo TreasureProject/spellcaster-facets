@@ -2,13 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./libraries/WorldStateStorage.sol";
 import "./interfaces/INFTConsumer.sol";
 import "hardhat/console.sol";
 
-struct TokenStorageData {
-    address owner;
-    bool stored;
-}
 
 struct Signature {
     uint8 v;
@@ -26,10 +23,6 @@ struct WithdrawRequest {
 }
 
 contract WorldStakingERC721 {
-    mapping(address => mapping(uint256 => TokenStorageData))
-        public collectionAddressToTokenIdToTokenStorageData;
-
-    mapping(uint256 => bool) usedNonces;
 
     event NFTDeposited(address _collectionAddress, address _depositor,address _reciever, uint256 _tokenId);
     event NFTWithdrawn(address _collectionAddress, address _reciever, uint256 _tokenId);
@@ -53,9 +46,7 @@ contract WorldStakingERC721 {
             );
 
             //Store it.
-            collectionAddressToTokenIdToTokenStorageData[_collectionAddress][
-                _tokenIds[i]
-            ] = TokenStorageData(_reciever, true);
+            WorldStateStorage.setTokenStorageData(_collectionAddress, _tokenIds[i], TokenStorageData(_reciever, true));
 
             emit NFTDeposited(_collectionAddress, msg.sender, _reciever, _tokenIds[i]);
         }
@@ -81,14 +72,14 @@ contract WorldStakingERC721 {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
             address _collectionAddress = _withdrawRequest.collectionAddress;
 
+            TokenStorageData memory _tokenStorageData = WorldStateStorage.getTokenStorageData(_collectionAddress, _withdrawRequest.tokenId);
+
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
                 //Permissioned by chain
 
                 require(
-                    collectionAddressToTokenIdToTokenStorageData[
-                        _collectionAddress
-                    ][_withdrawRequest.tokenId].owner == _withdrawRequest.reciever,
+                    _tokenStorageData.owner == _withdrawRequest.reciever,
                     "You didn't store this NFT."
                 );
 
@@ -99,13 +90,11 @@ contract WorldStakingERC721 {
                     _withdrawRequest.tokenId
                 );
 
-                //Remove it.
-                collectionAddressToTokenIdToTokenStorageData[
-                    _collectionAddress
-                ][_withdrawRequest.tokenId] = TokenStorageData(
+                //Store it.
+                WorldStateStorage.setTokenStorageData(_collectionAddress, _withdrawRequest.tokenId, TokenStorageData(
                     address(0),
                     false
-                );
+                ));
                 
                 emit NFTWithdrawn( _collectionAddress,  _withdrawRequest.reciever,  _withdrawRequest.tokenId);
             } else {
@@ -121,10 +110,10 @@ contract WorldStakingERC721 {
                 require(INFTConsumer(_collectionAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
-                require(!usedNonces[_withdrawRequest.nonce], "Nonce already used.");
+                require(!WorldStateStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
 
                 //Store nonce as used.
-                usedNonces[_withdrawRequest.nonce] = true;
+                WorldStateStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
                 INFTConsumer(_collectionAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);
