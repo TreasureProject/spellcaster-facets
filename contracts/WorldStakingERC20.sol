@@ -85,9 +85,8 @@ contract WorldStakingERC20 {
 
                 WorldStateStorage.setERC20TokensStored(_tokenAddress, msg.sender, _amountStored - _withdrawRequest.amount);
 
-                //Yoink it.
-                IERC20(_tokenAddress).transferFrom(
-                    address(this),
+                //Send it back
+                IERC20(_tokenAddress).transfer(
                     msg.sender,
                     _withdrawRequest.amount
                 );

@@ -2,6 +2,9 @@ const { ethers, waffle } = require("hardhat");
 const { expect } = require("chai");
 const Promise = require("bluebird");
 
+var signer1;
+var owner;
+
 const ids = [
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 ];
@@ -27,7 +30,7 @@ var tokenIdToEmit = 100000;
 describe("Tests", function () {
   it("deposits and withdraws 20 tokens from world", async function () {
     await ERC721Consumer.setApprovalForAll(WorldStakingERC721.address, true);
-    await WorldStakingERC721.depositERC721s(ERC721Consumer.address, owner.address, ids);
+    await WorldStakingERC721.depositERC721(ERC721Consumer.address, owner.address, ids);
 
     const withdrawRequests = ids.map((a) => {
       return {
@@ -46,7 +49,7 @@ describe("Tests", function () {
 
     expect(await ERC721Consumer.balanceOf(owner.address)).to.equal(0)
 
-    await WorldStakingERC721.withdrawERC721s(withdrawRequests);
+    await WorldStakingERC721.withdrawERC721(withdrawRequests);
 
     expect(await ERC721Consumer.balanceOf(owner.address)).to.equal(20)
   });
@@ -86,7 +89,7 @@ describe("Tests", function () {
       return withdrawRequest;
     });
 
-    await WorldStakingERC721.withdrawERC721s(withdrawRequests);
+    await WorldStakingERC721.withdrawERC721(withdrawRequests);
 
     expect(await ERC721Consumer.balanceOf(owner.address)).to.equal(40)
   });
