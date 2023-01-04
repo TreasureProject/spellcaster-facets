@@ -9,11 +9,13 @@ struct ERC721TokenStorageData {
 
 
 
+
 library WorldStateStorage {
 
     struct State {
         mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
         mapping(address => mapping(address => uint256)) tokenAddressToAddressToTokensStored;
+        mapping(address => mapping(uint256 => mapping(address => uint256))) tokenAddressToTokenIdToUserToQuantityStored;
         mapping(uint256 => bool) usedNonces;
     }
 
@@ -41,6 +43,16 @@ library WorldStateStorage {
     function setERC20TokensStored(address _tokenAddress, address _user, uint256 _amount) internal {
         getState().tokenAddressToAddressToTokensStored[_tokenAddress][_user] = _amount;
     }
+
+    function getERC1155TokensStored(address _tokenAddress, uint256 _tokenId, address _user) internal view returns (uint256) {
+        return getState().tokenAddressToTokenIdToUserToQuantityStored[_tokenAddress][_tokenId][_user];
+    }
+
+    function setERC1155TokensStored(address _tokenAddress, uint256 _tokenId, address _user, uint256 _quantity) internal {
+        getState().tokenAddressToTokenIdToUserToQuantityStored[_tokenAddress][_tokenId][_user] = _quantity;
+    }
+
+
 
 
     function getUsedNonce(uint256 _nonce) internal view returns(bool){
