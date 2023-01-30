@@ -1,0 +1,13 @@
+[profile.default]
+src = 'src'
+out = '_out'
+test = 'test'
+libs = ['lib']
+fuzz_runs = 1024
+gas_reports = ["*"]
+# These compiler settings must match hardhat.config.ts to avoid unexpected issues
+solc = "0.8.17"
+optimizer = true
+optimizer_runs = 200
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

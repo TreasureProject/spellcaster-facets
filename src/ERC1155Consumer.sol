@@ -1,16 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
 
-contract ERC1155Consumer is ERC1155, Ownable {
+contract ERC1155Consumer is ERC1155Upgradeable, OwnableUpgradeable {
     address public worldAddress;
 
     mapping(address => bool) public isAdmin;
 
-    constructor() ERC1155("uri") {}
+    // constructor() ERC1155Upgradeable("uri") {}
+
+    function initialize() public initializer {
+        __ERC1155_init("uri");
+        __Ownable_init();
+    }
 
     function setAdmin(address _address, bool _isAdmin) public onlyOwner {
         isAdmin[_address] = _isAdmin;

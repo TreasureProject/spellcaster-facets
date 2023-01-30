@@ -1,10 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./libraries/WorldStateStorage.sol";
+import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
+import "./libraries/WorldStakingStorage.sol";
 import "./interfaces/IERC721Consumer.sol";
-import "hardhat/console.sol";
 
 
 struct Signature {
@@ -34,19 +33,19 @@ contract WorldStakingERC721 {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             //Require dey own it.
             require(
-                IERC721(_tokenAddress).ownerOf(_tokenIds[i]) == msg.sender,
+                IERC721Upgradeable(_tokenAddress).ownerOf(_tokenIds[i]) == msg.sender,
                 "You don't own these tokens"
             );
 
             //Yoink it.
-            IERC721(_tokenAddress).transferFrom(
+            IERC721Upgradeable(_tokenAddress).transferFrom(
                 msg.sender,
                 address(this),
                 _tokenIds[i]
             );
 
             //Store it.
-            WorldStateStorage.setERC721TokenStorageData(_tokenAddress, _tokenIds[i], ERC721TokenStorageData(_reciever, true));
+            WorldStakingStorage.setERC721TokenStorageData(_tokenAddress, _tokenIds[i], ERC721TokenStorageData(_reciever, true));
 
             emit ERC721Deposited(_tokenAddress, msg.sender, _reciever, _tokenIds[i]);
         }
@@ -72,7 +71,7 @@ contract WorldStakingERC721 {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
             address _tokenAddress = _withdrawRequest.tokenAddress;
 
-            ERC721TokenStorageData memory _ERC721TokenStorageData = WorldStateStorage.getERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId);
+            ERC721TokenStorageData memory _ERC721TokenStorageData = WorldStakingStorage.getERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId);
 
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
@@ -84,13 +83,13 @@ contract WorldStakingERC721 {
                 );
 
                 //Store it.
-                WorldStateStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
+                WorldStakingStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
                     address(0),
                     false
                 ));
 
                 //Send it back.
-                IERC721(_tokenAddress).transferFrom(
+                IERC721Upgradeable(_tokenAddress).transferFrom(
                     address(this),
                     _withdrawRequest.reciever,
                     _withdrawRequest.tokenId
@@ -110,10 +109,10 @@ contract WorldStakingERC721 {
                 require(IERC721Consumer(_tokenAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
-                require(!WorldStateStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
+                require(!WorldStakingStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
 
                 //Store nonce as used.
-                WorldStateStorage.setUsedNonce(_withdrawRequest.nonce, true);
+                WorldStakingStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
                 IERC721Consumer(_tokenAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);

@@ -1,10 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./libraries/WorldStateStorage.sol";
+import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import "./libraries/WorldStakingStorage.sol";
 import "./interfaces/IERC20Consumer.sol";
-import "hardhat/console.sol";
 
 
 struct ERC20TokenStorageData {
@@ -39,14 +38,14 @@ contract WorldStakingERC20 {
         public
     {
         //Yoink it.
-        IERC20(_tokenAddress).transferFrom(
+        IERC20Upgradeable(_tokenAddress).transferFrom(
             msg.sender,
             address(this),
             _amount
         );
 
         //Store it.
-        WorldStateStorage.setERC20TokensStored(_tokenAddress, _reciever, _amount);
+        WorldStakingStorage.setERC20TokensStored(_tokenAddress, _reciever, _amount);
 
         emit ERC20Deposited(_tokenAddress, msg.sender, _reciever, _amount);
     }
@@ -72,7 +71,7 @@ contract WorldStakingERC20 {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
             address _tokenAddress = _withdrawRequest.tokenAddress;
 
-            uint256 _amountStored = WorldStateStorage.getERC20TokensStored(_tokenAddress, msg.sender);
+            uint256 _amountStored = WorldStakingStorage.getERC20TokensStored(_tokenAddress, msg.sender);
 
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
@@ -83,10 +82,10 @@ contract WorldStakingERC20 {
                     "You don't have enough stored to withdraw."
                 );
 
-                WorldStateStorage.setERC20TokensStored(_tokenAddress, msg.sender, _amountStored - _withdrawRequest.amount);
+                WorldStakingStorage.setERC20TokensStored(_tokenAddress, msg.sender, _amountStored - _withdrawRequest.amount);
 
                 //Send it back
-                IERC20(_tokenAddress).transfer(
+                IERC20Upgradeable(_tokenAddress).transfer(
                     msg.sender,
                     _withdrawRequest.amount
                 );
@@ -105,10 +104,10 @@ contract WorldStakingERC20 {
                 require(IERC20Consumer(_tokenAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
-                require(!WorldStateStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
+                require(!WorldStakingStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
 
                 //Store nonce as used.
-                WorldStateStorage.setUsedNonce(_withdrawRequest.nonce, true);
+                WorldStakingStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
                 IERC20Consumer(_tokenAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.amount);

@@ -1,17 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
 
-contract ERC721Consumer is ERC721Enumerable, Ownable {
+contract ERC721Consumer is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     uint256 internal _counter;
     address public worldAddress;
 
     mapping(address => bool) public isAdmin;
 
-    constructor() ERC721("ERC721Consumer", "ERC721C") {}
+    // constructor() ERC721Upgradeable("ERC721Consumer", "ERC721C") {}
+    function initialize() public initializer {
+        __ERC721_init("name", "symbol");
+        __Ownable_init();
+    }
 
     function setAdmin(address _address, bool _isAdmin) public onlyOwner {
         isAdmin[_address] = _isAdmin;

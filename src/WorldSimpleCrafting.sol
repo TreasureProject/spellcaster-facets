@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "./libraries/WorldStateStorage.sol";
+import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
+import "./libraries/WorldStakingStorage.sol";
 import "./interfaces/IERC20Consumer.sol";
-import "hardhat/console.sol";
 
 enum TOKENTYPE {
     ERC20,
@@ -44,7 +43,7 @@ contract WorldSimpleCrafting {
 
     uint256 _currentRecipeId = 1;
 
-    function createNewRecipe(CraftingRecipe memory _craftingRecipe) public {
+    function createNewRecipe(CraftingRecipe calldata _craftingRecipe) public {
         craftingRecipes[_currentRecipeId] = _craftingRecipe;
         _currentRecipeId++;
     }
@@ -71,7 +70,7 @@ contract WorldSimpleCrafting {
 
             if (_ingredient.tokenType == TOKENTYPE.ERC20) {
                 //ERC20
-                IERC20(_ingredient.tokenAddress).transferFrom(
+                IERC20Upgradeable(_ingredient.tokenAddress).transferFrom(
                     msg.sender,
                     address(this),
                     _ingredient.tokenQuantity
@@ -80,7 +79,7 @@ contract WorldSimpleCrafting {
 
             if (_ingredient.tokenType == TOKENTYPE.ERC721) {
                 //ERC721
-                IERC721(_ingredient.tokenAddress).transferFrom(
+                IERC721Upgradeable(_ingredient.tokenAddress).transferFrom(
                     msg.sender,
                     address(this),
                     _ingredient.tokenId
@@ -89,7 +88,7 @@ contract WorldSimpleCrafting {
 
             if (_ingredient.tokenType == TOKENTYPE.ERC1155) {
                 //ERC1155
-                IERC1155(_ingredient.tokenAddress).safeTransferFrom(
+                IERC1155Upgradeable(_ingredient.tokenAddress).safeTransferFrom(
                     msg.sender,
                     address(this),
                     _ingredient.tokenId,

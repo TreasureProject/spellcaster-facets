@@ -1,16 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 struct ERC721TokenStorageData {
     address owner;
     bool stored;
 }
 
-
-
-
-library WorldStateStorage {
+library WorldStakingStorage {
 
     struct State {
         mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
@@ -19,7 +15,7 @@ library WorldStateStorage {
         mapping(uint256 => bool) usedNonces;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("world.storage.diamond");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("world.staking.diamond");
 
     function getState() internal pure returns (State storage s) {
         bytes32 position = FACET_STORAGE_POSITION;

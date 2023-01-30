@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
 import "./interfaces/IERC1155Consumer.sol";
-import "./libraries/WorldStateStorage.sol";
-import "hardhat/console.sol";
+import "./libraries/WorldStakingStorage.sol";
 
 
 struct Signature {
@@ -24,7 +23,7 @@ struct WithdrawRequest {
     Signature signature;
 }
 
-contract WorldStakingERC1155 is ERC1155Holder {
+contract WorldStakingERC1155 is ERC1155HolderUpgradeable {
 
     event ERC1155Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId, uint256 _amount);
     event ERC1155Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId, uint256 _amount);
@@ -36,12 +35,12 @@ contract WorldStakingERC1155 is ERC1155Holder {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             //Require dey own it.
             require(
-                IERC1155(_tokenAddress).balanceOf(msg.sender, _tokenIds[i]) == _quantities[i],
+                IERC1155Upgradeable(_tokenAddress).balanceOf(msg.sender, _tokenIds[i]) == _quantities[i],
                 "You don't own these tokens"
             );
 
             //Yoink it.
-            IERC1155(_tokenAddress).safeTransferFrom(
+            IERC1155Upgradeable(_tokenAddress).safeTransferFrom(
                 msg.sender,
                 address(this),
                 _tokenIds[i],
@@ -50,7 +49,7 @@ contract WorldStakingERC1155 is ERC1155Holder {
             );
 
             //Store it.
-            WorldStateStorage.setERC1155TokensStored(_tokenAddress, _tokenIds[i], _reciever, _quantities[i] + WorldStateStorage.getERC1155TokensStored(_tokenAddress, _tokenIds[i], _reciever));
+            WorldStakingStorage.setERC1155TokensStored(_tokenAddress, _tokenIds[i], _reciever, _quantities[i] + WorldStakingStorage.getERC1155TokensStored(_tokenAddress, _tokenIds[i], _reciever));
 
             emit ERC1155Deposited(_tokenAddress, msg.sender, _reciever, _tokenIds[i], _quantities[i]);
         }
@@ -76,7 +75,7 @@ contract WorldStakingERC1155 is ERC1155Holder {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
             address _tokenAddress = _withdrawRequest.tokenAddress;
 
-            uint256 _ERC1155Stored = WorldStateStorage.getERC1155TokensStored(_tokenAddress, _withdrawRequest.tokenId, msg.sender);
+            uint256 _ERC1155Stored = WorldStakingStorage.getERC1155TokensStored(_tokenAddress, _withdrawRequest.tokenId, msg.sender);
 
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
@@ -88,15 +87,15 @@ contract WorldStakingERC1155 is ERC1155Holder {
                 );
 
                 //Store it.
-                WorldStateStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
+                WorldStakingStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
                     address(0),
                     false
                 ));
 
-                WorldStateStorage.setERC1155TokensStored(_tokenAddress, _withdrawRequest.tokenId, msg.sender, _ERC1155Stored - _withdrawRequest.amount);
+                WorldStakingStorage.setERC1155TokensStored(_tokenAddress, _withdrawRequest.tokenId, msg.sender, _ERC1155Stored - _withdrawRequest.amount);
 
                 //Send it back.
-                IERC1155(_tokenAddress).safeTransferFrom(
+                IERC1155Upgradeable(_tokenAddress).safeTransferFrom(
                     address(this),
                     _withdrawRequest.reciever,
                     _withdrawRequest.tokenId,
@@ -118,10 +117,10 @@ contract WorldStakingERC1155 is ERC1155Holder {
                 require(IERC1155Consumer(_tokenAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
-                require(!WorldStateStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
+                require(!WorldStakingStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
 
                 //Store nonce as used.
-                WorldStateStorage.setUsedNonce(_withdrawRequest.nonce, true);
+                WorldStakingStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
                 IERC1155Consumer(_tokenAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId, _withdrawRequest.amount);

@@ -1,17 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts-diamond/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
 
-contract ERC20Consumer is ERC20, Ownable {
+contract ERC20Consumer is ERC20Upgradeable, OwnableUpgradeable {
     address public worldAddress;
 
     mapping(address => bool) public isAdmin;
 
-    constructor() ERC20("ERC20Consumer", "ERC20C") {}
+    // constructor() ERC20Upgradeable("ERC20Consumer", "ERC20C") {}
+    function initialize() public initializer {
+        __ERC20_init("name", "symbol");
+        __Ownable_init();
+    }
 
     function setAdmin(address _address, bool _isAdmin) public onlyOwner {
         isAdmin[_address] = _isAdmin;
