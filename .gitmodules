@@ -1,0 +1,3 @@
+[submodule "lib/openzeppelin-contracts-diamond"]
+	path = lib/openzeppelin-contracts-diamond
+	url = https://github.com/GeniusVentures/openzeppelin-contracts-diamond
