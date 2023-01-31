@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {MagicDomainRegistrarController} from "../../src/MagicDomainRegistrarController.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-diamond/utils/StringsUpgradeable.sol";
 
 abstract contract TestUtilities {
+    using StringsUpgradeable for uint256;
+
     // Hex representation of 0123456789abcdef used for character lookup
     bytes32 internal constant ALPHANUMERIC_HEX =
         0x3031323334353637383961626364656600000000000000000000000000000000;
+
+    function toString(uint256 _val) internal pure returns(string memory) {
+        return _val.toString();
+    }
 
     function roleBytes(string memory _roleName) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(_roleName));

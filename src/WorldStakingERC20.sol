@@ -1,16 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
-import "./libraries/WorldStakingStorage.sol";
-import "./interfaces/IERC20Consumer.sol";
-
+import {Initializable} from "@openzeppelin/contracts-diamond/proxy/utils/Initializable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import {WorldStakingStorage} from "./libraries/WorldStakingStorage.sol";
+import {IERC20Consumer} from "./interfaces/IERC20Consumer.sol";
 
 struct ERC20TokenStorageData {
     address owner;
     bool stored;
 }
-
 
 struct Signature {
     uint8 v;
@@ -27,12 +26,12 @@ struct WithdrawRequest {
     Signature signature;
 }
 
-contract WorldStakingERC20 {
-
-
+contract WorldStakingERC20 is Initializable {
     event ERC20Deposited(address _tokenAddress, address _depositor,address _reciever, uint256 _amount);
     event ERC20Withdrawn(address _tokenAddress, address _reciever, uint256 _amount);
 
+    function __WorldStakingERC20_init() internal onlyInitializing {
+    }
 
     function depositERC20(address _tokenAddress, address _reciever, uint256 _amount)
         public
@@ -60,9 +59,6 @@ contract WorldStakingERC20 {
 
         return ecrecover(messageDigest, signature.v, signature.r, signature.s);
     }
-
-
-
 
     function withdrawERC20(
         WithdrawRequest[] calldata _withdrawRequests

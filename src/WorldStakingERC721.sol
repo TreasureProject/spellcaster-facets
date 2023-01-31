@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
-import "./libraries/WorldStakingStorage.sol";
-import "./interfaces/IERC721Consumer.sol";
-
+import {Initializable} from "@openzeppelin/contracts-diamond/proxy/utils/Initializable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
+import {IERC721Consumer} from "./interfaces/IERC721Consumer.sol";
+import {WorldStakingStorage, ERC721TokenStorageData} from "./libraries/WorldStakingStorage.sol";
 
 struct Signature {
     uint8 v;
@@ -21,11 +21,12 @@ struct WithdrawRequest {
     Signature signature;
 }
 
-contract WorldStakingERC721 {
-
+contract WorldStakingERC721 is Initializable {
     event ERC721Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId);
     event ERC721Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId);
 
+    function __WorldStakingERC721_init() internal onlyInitializing {
+    }
 
     function depositERC721(address _tokenAddress, address _reciever, uint256[] memory _tokenIds)
         public

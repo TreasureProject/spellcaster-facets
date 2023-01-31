@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
-import "./interfaces/IERC1155Consumer.sol";
-import "./libraries/WorldStakingStorage.sol";
-
+import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
+import {IERC1155Consumer} from "./interfaces/IERC1155Consumer.sol";
+import {WorldStakingStorage, ERC721TokenStorageData} from "./libraries/WorldStakingStorage.sol";
 
 struct Signature {
     uint8 v;
@@ -24,10 +23,11 @@ struct WithdrawRequest {
 }
 
 contract WorldStakingERC1155 is ERC1155HolderUpgradeable {
-
     event ERC1155Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId, uint256 _amount);
     event ERC1155Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId, uint256 _amount);
 
+    function __WorldStakingERC1155_init() internal onlyInitializing {
+    }
 
     function depositERC1155(address _tokenAddress, address _reciever, uint256[] memory _tokenIds, uint256[] memory _quantities)
         public
