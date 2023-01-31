@@ -1,14 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
 import "./libraries/SimpleCraftingStorage.sol";
 import "./interfaces/IERC20Consumer.sol";
 
-contract SimpleCrafting {
-    function createNewRecipe(CraftingRecipe calldata _craftingRecipe) public {
+import "forge-std/console.sol";
+
+contract SimpleCrafting is ERC1155HolderUpgradeable {
+
+    function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipe) public {
         uint256 _currentRecipeId = SimpleCraftingStorage.getState()._currentRecipeId;
 
         SimpleCraftingStorage.getState().craftingRecipes[_currentRecipeId] = _craftingRecipe;
@@ -30,7 +34,7 @@ contract SimpleCrafting {
         //10 minutes
         //TODO
         //Adjust anointment timelock method.
-        require(block.timestamp >= _craftingRecipe.anointmentTime + 600);
+        require(block.timestamp >= _craftingRecipe.anointmentTime);
 
         for (uint256 i = 0; i < _craftingRecipe.ingredients.length; i++) {
             //Pull all the ingredients
@@ -69,10 +73,11 @@ contract SimpleCrafting {
         for (uint256 i = 0; i < _craftingRecipe.results.length; i++) {
             Result storage _result = _craftingRecipe.results[i];
 
+
             (bool success, bytes memory data) = address(_result.target).call{
                 value: 0,
                 gas: 150000
-            }(abi.encodeWithSelector(_result.selector, _result.params));
+            }(abi.encodePacked(_result.selector, abi.encode(msg.sender), _result.params));
         }
     }
 
