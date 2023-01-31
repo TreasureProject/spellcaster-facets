@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Initializable} from "@openzeppelin/contracts-diamond/proxy/utils/Initializable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721Consumer} from "./interfaces/IERC721Consumer.sol";
-import {WorldStakingStorage, ERC721TokenStorageData} from "./libraries/WorldStakingStorage.sol";
+import {StakingStorage, ERC721TokenStorageData} from "./libraries/StakingStorage.sol";
 
 struct Signature {
     uint8 v;
@@ -21,11 +21,11 @@ struct WithdrawRequest {
     Signature signature;
 }
 
-contract WorldStakingERC721 is Initializable {
+contract StakingERC721 is Initializable {
     event ERC721Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId);
     event ERC721Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId);
 
-    function __WorldStakingERC721_init() internal onlyInitializing {
+    function __StakingERC721_init() internal onlyInitializing {
     }
 
     function depositERC721(address _tokenAddress, address _reciever, uint256[] memory _tokenIds)
@@ -46,7 +46,7 @@ contract WorldStakingERC721 is Initializable {
             );
 
             //Store it.
-            WorldStakingStorage.setERC721TokenStorageData(_tokenAddress, _tokenIds[i], ERC721TokenStorageData(_reciever, true));
+            StakingStorage.setERC721TokenStorageData(_tokenAddress, _tokenIds[i], ERC721TokenStorageData(_reciever, true));
 
             emit ERC721Deposited(_tokenAddress, msg.sender, _reciever, _tokenIds[i]);
         }
@@ -72,7 +72,7 @@ contract WorldStakingERC721 is Initializable {
             WithdrawRequest calldata _withdrawRequest = _withdrawRequests[i];
             address _tokenAddress = _withdrawRequest.tokenAddress;
 
-            ERC721TokenStorageData memory _ERC721TokenStorageData = WorldStakingStorage.getERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId);
+            ERC721TokenStorageData memory _ERC721TokenStorageData = StakingStorage.getERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId);
 
             if (_withdrawRequest.stored) {
                 //It's stored in the contract
@@ -84,7 +84,7 @@ contract WorldStakingERC721 is Initializable {
                 );
 
                 //Store it.
-                WorldStakingStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
+                StakingStorage.setERC721TokenStorageData(_tokenAddress, _withdrawRequest.tokenId, ERC721TokenStorageData(
                     address(0),
                     false
                 ));
@@ -110,10 +110,10 @@ contract WorldStakingERC721 is Initializable {
                 require(IERC721Consumer(_tokenAddress).isAdmin(_signer), "Not a valid signed message.");
 
                 //Make sure they aren't using sig twice.
-                require(!WorldStakingStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
+                require(!StakingStorage.getUsedNonce(_withdrawRequest.nonce), "Nonce already used.");
 
                 //Store nonce as used.
-                WorldStakingStorage.setUsedNonce(_withdrawRequest.nonce, true);
+                StakingStorage.setUsedNonce(_withdrawRequest.nonce, true);
 
                 //Mint the token
                 IERC721Consumer(_tokenAddress).mintFromWorld(_withdrawRequest.reciever, _withdrawRequest.tokenId);

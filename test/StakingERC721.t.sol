@@ -2,21 +2,21 @@
 pragma solidity ^0.8.0;
 
 import {TestBase} from "./utils/TestBase.sol";
-import {WorldStakingERC721, WithdrawRequest, Signature} from "../src/WorldStakingERC721.sol";
+import {StakingERC721, WithdrawRequest, Signature} from "../src/StakingERC721.sol";
 import {ERC721Consumer} from "../src/mocks/ERC721Consumer.sol";
 
-contract WorldStakingERC721Impl is WorldStakingERC721 {
+contract StakingERC721Impl is StakingERC721 {
     function initialize() public initializer{
-        __WorldStakingERC721_init();
+        __StakingERC721_init();
     }
 }
 
-contract WorldStakingERC721Test is TestBase {
-    WorldStakingERC721Impl internal _staking;
+contract StakingERC721Test is TestBase {
+    StakingERC721Impl internal _staking;
     ERC721Consumer internal _consumer;
 
     function setUp() public {
-        _staking = new WorldStakingERC721Impl();
+        _staking = new StakingERC721Impl();
         _consumer = new ERC721Consumer();
 
         _staking.initialize();

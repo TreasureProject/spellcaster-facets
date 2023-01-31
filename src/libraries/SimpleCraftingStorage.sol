@@ -33,7 +33,7 @@ struct CraftingRecipe {
 }
 
 
-library WorldSimpleCraftingStorage {
+library SimpleCraftingStorage {
 
     struct State {
         mapping(uint256 => CraftingRecipe) craftingRecipes;
@@ -47,24 +47,5 @@ library WorldSimpleCraftingStorage {
         assembly {
             s.slot := position
         }
-    }
-
-    function getCraftingRecipe(uint256 _recipeId) internal view returns (CraftingRecipe storage) {
-        return getState().craftingRecipes[_recipeId];
-    }
-
-    function setCraftingRecipe(uint256 _recipeId, CraftingRecipe memory _craftingRecipe) internal {
-        getState().craftingRecipes[_recipeId] = _craftingRecipe;
-    }
-
-    function getCurrentRecipeId() internal view returns(uint256) {
-        return getState()._currentRecipeId;
-    }
-
-    function getAndIncrementCurrentRecipeId() internal returns(uint256) {
-        uint256 _currentRecipeId = getState()._currentRecipeId;
-        getState()._currentRecipeId += 1;
-
-        return _currentRecipeId;
     }
 }

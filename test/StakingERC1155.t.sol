@@ -4,23 +4,23 @@ pragma solidity ^0.8.0;
 import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import {TestBase} from "./utils/TestBase.sol";
-import {WorldStakingERC1155, WithdrawRequest, Signature} from "../src/WorldStakingERC1155.sol";
+import {StakingERC1155, WithdrawRequest, Signature} from "../src/StakingERC1155.sol";
 import {ERC1155Consumer} from "../src/mocks/ERC1155Consumer.sol";
 
-contract WorldStakingERC1155Impl is WorldStakingERC1155 {
+contract StakingERC1155Impl is StakingERC1155 {
     function initialize() public initializer{
-        __WorldStakingERC1155_init();
+        __StakingERC1155_init();
     }
 }
 
-contract WorldStakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
-    WorldStakingERC1155Impl internal _staking;
+contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
+    StakingERC1155Impl internal _staking;
     ERC1155Consumer internal _consumer;
 
     uint256 constant _tokenId = 2;
 
     function setUp() public {
-        _staking = new WorldStakingERC1155Impl();
+        _staking = new StakingERC1155Impl();
         _consumer = new ERC1155Consumer();
 
         _staking.initialize();

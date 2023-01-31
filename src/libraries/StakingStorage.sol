@@ -6,7 +6,7 @@ struct ERC721TokenStorageData {
     bool stored;
 }
 
-library WorldStakingStorage {
+library StakingStorage {
 
     struct State {
         mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
@@ -15,7 +15,7 @@ library WorldStakingStorage {
         mapping(uint256 => bool) usedNonces;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("world.staking.diamond");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("staking.diamond");
 
     function getState() internal pure returns (State storage s) {
         bytes32 position = FACET_STORAGE_POSITION;
