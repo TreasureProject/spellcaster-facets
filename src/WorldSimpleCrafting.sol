@@ -8,11 +8,14 @@ import "./libraries/WorldSimpleCraftingStorage.sol";
 import "./interfaces/IERC20Consumer.sol";
 
 contract WorldSimpleCrafting {
-    
     function createNewRecipe(CraftingRecipe calldata _craftingRecipe) public {
-        uint256 _currentRecipeId = getAndIncrementCurrentRecipeId();
+        uint256 _currentRecipeId = WorldSimpleCraftingStorage
+            .getAndIncrementCurrentRecipeId();
 
-        setCraftingRecipe(_currentRecipeId, _craftingRecipe);
+        WorldSimpleCraftingStorage.setCraftingRecipe(
+            _currentRecipeId,
+            _craftingRecipe
+        );
     }
 
     function getCraftingRecipe(uint256 _recipeId)
@@ -20,11 +23,12 @@ contract WorldSimpleCrafting {
         view
         returns (CraftingRecipe memory)
     {
-        return getCraftingRecipe(_recipeId);
+        return WorldSimpleCraftingStorage.getCraftingRecipe(_recipeId);
     }
 
     function craft(uint256 _recipeId) public {
-        CraftingRecipe memory _craftingRecipe = getCraftingRecipe(_recipeId);
+        CraftingRecipe memory _craftingRecipe = WorldSimpleCraftingStorage
+            .getCraftingRecipe(_recipeId);
 
         //10 minutes
         //TODO
@@ -75,13 +79,33 @@ contract WorldSimpleCrafting {
         }
     }
 
-    function anoint(uint256 _recipeId) public /*onlyAdmin(_recipeId)*/ {
-        craftingRecipes[_recipeId].anointed = true;
-        craftingRecipes[_recipeId].anointmentTime = block.timestamp;
+    function anoint(
+        uint256 _recipeId /*onlyAdmin(_recipeId)*/
+    ) public {
+        CraftingRecipe memory _craftingRecipe = WorldSimpleCraftingStorage
+            .getCraftingRecipe(_recipeId);
+
+        _craftingRecipe.anointed = true;
+        _craftingRecipe.anointmentTime = block.timestamp;
+
+        WorldSimpleCraftingStorage.setCraftingRecipe(
+            _recipeId,
+            _craftingRecipe
+        );
     }
 
-    function unanoint(uint256 _recipeId)  public /*onlyAdmin(_recipeId)*/ {
-        craftingRecipes[_recipeId].anointed = false;
-        craftingRecipes[_recipeId].anointmentTime = 0;
+    function unanoint(
+        uint256 _recipeId /*onlyAdmin(_recipeId)*/
+    ) public {
+        CraftingRecipe memory _craftingRecipe = WorldSimpleCraftingStorage
+            .getCraftingRecipe(_recipeId);
+
+        _craftingRecipe.anointed = false;
+        _craftingRecipe.anointmentTime = 0;
+
+        WorldSimpleCraftingStorage.setCraftingRecipe(
+            _recipeId,
+            _craftingRecipe
+        );
     }
 }

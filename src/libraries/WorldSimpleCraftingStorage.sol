@@ -33,7 +33,7 @@ struct CraftingRecipe {
 }
 
 
-library WorldStakingStorage {
+library WorldSimpleCraftingStorage {
 
     struct State {
         mapping(uint256 => CraftingRecipe) craftingRecipes;
@@ -53,7 +53,7 @@ library WorldStakingStorage {
         return getState().craftingRecipes[_recipeId];
     }
 
-    function setCraftingRecipe(uint256 _recipeId, CraftingRecipe calldata _craftingRecipe) internal {
+    function setCraftingRecipe(uint256 _recipeId, CraftingRecipe memory _craftingRecipe) internal {
         getState().craftingRecipes[_recipeId] = _craftingRecipe;
     }
 
