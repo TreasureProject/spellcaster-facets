@@ -25,7 +25,7 @@ contract StakingERC721 is Initializable {
     event ERC721Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId);
     event ERC721Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId);
 
-    function __StakingERC721_init() internal onlyInitializing {
+    function initialize() external initializer {
     }
 
     function depositERC721(address _tokenAddress, address _reciever, uint256[] memory _tokenIds)

@@ -5,18 +5,12 @@ import {TestBase} from "./utils/TestBase.sol";
 import {StakingERC20, WithdrawRequest, Signature} from "../src/StakingERC20.sol";
 import {ERC20Consumer} from "../src/mocks/ERC20Consumer.sol";
 
-contract StakingERC20Impl is StakingERC20 {
-    function initialize() public initializer{
-        __StakingERC20_init();
-    }
-}
-
 contract StakingERC20Test is TestBase {
-    StakingERC20Impl internal _staking;
+    StakingERC20 internal _staking;
     ERC20Consumer internal _consumer;
 
     function setUp() public {
-        _staking = new StakingERC20Impl();
+        _staking = new StakingERC20();
         _consumer = new ERC20Consumer();
 
         _staking.initialize();

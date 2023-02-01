@@ -43,6 +43,7 @@
   * [Initial installation](#initial-installation)
   * [Building](#building)
   * [Testing](#testing)
+  * [Recommended Setup](#recommended-setup)
 * [Contact](#contact)
 
 
@@ -80,6 +81,27 @@ forge build
 ### Testing
 ```
 forge test
+```
+
+### Recommended Setup
+For optimal intellisense and NatSpec completion, it is recommended to use the Nomic Foundation's Solidity extension, in addition to adding the following VSCode snippet (since there isn't any native event/struct completion snippets)
+
+To add the snippet on Mac: Open Command Palette -> Type Snippet -> Press "Snippets: Configure User Snippets" -> find the 'Solidity' language -> Paste the following
+```
+{
+	"natspec event": {
+		"prefix": "\/\/ nat_event",
+		"body": "\/**\r\n * @notice \r\n * @param \r\n *\/",
+		"description": "natspec for events"
+	},
+	"natspec struct": {
+		"prefix": "\/\/ nat_struct",
+		"body": "\/**\r\n * @dev \r\n * @param \r\n *\/",
+		"description": "natspec for structs"
+	}
+}
+
+Now you can find these completions whenever typing '/'. For non-events/structs, use the default completion, as it will generate based on params and return variables
 ```
 
 <!-- CONTACT -->

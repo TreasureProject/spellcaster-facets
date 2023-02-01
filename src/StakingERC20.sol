@@ -30,7 +30,7 @@ contract StakingERC20 is Initializable {
     event ERC20Deposited(address _tokenAddress, address _depositor,address _reciever, uint256 _amount);
     event ERC20Withdrawn(address _tokenAddress, address _reciever, uint256 _amount);
 
-    function __StakingERC20_init() internal onlyInitializing {
+    function initialize() external initializer {
     }
 
     function depositERC20(address _tokenAddress, address _reciever, uint256 _amount)

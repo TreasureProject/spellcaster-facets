@@ -7,20 +7,14 @@ import {TestBase} from "./utils/TestBase.sol";
 import {StakingERC1155, WithdrawRequest, Signature} from "../src/StakingERC1155.sol";
 import {ERC1155Consumer} from "../src/mocks/ERC1155Consumer.sol";
 
-contract StakingERC1155Impl is StakingERC1155 {
-    function initialize() public initializer{
-        __StakingERC1155_init();
-    }
-}
-
 contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
-    StakingERC1155Impl internal _staking;
+    StakingERC1155 internal _staking;
     ERC1155Consumer internal _consumer;
 
     uint256 constant _tokenId = 2;
 
     function setUp() public {
-        _staking = new StakingERC1155Impl();
+        _staking = new StakingERC1155();
         _consumer = new ERC1155Consumer();
 
         _staking.initialize();

@@ -26,7 +26,7 @@ contract StakingERC1155 is ERC1155HolderUpgradeable {
     event ERC1155Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId, uint256 _amount);
     event ERC1155Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId, uint256 _amount);
 
-    function __StakingERC1155_init() internal onlyInitializing {
+    function initialize() external initializer {
     }
 
     function depositERC1155(address _tokenAddress, address _reciever, uint256[] memory _tokenIds, uint256[] memory _quantities)
