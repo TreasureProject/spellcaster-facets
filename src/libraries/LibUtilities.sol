@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {PausableStorage} from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
+
 library LibUtilities {
     event Paused(address _account);
     event Unpaused(address _account);
@@ -30,5 +32,21 @@ library LibUtilities {
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
+    function paused() internal view returns (bool) {
+        return PausableStorage.layout()._paused;
+    }
+
+    function requirePaused() internal view {
+        if(!paused()) {
+            revert NotPaused();
+        }
+    }
+
+    function requireNotPaused() internal view {
+        if(paused()) {
+            revert IsPaused();
+        }
     }
 }

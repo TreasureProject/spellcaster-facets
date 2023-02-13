@@ -26,12 +26,12 @@ abstract contract TestUtilities {
         if (domain.length <= i)
         return 0x0000000000000000000000000000000000000000000000000000000000000000;
 
-        uint len = LabelLength(domain, i);
+        uint len = labelLength(domain, i);
 
         return keccak256(abi.encodePacked(namehash(domain, i+len+1), keccak(domain, i, len)));
     }
 
-    function LabelLength(bytes memory domain, uint i) private pure returns (uint) {
+    function labelLength(bytes memory domain, uint i) private pure returns (uint) {
         uint len;
         while (i+len != domain.length && domain[i+len] != 0x2e) {
         len++;

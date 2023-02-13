@@ -1,14 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-diamond/access/AccessControlEnumerableUpgradeable.sol"; 
+import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-diamond/access/AccessControlEnumerableUpgradeable.sol";
+import {FacetInitializable} from "../utils/FacetInitializable.sol";
 import {LibUtilities} from "../libraries/LibUtilities.sol";
-import {ADMIN_ROLE} from "../libraries/LibAccessControlRoles.sol";
+import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
+import {LibMeta} from "../libraries/LibMeta.sol";
 
-contract AccessControlFacet is AccessControlEnumerableUpgradeable {
+/**
+ * @title AccessControl facet wrapper for OZ's pausable contract.
+ * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared 
+ */
+contract AccessControlFacet is FacetInitializable, AccessControlEnumerableUpgradeable {
 
-    function __AccessControlFacet_init() external initializer {
+    function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet")) {
         __AccessControlEnumerable_init();
+
+        _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
+        _grantRole(ADMIN_GRANTER_ROLE, LibAccessControlRoles.contractOwner());
+
+        // Give admin to the owner. May be revoked to prevent permanent administrative rights as owner
+        _grantRole(ADMIN_ROLE, LibAccessControlRoles.contractOwner());
     }
 
     // =============================================================
@@ -33,7 +45,7 @@ contract AccessControlFacet is AccessControlEnumerableUpgradeable {
     /**
      * @dev Helper for getting admin role from block explorers
      */
-    function adminRole() public pure returns(bytes32 role_) {
+    function adminRole() external pure returns(bytes32 role_) {
         return ADMIN_ROLE;
     }
 
@@ -45,6 +57,7 @@ contract AccessControlFacet is AccessControlEnumerableUpgradeable {
         public
         view
         override
+        virtual
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
