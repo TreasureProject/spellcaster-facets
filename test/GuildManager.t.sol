@@ -8,7 +8,11 @@ import {DiamondUtils} from "./utils/DiamondUtils.sol";
 
 import {GuildToken} from "../src/guilds/guildtoken/GuildToken.sol";
 import {GuildManager} from "../src/guilds/guildmanager/GuildManager.sol";
-import {IGuildManager} from "../src/guilds/guildmanager/IGuildManager.sol";
+import {
+    IGuildManager,
+    GuildCreationRule,
+    MaxUsersPerGuildRule
+} from "../src/guilds/guildmanager/IGuildManager.sol";
 
 contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
@@ -43,8 +47,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My descr",
             1, // Max users per guild 
             0, // Timeout to join another
-            IGuildManager.GuildCreationRule.ADMIN_ONLY,
-            IGuildManager.MaxUsersPerGuildRule.CONSTANT,
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
@@ -70,8 +74,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My descr",
             1, // Max users per guild 
             0, // Timeout to join another
-            IGuildManager.GuildCreationRule.ADMIN_ONLY,
-            IGuildManager.MaxUsersPerGuildRule.CONSTANT,
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );

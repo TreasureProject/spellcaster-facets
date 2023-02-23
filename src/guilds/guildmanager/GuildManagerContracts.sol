@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
-import {GuildManagerState, UpgradeableBeacon} from "./GuildManagerState.sol";
+import {GuildManagerState, GuildManagerStorage} from "./GuildManagerState.sol";
 
 abstract contract GuildManagerContracts is GuildManagerState {
 
@@ -14,11 +14,7 @@ abstract contract GuildManagerContracts is GuildManagerState {
         address _guildTokenImplementationAddress)
     external onlyRole(ADMIN_ROLE)
     {
-        if(address(guildTokenBeacon) == address(0)) {
-            guildTokenBeacon = new UpgradeableBeacon(_guildTokenImplementationAddress);
-        } else if(guildTokenBeacon.implementation() != _guildTokenImplementationAddress) {
-            guildTokenBeacon.upgradeTo(_guildTokenImplementationAddress);
-        }
+        GuildManagerStorage.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }
 
     modifier contractsAreSet() {
@@ -27,16 +23,16 @@ abstract contract GuildManagerContracts is GuildManagerState {
     }
 
     function areContractsSet() public view returns(bool) {
-        return address(guildTokenBeacon) != address(0);
+        return address(GuildManagerStorage.getGuildTokenBeacon()) != address(0);
     }
 
     function guildTokenImplementation() external view returns(address) {
         // Beacon hasn't been setup yet.
         //
-        if(address(guildTokenBeacon) == address(0)) {
+        if(address(GuildManagerStorage.getGuildTokenBeacon()) == address(0)) {
             return address(0);
         }
 
-        return guildTokenBeacon.implementation();
+        return GuildManagerStorage.getGuildTokenBeacon().implementation();
     }
 }
