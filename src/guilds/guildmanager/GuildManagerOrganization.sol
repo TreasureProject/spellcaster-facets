@@ -120,14 +120,9 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
         GuildManagerStorage.setOrganizationConfigAddress(_organizationId, _organizationConfigAddress);
     }
 
-    /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the owner of
-     */
-    function getGuildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address) {
-        return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).currentOwner;
-    }
+    // =============================================================
+    //                        VIEW FUNCTIONS
+    // =============================================================
 
     /**
      * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from
@@ -138,14 +133,22 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
         return GuildManagerStorage.getOrganizationInfo(_organizationId);
     }
 
+    // =============================================================
+    //                         MODIFIERS
+    // =============================================================
+
     modifier onlyOrganizationAdmin(uint32 _organizationId) {
-        require(msg.sender == GuildManagerStorage.getOrganizationInfo(_organizationId).admin, "Not organization admin");
+        if(msg.sender != GuildManagerStorage.getOrganizationInfo(_organizationId).admin) {
+            revert GuildManagerStorage.NotOrganizationAdmin(msg.sender);
+        }
 
         _;
     }
 
     modifier onlyValidOrganization(uint32 _organizationId) {
-        require(address(0) != GuildManagerStorage.getOrganizationInfo(_organizationId).admin, "Not a valid organization");
+        if(address(0) == GuildManagerStorage.getOrganizationInfo(_organizationId).admin) {
+            revert GuildManagerStorage.NonexistantOrganization(_organizationId);
+        }
 
         _;
     }

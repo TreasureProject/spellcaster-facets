@@ -34,6 +34,15 @@ library GuildManagerStorage {
 
     event GuildUserStatusChanged(uint32 organizationId, uint32 guildId, address user, GuildUserStatus status);
 
+    error UserCannotCreateGuild(uint32 organizationId, address user);
+    error NonexistantOrganization(uint32 organizationId);
+    error UserAlreadyInGuild(uint32 organizationId, uint32 guildId, address user);
+    error UserNotGuildMember(uint32 organizationId, uint32 guildId, address user);
+    error NotOrganizationAdmin(address sender);
+    error InvalidAddress(address user);
+    error NotGuildOwner(address sender, string action);
+    error NotGuildOwnerOrAdmin(address sender, string action);
+
     struct Layout {
         UpgradeableBeacon guildTokenBeacon;
         uint32 organizationIdCur;
@@ -200,7 +209,9 @@ library GuildManagerStorage {
         Layout storage l = layout();
 
         // Check to make sure the user can create a guild
-        require(userCanCreateGuild(_organizationId, msg.sender), "Do not have permission to create guild");
+        if(!userCanCreateGuild(_organizationId, msg.sender)) {
+            revert UserCannotCreateGuild(_organizationId, msg.sender);
+        }
 
         uint32 _newGuildId = l.organizationIdToInfo[_organizationId].guildIdCur;
         l.organizationIdToInfo[_organizationId].guildIdCur++;
@@ -229,9 +240,8 @@ library GuildManagerStorage {
         string calldata _name,
         string calldata _description)
     internal
+    onlyGuildOwner(_organizationId, _guildId, "UPDATE_INFO")
     {
-        require(isGuildOwner(_organizationId, _guildId, msg.sender), "Only Guild owner can call");
-
         GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
 
         _guildInfo.name = _name;
@@ -246,8 +256,8 @@ library GuildManagerStorage {
         string calldata _symbolImageData,
         bool _isSymbolOnChain)
     internal
+    onlyGuildOwner(_organizationId, _guildId, "UPDATE_SYMBOL")
     {
-        require(isGuildOwner(_organizationId, _guildId, msg.sender), "Only Guild owner can call");
 
         GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
 
@@ -266,16 +276,20 @@ library GuildManagerStorage {
         uint32 _guildId,
         address[] calldata _users)
     internal
+    onlyGuildOwnerOrAdmin(_organizationId, _guildId, "INVITE")
     {
-        require(isGuildAdminOrOwner(_organizationId, _guildId, msg.sender), "Do not have permission to invite user.");
         require(_users.length > 0);
 
         for(uint256 i = 0; i < _users.length; i++) {
             address _userToInvite = _users[i];
-            require(_userToInvite != address(0), "Bad user address");
+            if(_userToInvite == address(0)) {
+                revert InvalidAddress(_userToInvite);
+            }
 
             GuildUserStatus _userStatus = getGuildMemberStatus(_organizationId, _guildId, _userToInvite);
-            require(_userStatus == GuildUserStatus.NOT_ASSOCIATED, "User is already invited or a member");
+            if(_userStatus != GuildUserStatus.NOT_ASSOCIATED) {
+                revert UserAlreadyInGuild(_organizationId, _guildId, _userToInvite);
+            }
 
             _changeUserStatus(_organizationId, _guildId, _userToInvite, GuildUserStatus.INVITED);
         }
@@ -319,11 +333,11 @@ library GuildManagerStorage {
             if(_userStatus == GuildUserStatus.OWNER) {
                 revert("Cannot kick owner");
             } else if(_userStatus == GuildUserStatus.ADMIN) {
-                require(isGuildOwner(_organizationId, _guildId, msg.sender), "Only owner can kick admin");
+                requireGuildOwner(_organizationId, _guildId, "KICK");
             } else if(_userStatus == GuildUserStatus.NOT_ASSOCIATED) {
                 revert("Cannot kick someone unassociated");
             } else { // MEMBER or INVITED
-                require(isGuildAdminOrOwner(_organizationId, _guildId, msg.sender), "Only owner/admin can kick");
+                requireGuildOwnerOrAdmin(_organizationId, _guildId, "KICK");
             }
             _changeUserStatus(_organizationId, _guildId, _user, GuildUserStatus.NOT_ASSOCIATED);
         }
@@ -339,8 +353,8 @@ library GuildManagerStorage {
         address[] calldata _users,
         bool[] calldata _isAdmins)
     internal
+    onlyGuildOwner(_organizationId, _guildId, "CHANGE_ADMINS")
     {
-        require(isGuildOwner(_organizationId, _guildId, msg.sender), "Only owner can make admins");
         require(_users.length > 0);
         require(_users.length == _isAdmins.length);
 
@@ -351,7 +365,9 @@ library GuildManagerStorage {
             GuildUserStatus _userStatus = getGuildMemberStatus(_organizationId, _guildId, _user);
 
             if(_willBeAdmin) {
-                require(_userStatus == GuildUserStatus.MEMBER, "Can only promote members to admins");
+                if(_userStatus != GuildUserStatus.MEMBER) {
+                    revert UserNotGuildMember(_organizationId, _guildId, _user);
+                }
                 _changeUserStatus(_organizationId, _guildId, _user, GuildUserStatus.ADMIN);
             } else {
                 require(_userStatus == GuildUserStatus.ADMIN, "Can only demote admins");
@@ -365,8 +381,8 @@ library GuildManagerStorage {
         uint32 _guildId,
         address _newOwner)
     internal
+    onlyGuildOwner(_organizationId, _guildId, "TRANSFER_OWNER")
     {
-        require(isGuildOwner(_organizationId, _guildId, msg.sender), "Only owner can make admins");
 
         GuildUserStatus _newOwnerOldStatus = getGuildMemberStatus(_organizationId, _guildId, _newOwner);
         require(_newOwnerOldStatus == GuildUserStatus.MEMBER || _newOwnerOldStatus == GuildUserStatus.ADMIN, "Can only make member owner");
@@ -522,6 +538,30 @@ library GuildManagerStorage {
         require(block.timestamp >= _orgUserInfo.timeUserLeftGuild + orgInfo.timeoutAfterLeavingGuild);
     }
 
+    function requireGuildOwner(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string memory _action)
+    private
+    view
+    {
+        if(!isGuildOwner(_organizationId, _guildId, msg.sender)) {
+            revert NotGuildOwner(msg.sender, _action);
+        }
+    }
+
+    function requireGuildOwnerOrAdmin(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string memory _action)
+    private
+    view
+    {
+        if(!isGuildAdminOrOwner(_organizationId, _guildId, msg.sender)) {
+            revert NotGuildOwnerOrAdmin(msg.sender, _action);
+        }
+    }
+
     function _onUserLeftGuild(
         uint32 _organizationId,
         uint32 _guildId,
@@ -549,6 +589,28 @@ library GuildManagerStorage {
 
         // Mark down when the user is leaving the guild.
         _orgUserInfo.timeUserLeftGuild = uint64(block.timestamp);
+    }
+
+    // =============================================================
+    //                      PRIVATE MODIFIERS
+    // =============================================================
+
+    modifier onlyGuildOwner(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string memory _action)
+    {
+        requireGuildOwner(_organizationId, _guildId, _action);
+        _;
+    }
+
+    modifier onlyGuildOwnerOrAdmin(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string memory _action)
+    {
+        requireGuildOwnerOrAdmin(_organizationId, _guildId, _action);
+        _;
     }
 
 }

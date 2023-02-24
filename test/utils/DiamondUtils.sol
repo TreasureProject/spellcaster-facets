@@ -17,6 +17,10 @@ library DiamondUtils {
         AccessControlFacet(address(_diamond)).grantRole(keccak256(abi.encodePacked(_roleName)), _addr);
     }
 
+    function revokeRole(Diamond _diamond, string memory _roleName, address _addr) public {
+        AccessControlFacet(address(_diamond)).revokeRole(keccak256(abi.encodePacked(_roleName)), _addr);
+    }
+
     function hasRole(Diamond _diamond, string memory _roleName, address _addr) public view returns(bool) {
         return AccessControlFacet(address(_diamond)).hasRole(keccak256(abi.encodePacked(_roleName)), _addr);
     }

@@ -144,14 +144,38 @@ contract GuildManager is GuildManagerOrganization {
         return GuildManagerStorage.getOrganizationInfo(_organizationId).tokenAddress;
     }
 
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the name of
+     */
     function guildName(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).name;
     }
 
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the description of
+     */
     function guildDescription(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).description;
     }
 
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the owner of
+     */
+    function guildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address) {
+        return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).currentOwner;
+    }
+
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the symbol data of
+     */
     function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {
         GuildInfo storage _guildInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId);
         _symbolImageData = _guildInfo.symbolImageData;
