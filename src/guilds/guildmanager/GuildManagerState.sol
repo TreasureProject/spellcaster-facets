@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {FacetInitializable} from "../../utils/FacetInitializable.sol";
 
 import {GuildManagerStorage} from "../../libraries/GuildManagerStorage.sol";
-import {IGuildManager} from "./IGuildManager.sol";
+import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 import {Modifiers} from "../../Modifiers.sol";
 
 abstract contract GuildManagerState is FacetInitializable, IGuildManager, Modifiers {

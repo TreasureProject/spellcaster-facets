@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {LibBBase64} from "./LibBBase64.sol";
-import {IGuildManager} from "../guilds/guildmanager/IGuildManager.sol";
+import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 
 library GuildTokenStorage {
 

@@ -13,7 +13,7 @@ import {
     OrganizationInfo,
     OrganizationUserInfo,
     MaxUsersPerGuildRule
-} from "../guilds/guildmanager/IGuildManager.sol";
+} from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "../guilds/guildtoken/IGuildToken.sol";
 import {IGuildOrganizationConfig} from "../guilds/interfaces/IGuildOrganizationConfig.sol";
 

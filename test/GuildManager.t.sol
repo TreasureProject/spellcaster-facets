@@ -14,7 +14,7 @@ import {
     GuildCreationRule,
     MaxUsersPerGuildRule,
     GuildUserStatus
-} from "../src/guilds/guildmanager/IGuildManager.sol";
+} from "src/interfaces/IGuildManager.sol";
 
 import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
 
 import {GuildManagerContracts, GuildManagerStorage} from "./GuildManagerContracts.sol";
-import {GuildCreationRule, MaxUsersPerGuildRule, OrganizationInfo} from "./IGuildManager.sol";
+import {GuildCreationRule, MaxUsersPerGuildRule, OrganizationInfo} from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "../guildtoken/IGuildToken.sol";
 
 abstract contract GuildManagerOrganization is GuildManagerContracts {
