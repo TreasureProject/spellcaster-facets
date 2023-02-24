@@ -5,7 +5,6 @@ import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-diamon
 import {FacetInitializable} from "../utils/FacetInitializable.sol";
 import {LibUtilities} from "../libraries/LibUtilities.sol";
 import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
-import {LibMeta} from "../libraries/LibMeta.sol";
 
 /**
  * @title AccessControl facet wrapper for OZ's pausable contract.
