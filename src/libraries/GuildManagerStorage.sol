@@ -14,8 +14,8 @@ import {
     OrganizationUserInfo,
     MaxUsersPerGuildRule
 } from "src/interfaces/IGuildManager.sol";
-import {IGuildToken} from "../guilds/guildtoken/IGuildToken.sol";
-import {IGuildOrganizationConfig} from "../guilds/interfaces/IGuildOrganizationConfig.sol";
+import {IGuildToken} from "src/interfaces/IGuildToken.sol";
+import {IGuildOrganizationConfig} from "src/interfaces/IGuildOrganizationConfig.sol";
 
 /// @title Library for handling storage interfacing for Guild Manager contracts
 library GuildManagerStorage {

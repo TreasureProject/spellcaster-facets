@@ -5,7 +5,7 @@ import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
 
 import {GuildManagerContracts, GuildManagerStorage} from "./GuildManagerContracts.sol";
 import {GuildCreationRule, MaxUsersPerGuildRule, OrganizationInfo} from "src/interfaces/IGuildManager.sol";
-import {IGuildToken} from "../guildtoken/IGuildToken.sol";
+import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 
 abstract contract GuildManagerOrganization is GuildManagerContracts {
 

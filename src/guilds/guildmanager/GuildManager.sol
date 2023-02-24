@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {GuildManagerOrganization, GuildManagerStorage} from "./GuildManagerOrganization.sol";
-import {IGuildOrganizationConfig} from "../interfaces/IGuildOrganizationConfig.sol";
-import {IGuildToken} from "../guildtoken/IGuildToken.sol";
+import {IGuildOrganizationConfig} from "src/interfaces/IGuildOrganizationConfig.sol";
+import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
 
 contract GuildManager is GuildManagerOrganization {
