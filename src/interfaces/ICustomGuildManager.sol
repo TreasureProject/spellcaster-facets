@@ -14,10 +14,11 @@ interface ICustomGuildManager {
     /**
      * @dev Called after a guild is created by the given owner. Additional state changes
      *  or checks can be put here. For example, if staking is required, transfers can occur.
+     * @param _owner The owner of the guild.
      * @param _organizationId The organization to find the guild within. 
      * @param _createdGuildId The guild that was created.
      */
-    function onGuildCreation(uint32 _organizationId, uint32 _createdGuildId) external;
+    function onGuildCreation(address _owner, uint32 _organizationId, uint32 _createdGuildId) external;
 
     /**
      * @dev Returns the maximum number of users that can be in a guild.

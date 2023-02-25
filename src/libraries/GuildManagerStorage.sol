@@ -15,7 +15,7 @@ import {
     MaxUsersPerGuildRule
 } from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {IGuildOrganizationConfig} from "src/interfaces/IGuildOrganizationConfig.sol";
+import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 
 /// @title Library for handling storage interfacing for Guild Manager contracts
 library GuildManagerStorage {
@@ -117,7 +117,7 @@ library GuildManagerStorage {
         string calldata _description)
     internal
     {
-        OrganizationInfo storage _info = GuildManagerStorage.getOrganizationInfo(_organizationId);
+        OrganizationInfo storage _info = getOrganizationInfo(_organizationId);
         _info.name = _name;
         _info.description = _description;
         emit OrganizationInfoUpdated(_organizationId, _name, _description);
@@ -225,7 +225,7 @@ library GuildManagerStorage {
 
         // Call the hook if they have it setup.
         if(l.organizationIdToInfo[_organizationId].organizationConfigAddress != address(0))  {
-            return IGuildOrganizationConfig(l.organizationIdToInfo[_organizationId].organizationConfigAddress)
+            return ICustomGuildManager(l.organizationIdToInfo[_organizationId].organizationConfigAddress)
                 .onGuildCreation(msg.sender, _organizationId, _newGuildId);
         }
     }
@@ -413,7 +413,7 @@ library GuildManagerStorage {
             address _organizationConfigAddress = l.organizationIdToInfo[_organizationId].organizationConfigAddress;
             require(_organizationConfigAddress != address(0), "Creation Rule set to CUSTOM_RULE, but no config set.");
 
-            return IGuildOrganizationConfig(_organizationConfigAddress).canCreateGuild(_user, _organizationId);
+            return ICustomGuildManager(_organizationConfigAddress).canCreateGuild(_user, _organizationId);
         }
     }
 
@@ -433,8 +433,8 @@ library GuildManagerStorage {
             return _orgInfo.maxUsersPerGuildConstant;
         } else {
             require(_orgInfo.organizationConfigAddress != address(0), "CUSTOM_RULE with no config set");
-            return IGuildOrganizationConfig(_orgInfo.organizationConfigAddress)
-                .maxUsersForGuild(_guildOwner, _organizationId, _guildId);
+            return ICustomGuildManager(_orgInfo.organizationConfigAddress)
+                .maxUsersForGuild(_organizationId, _guildId);
         }
     }
 
