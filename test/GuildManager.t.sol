@@ -20,6 +20,7 @@ import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressU
 
 contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
+    using AddressUpgradeable for address;
 
     GuildManager internal _manager;
 
@@ -46,7 +47,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function createDefaultOrgAndGuild() internal {
-        _manager.createOrganization(
+        _manager.createForNewOrganization(
             "My org",
             "My descr",
             1, // Max users per guild 
@@ -74,10 +75,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testAllowAdminCreateOrganization() public {
         _diamond.setPause(false);
         
-        assertEq(0, _manager.getOrganizationInfo(1).guildIdCur);
+        assertEq(0, _manager.getGuildOrganizationInfo(1).guildIdCur);
         assertEq(address(0), _manager.getOrganizationInfo(1).admin);
         
-        _manager.createOrganization(
+        _manager.createForNewOrganization(
             "My org",
             "My descr",
             1, // Max users per guild 
@@ -88,7 +89,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             address(0) // optional contract for customizable guild rules
         );
 
-        assertEq(1, _manager.getOrganizationInfo(1).guildIdCur);
+        assertEq(1, _manager.getGuildOrganizationInfo(1).guildIdCur);
         assertEq(address(this), _manager.getOrganizationInfo(1).admin);
     }
 
@@ -96,7 +97,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.setPause(false);
         _diamond.revokeRole("ADMIN", address(this));
         vm.expectRevert(errMissingRole("ADMIN", address(this)));
-        _manager.createOrganization(
+        _manager.createForNewOrganization(
             "My org",
             "My descr",
             1, // Max users per guild 
@@ -111,7 +112,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testAllowAdminEditOrganizationNameAndDesc() public {
         _diamond.setPause(false);
         
-        _manager.createOrganization(
+        _manager.createForNewOrganization(
             "My org",
             "My descr",
             1, // Max users per guild 
@@ -154,7 +155,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         assertEq(address(0), _manager.guildOwner(_org1, _guild1));
         
-        _manager.createOrganization(
+        _manager.createForNewOrganization(
             "My org",
             "My descr",
             1, // Max users per guild 
@@ -258,13 +259,13 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowNonOwnerUsersToLeaveGuild(address _user) public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
         vm.assume(_user != address(0)
             && _user != _manager.guildOwner(_org1, _guild1)
-            && !AddressUpgradeable.isContract(_user)
+            && !_user.isContract()
         );
-        _diamond.setPause(false);
-        createDefaultOrgAndGuild();
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
         vm.prank(_user);
@@ -275,16 +276,20 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowGuildOwnerAndAdminKickMembers(address _user) public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
         vm.assume(_user != address(0)
             && _user != _manager.guildOwner(_org1, _guild1)
-            && !AddressUpgradeable.isContract(_user)
+            && !_user.isContract()
         );
-        _diamond.setPause(false);
-        createDefaultOrgAndGuild();
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
-        inviteAndAcceptGuildInvite(_org1, _guild1, leet);
-        inviteAndAcceptGuildInvite(_org1, _guild1, alice);
+        if(_user != leet) {
+            inviteAndAcceptGuildInvite(_org1, _guild1, leet);
+        }
+        if(_user != alice) {
+            inviteAndAcceptGuildInvite(_org1, _guild1, alice);
+        }
         changeGuildMemberAdminStatus(leet, true);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
         if(_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.MEMBER) {
@@ -306,13 +311,13 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowAdminToBeDemoted(address _user) public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
         vm.assume(_user != address(0)
             && _user != _manager.guildOwner(_org1, _guild1)
-            && !AddressUpgradeable.isContract(_user)
+            && !_user.isContract()
         );
-        _diamond.setPause(false);
-        createDefaultOrgAndGuild();
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
         changeGuildMemberAdminStatus(_user, true);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
@@ -320,6 +325,16 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         GuildUserStatus afterDemote = _manager.getGuildMemberStatus(_org1, _guild1, _user);
         assertEq(uint(before), uint(GuildUserStatus.ADMIN));
         assertEq(uint(afterDemote), uint(GuildUserStatus.MEMBER));
+    }
+
+    function test() public {
+        // TODO: add the following tests
+        // testCanCreateForExistingOrganization
+        // testCannotCreateForAlreadyInitializedOrganization
+        // testCannotCreateForNonExistingOrganization
+        // testCannotAddMoreMembersThanMax
+        // testUserCannotJoinMoreGuildsThanMax
+        // add emit event assertions to tests
     }
 
     function inviteAndAcceptGuildInvite(uint32 _orgId, uint32 _guildId, address _user) public {

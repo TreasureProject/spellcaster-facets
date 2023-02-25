@@ -17,8 +17,16 @@ abstract contract TestLogging {
         console.log(p0);
     }
 
+    function debug(string memory label, bool p0) internal view {
+        console.log(label, p0);
+    }
+
     function debug(address p0) internal view {
         console.log(p0);
+    }
+
+    function debug(string memory label, address p0) internal view {
+        console.log(label, p0);
     }
 
     function debug(int p0) internal view {

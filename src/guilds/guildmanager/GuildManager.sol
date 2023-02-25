@@ -137,11 +137,11 @@ contract GuildManager is GuildManagerOrganization {
     }
 
     function isValidGuild(uint32 _organizationId, uint32 _guildId) external view returns(bool) {
-        return GuildManagerStorage.getOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
+        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
     }
 
     function organizationToken(uint32 _organizationId) external view returns(address) {
-        return GuildManagerStorage.getOrganizationInfo(_organizationId).tokenAddress;
+        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).tokenAddress;
     }
 
     /**

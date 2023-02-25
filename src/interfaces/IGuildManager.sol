@@ -3,9 +3,6 @@ pragma solidity ^0.8.0;
 
 /**
  * @dev Info related to a specific organization. Think of organizations as systems/games. i.e. Bridgeworld, The Beacon, etc.
- * @param name The name of the organization
- * @param description A description of the organization
- * @param admin The admin of the organization. The only user that can modify organization settings. There is only 1
  * @param guildIdCur The next available guild id within this organization for newly created guilds
  * @param creationRule Describes who can create a guild within this organization
  * @param maxGuildsPerUser The number of guilds a user can join within the organization.
@@ -13,16 +10,10 @@ pragma solidity ^0.8.0;
  * @param tokenAddress The address of the 1155 token that represents this organization
  * @param maxUsersPerGuildRule Indicates how the max number of users per guild is decided
  * @param maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
- * @param organizationConfigAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+ * @param customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
  *  This is used for guild creation if @param creationRule == CUSTOM_RULE
  */
-struct OrganizationInfo {
-    // Slot 1
-    string name;
-    // Slot 2
-    string description;
-    // Slot 3 (240/256)
-    address admin;
+struct GuildOrganizationInfo {
     uint32 guildIdCur;
     GuildCreationRule creationRule;
     uint8 maxGuildsPerUser;
@@ -31,8 +22,8 @@ struct OrganizationInfo {
     address tokenAddress;
     MaxUsersPerGuildRule maxUsersPerGuildRule;
     uint32 maxUsersPerGuildConstant;
-    // Slot 5 (160/256) - organizationConfigAddress
-    address organizationConfigAddress;
+    // Slot 5 (160/256) - customGuildManagerAddress
+    address customGuildManagerAddress;
 }
 
 /**
@@ -40,7 +31,7 @@ struct OrganizationInfo {
  * @param guildsIdsAMemberOf A list of guild ids they are currently a member/admin/owner of. Excludes invitations
  * @param timeUserLeftGuild The time this user last left or was kicked from a guild. Useful for guild joining timeouts
  */
-struct OrganizationUserInfo {
+struct GuildOrganizationUserInfo {
     // Slot 1
     uint32[] guildIdsAMemberOf;
     // Slot 2 (64/256)

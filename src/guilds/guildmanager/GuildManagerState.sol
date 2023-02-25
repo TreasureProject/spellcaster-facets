@@ -6,12 +6,12 @@ import {FacetInitializable} from "../../utils/FacetInitializable.sol";
 import {GuildManagerStorage} from "../../libraries/GuildManagerStorage.sol";
 import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 import {Modifiers} from "../../Modifiers.sol";
+import {OrganizationFacet} from "../../organizations/OrganizationFacet.sol";
 
-abstract contract GuildManagerState is FacetInitializable, IGuildManager, Modifiers {
+abstract contract GuildManagerState is FacetInitializable, IGuildManager, Modifiers, OrganizationFacet {
 
     function __GuildManagerState_init() internal onlyFacetInitializing {
+        OrganizationFacet_init();
         _pause();
-
-        GuildManagerStorage.layout().organizationIdCur = 1;
     }
 }

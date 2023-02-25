@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
 
 import {GuildManagerContracts, GuildManagerStorage} from "./GuildManagerContracts.sol";
-import {GuildCreationRule, MaxUsersPerGuildRule, OrganizationInfo} from "src/interfaces/IGuildManager.sol";
+import {GuildCreationRule, MaxUsersPerGuildRule, GuildOrganizationInfo} from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 
 abstract contract GuildManagerOrganization is GuildManagerContracts {
@@ -13,9 +13,20 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
         GuildManagerContracts.__GuildManagerContracts_init();
     }
 
-    // Creates a new organization. For now, this can only be done by admins on
-    // the GuildManager contract.
-    function createOrganization(
+    /**
+     * @dev Creates a new organization and initializes the Guild feature for it.
+     *  This can only be done by admins on the GuildManager contract.
+     * @param _name The name of the new organization
+     * @param _description The description of the new organization
+     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
+     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
+     * @param _guildCreationRule The rule for creating new guilds
+     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
+     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
+     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
+     */
+    function createForNewOrganization(
         string calldata _name,
         string calldata _description,
         uint8 _maxGuildsPerUser,
@@ -23,45 +34,54 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _organizationConfigAddress)
+        address _customGuildManagerAddress)
     external
     onlyRole(ADMIN_ROLE)
     contractsAreSet
     whenNotPaused
     {
-        uint32 _newOrganizationId = GuildManagerStorage.createOrganization();
+        uint32 _newOrganizationId = GuildManagerStorage.createForNewOrganization(_name, _description);
 
-        GuildManagerStorage.setOrganizationNameAndDescription(_newOrganizationId, _name, _description);
-        GuildManagerStorage.setOrganizationAdmin(_newOrganizationId, msg.sender);
         GuildManagerStorage.setOrganizationMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
         GuildManagerStorage.setOrganizationTimeoutAfterLeavingGuild(_newOrganizationId, _timeoutAfterLeavingGuild);
         GuildManagerStorage.setOrganizationCreationRule(_newOrganizationId, _guildCreationRule);
         GuildManagerStorage.setOrganizationMaxUsersPerGuild(_newOrganizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
-        GuildManagerStorage.setOrganizationConfigAddress(_newOrganizationId, _organizationConfigAddress);
+        GuildManagerStorage.setCustomGuildManagerAddress(_newOrganizationId, _customGuildManagerAddress);
     }
 
-    function setOrganizationNameAndDescription(
+    /**
+     * @dev Creates a new organization and initializes the Guild feature for it.
+     *  This can only be done by admins on the GuildManager contract.
+     * @param _organizationId The id of the organization to initialize
+     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
+     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
+     * @param _guildCreationRule The rule for creating new guilds
+     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
+     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
+     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
+     */
+    function createForExistingOrganization(
         uint32 _organizationId,
-        string calldata _name,
-        string calldata _description)
+        uint8 _maxGuildsPerUser,
+        uint32 _timeoutAfterLeavingGuild,
+        GuildCreationRule _guildCreationRule,
+        MaxUsersPerGuildRule _maxUsersPerGuildRule,
+        uint32 _maxUsersPerGuildConstant,
+        address _customGuildManagerAddress)
     external
+    onlyRole(ADMIN_ROLE)
     contractsAreSet
     whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
+    onlyValidOrganization(_organizationId)
     {
-        GuildManagerStorage.setOrganizationNameAndDescription(_organizationId, _name, _description);
-    }
+        GuildManagerStorage.createForExistingOrganization(_organizationId);
 
-    function setOrganizationAdmin(
-        uint32 _organizationId,
-        address _admin)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    {
-        require(_admin != address(0) && _admin != GuildManagerStorage.getOrganizationInfo(_organizationId).admin);
-        GuildManagerStorage.setOrganizationAdmin(_organizationId, _admin);
+        GuildManagerStorage.setOrganizationMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
+        GuildManagerStorage.setOrganizationTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
+        GuildManagerStorage.setOrganizationCreationRule(_organizationId, _guildCreationRule);
+        GuildManagerStorage.setOrganizationMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
+        GuildManagerStorage.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
     function setOrganizationMaxGuildsPerUser(
@@ -109,15 +129,15 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
         GuildManagerStorage.setOrganizationMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
     }
 
-    function setOrganizationConfigAddress(
+    function setCustomGuildManagerAddress(
         uint32 _organizationId,
-        address _organizationConfigAddress)
+        address _customGuildManagerAddress)
     external
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setOrganizationConfigAddress(_organizationId, _organizationConfigAddress);
+        GuildManagerStorage.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
     // =============================================================
@@ -127,29 +147,9 @@ abstract contract GuildManagerOrganization is GuildManagerContracts {
     /**
      * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from
      *  calling the mapping directly from external contracts
-     * @param _organizationId The organization to return info for
+     * @param _organizationId The organization to return guild management info for
      */
-    function getOrganizationInfo(uint32 _organizationId) external view returns(OrganizationInfo memory) {
-        return GuildManagerStorage.getOrganizationInfo(_organizationId);
-    }
-
-    // =============================================================
-    //                         MODIFIERS
-    // =============================================================
-
-    modifier onlyOrganizationAdmin(uint32 _organizationId) {
-        if(msg.sender != GuildManagerStorage.getOrganizationInfo(_organizationId).admin) {
-            revert GuildManagerStorage.NotOrganizationAdmin(msg.sender);
-        }
-
-        _;
-    }
-
-    modifier onlyValidOrganization(uint32 _organizationId) {
-        if(address(0) == GuildManagerStorage.getOrganizationInfo(_organizationId).admin) {
-            revert GuildManagerStorage.NonexistantOrganization(_organizationId);
-        }
-
-        _;
+    function getGuildOrganizationInfo(uint32 _organizationId) external view returns(GuildOrganizationInfo memory) {
+        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId);
     }
 }
