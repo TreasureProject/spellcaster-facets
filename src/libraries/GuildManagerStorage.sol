@@ -39,7 +39,9 @@ library GuildManagerStorage {
     error UserCannotCreateGuild(uint32 organizationId, address user);
     error NonexistantOrganization(uint32 organizationId);
     error GuildOrganizationAlreadyInitialized(uint32 organizationId);
+    error GuildFull(uint32 organizationId, uint32 guildId);
     error UserAlreadyInGuild(uint32 organizationId, uint32 guildId, address user);
+    error UserInTooManyGuilds(uint32 organizationId, address user);
     error UserNotGuildMember(uint32 organizationId, uint32 guildId, address user);
     error NotOrganizationAdmin(address sender);
     error InvalidAddress(address user);
@@ -529,12 +531,16 @@ library GuildManagerStorage {
 
         _orgUserInfo.guildIdsAMemberOf.push(_guildId);
         _guildUserInfo.timeUserJoined = uint64(block.timestamp);
-        require(orgInfo.maxGuildsPerUser >= _orgUserInfo.guildIdsAMemberOf.length, "Joining too many guilds");
+        if(orgInfo.maxGuildsPerUser < _orgUserInfo.guildIdsAMemberOf.length) {
+            revert UserInTooManyGuilds(_organizationId, _user);
+        }
 
         guildInfo.usersInGuild++;
 
         uint32 _maxUsersForGuild = maxUsersForGuild(_organizationId, _guildId);
-        require(_maxUsersForGuild >= guildInfo.usersInGuild, "Too many users in guild");
+        if(_maxUsersForGuild < guildInfo.usersInGuild) {
+            revert GuildFull(_organizationId, _guildId);
+        }
 
         // Mint their membership NFT
         IGuildToken(orgInfo.tokenAddress).adminMint(_user, _guildId, 1);

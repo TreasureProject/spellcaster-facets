@@ -174,6 +174,15 @@ contract GuildManager is GuildManagerOrganization {
     /**
      * @dev Retrieves the current owner for a given guild within a organization.
      * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the maxMembers of
+     */
+    function guildMaxMembers(uint32 _organizationId, uint32 _guildId) external view returns(uint32) {
+        return GuildManagerStorage.maxUsersForGuild(_organizationId, _guildId);
+    }
+
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
      * @param _guildId The guild to return the symbol data of
      */
     function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {

@@ -327,14 +327,110 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(uint(afterDemote), uint(GuildUserStatus.MEMBER));
     }
 
+    function testCanCreateForExistingOrganization() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+        uint32 org2 = _manager.createOrganization("Organization2", "Org description2");
+        _manager.createForExistingOrganization(
+            org2,
+            69, // Max users per guild 
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            420, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+
+        assertEq("Organization2", _manager.getOrganizationInfo(2).name);
+        assertEq("Org description2", _manager.getOrganizationInfo(2).description);
+        assertEq(69, _manager.getGuildOrganizationInfo(2).maxGuildsPerUser);
+        assertEq(420, _manager.getGuildOrganizationInfo(2).maxUsersPerGuildConstant);
+    }
+
+    function testCannotCreateForAlreadyInitializedOrganization() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+        uint32 org2 = _manager.createOrganization("Organization2", "Org description2");
+        _manager.createForExistingOrganization(
+            org2,
+            69, // Max users per guild 
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            420, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+
+        vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, org2));
+        _manager.createForExistingOrganization(
+            org2,
+            69, // Max users per guild 
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            420, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+    }
+
+    function testCannotCreateForNonExistingOrganization() public {
+        _diamond.setPause(false);
+        vm.expectRevert(err(GuildManagerStorage.NonexistantOrganization.selector, 2));
+        _manager.createForExistingOrganization(
+            2,
+            69, // Max users per guild 
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            420, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+    }
+
+    function testUserCannotJoinMoreGuildsThanMax() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+        // Have alice create another guild because address(this) already made the first guild,
+        // and you can only be in one guild per organization
+        _manager.setOrganizationAdmin(_org1, alice);
+        vm.prank(alice);
+        _manager.createGuild(_org1);
+        
+        inviteAndAcceptGuildInvite(_org1, _guild1, leet);
+
+        address[] memory invites = new address[](1);
+        invites[0] = leet;
+        vm.prank(alice);
+        _manager.inviteUsers(_org1, 2, invites);
+        vm.prank(leet);
+        vm.expectRevert(err(GuildManagerStorage.UserInTooManyGuilds.selector, _org1, leet));
+        _manager.acceptInvitation(_org1, 2);
+    }
+
+    function testCannotAddMoreMembersThanMax() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+        inviteAndAcceptGuildInvite(_org1, _guild1, leet);
+
+        uint32 maxMembers = _manager.guildMaxMembers(_org1, _guild1);
+
+        for (uint i = 1; i <= maxMembers; i++) {
+            address userCur = vm.addr(i);
+            address[] memory invites = new address[](1);
+            invites[0] = userCur;
+            _manager.inviteUsers(_org1, _guild1, invites);
+            vm.prank(userCur);
+            if(i >= maxMembers - 1) {
+                // Because the guild owner is a member, and we already invited and accepted leet,
+                // we can only invite maxMembers - 2 users
+                vm.expectRevert(err(GuildManagerStorage.GuildFull.selector, _org1, _guild1));
+            }
+            _manager.acceptInvitation(_org1, _guild1);
+        }
+    }
+
     function test() public {
-        // TODO: add the following tests
-        // testCanCreateForExistingOrganization
-        // testCannotCreateForAlreadyInitializedOrganization
-        // testCannotCreateForNonExistingOrganization
-        // testCannotAddMoreMembersThanMax
-        // testUserCannotJoinMoreGuildsThanMax
-        // add emit event assertions to tests
+        // TODO: add emit event assertions to tests
     }
 
     function inviteAndAcceptGuildInvite(uint32 _orgId, uint32 _guildId, address _user) public {
