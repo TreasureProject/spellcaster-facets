@@ -41,10 +41,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         init(facetInfo, initializations);
 
         _manager = GuildManager(address(_diamond));
-        _diamond.grantRole("ADMIN", address(this));
-
-        // Give the manager a reference impl for creating guild token beacons from
-        // _manager.setContracts(address(new GuildToken()));
+        _diamond.grantRole("ADMIN", deployer);
     }
 
     function createDefaultOrgAndGuild() internal {
@@ -73,7 +70,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     //                       Organizations
     // =============================================================
 
-    function testAllowAdminCreateOrganization() public {
+    function testAllowAdminCreateGuildOrganization() public {
         _diamond.setPause(false);
         
         assertEq(0, _manager.getGuildOrganizationInfo(1).guildIdCur);
@@ -91,13 +88,13 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         );
 
         assertEq(1, _manager.getGuildOrganizationInfo(1).guildIdCur);
-        assertEq(address(this), _manager.getOrganizationInfo(1).admin);
+        assertEq(deployer, _manager.getOrganizationInfo(1).admin);
     }
 
-    function testRevertNonAdminCreateOrganization() public {
+    function testRevertNonAdminCreateGuildOrganization() public {
         _diamond.setPause(false);
-        _diamond.revokeRole("ADMIN", address(this));
-        vm.expectRevert(errMissingRole("ADMIN", address(this)));
+        _diamond.revokeRole("ADMIN", deployer);
+        vm.expectRevert(errMissingRole("ADMIN", deployer));
         _manager.createForNewOrganization(
             "My org",
             "My descr",
@@ -108,33 +105,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
-    }
-
-    function testAllowAdminEditOrganizationNameAndDesc() public {
-        _diamond.setPause(false);
-        
-        _manager.createForNewOrganization(
-            "My org",
-            "My descr",
-            1, // Max users per guild 
-            0, // Timeout to join another
-            GuildCreationRule.ADMIN_ONLY,
-            MaxUsersPerGuildRule.CONSTANT,
-            20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
-        );
-        
-        assertEq("My org", _manager.getOrganizationInfo(1).name);
-        assertEq("My descr", _manager.getOrganizationInfo(1).description);
-
-        _manager.setOrganizationNameAndDescription(1, "New name", "New descr");
-
-        assertEq("New name", _manager.getOrganizationInfo(1).name);
-        assertEq("New descr", _manager.getOrganizationInfo(1).description);
-
-        vm.prank(leet);
-        vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, leet));
-        _manager.setOrganizationNameAndDescription(1, "New name2", "New descr2");
     }
 
     // =============================================================
@@ -148,7 +118,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         
         createDefaultOrgAndGuild();
 
-        assertEq(address(this), _manager.guildOwner(_org1, _guild1));
+        assertEq(deployer, _manager.guildOwner(_org1, _guild1));
     }
 
     function testRevertNonAdminCreateGuild() public {
@@ -167,7 +137,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             address(0) // optional contract for customizable guild rules
         );
 
-        // address(this) is the Organization's admin
+        // deployer is the Organization's admin
         vm.prank(leet);
         vm.expectRevert(err(GuildManagerStorage.UserCannotCreateGuild.selector, 1, leet));
         _manager.createGuild(_org1);
@@ -250,7 +220,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         inviteAndAcceptGuildInvite(_org1, _guild1, leet);
         changeGuildMemberAdminStatus(leet, true);
         
-        if(_user == address(this) || _user == leet) {
+        if(_user == deployer || _user == leet) {
             vm.expectRevert(err(GuildManagerStorage.UserAlreadyInGuild.selector, _org1, _guild1, _user));
         } else {
             vm.prank(_user);
@@ -298,10 +268,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             vm.expectRevert(err(GuildManagerStorage.NotGuildOwnerOrAdmin.selector, alice, "KICK"));
             kickGuildMemberAsAdmin(_user, alice);
             // Kick members as admin or owner
-            kickGuildMemberAsAdmin(_user, uint160(leet) % 2 == 1 ? leet : address(this));
+            kickGuildMemberAsAdmin(_user, uint160(leet) % 2 == 1 ? leet : deployer);
         } else {
             // Kick admins as owner
-            kickGuildMemberAsAdmin(_user, address(this));
+            kickGuildMemberAsAdmin(_user, deployer);
             // Ensure admin cannot kick admin
             vm.expectRevert(err(GuildManagerStorage.NotGuildOwner.selector, leet, "KICK"));
             kickGuildMemberAsAdmin(_user, leet);
@@ -391,7 +361,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testUserCannotJoinMoreGuildsThanMax() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-        // Have alice create another guild because address(this) already made the first guild,
+        // Have alice create another guild because deployer already made the first guild,
         // and you can only be in one guild per organization
         _manager.setOrganizationAdmin(_org1, alice);
         vm.prank(alice);

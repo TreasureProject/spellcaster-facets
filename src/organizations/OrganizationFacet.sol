@@ -16,7 +16,11 @@ import {OrganizationManagerStorage} from "../libraries/OrganizationManagerStorag
  */
 contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManager {
 
-    function OrganizationFacet_init() internal facetInitializer(keccak256("OrganizationFacet")) {
+    /**
+     * @dev Initialize the facet. Can be called externally or internally.
+     * Ideally referenced in an initialization script facet
+     */
+    function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet")) {
         OrganizationManagerStorage.layout().organizationIdCur = 1;
     }
 
