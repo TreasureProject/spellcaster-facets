@@ -9,6 +9,7 @@ import {DiamondUtils} from "./utils/DiamondUtils.sol";
 import {GuildToken} from "../src/guilds/guildtoken/GuildToken.sol";
 import {GuildManager} from "../src/guilds/guildmanager/GuildManager.sol";
 import {GuildManagerStorage} from "../src/libraries/GuildManagerStorage.sol";
+import {OrganizationManagerStorage} from "../src/libraries/OrganizationManagerStorage.sol";
 import {
     IGuildManager,
     GuildCreationRule,
@@ -34,7 +35,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         facetInfo[0] = FacetInfo(address(new GuildManager()), "GuildManager", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
-            initData: abi.encodeWithSelector(GuildManager.GuildManager_init.selector)
+            initData: abi.encodeWithSelector(GuildManager.GuildManager_init.selector, address(new GuildToken()))
         });
 
         init(facetInfo, initializations);
@@ -43,7 +44,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.grantRole("ADMIN", address(this));
 
         // Give the manager a reference impl for creating guild token beacons from
-        _manager.setContracts(address(new GuildToken()));
+        // _manager.setContracts(address(new GuildToken()));
     }
 
     function createDefaultOrgAndGuild() internal {
@@ -63,7 +64,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testIsSetUp() public {
         vm.expectRevert(errAlreadyInitialized("GuildManager"));
-        _manager.GuildManager_init();
+        _manager.GuildManager_init(address(0));
 
         assertEq(true, _diamond.paused());
     }
@@ -132,7 +133,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq("New descr", _manager.getOrganizationInfo(1).description);
 
         vm.prank(leet);
-        vm.expectRevert(err(GuildManagerStorage.NotOrganizationAdmin.selector, leet));
+        vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, leet));
         _manager.setOrganizationNameAndDescription(1, "New name2", "New descr2");
     }
 
@@ -375,7 +376,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testCannotCreateForNonExistingOrganization() public {
         _diamond.setPause(false);
-        vm.expectRevert(err(GuildManagerStorage.NonexistantOrganization.selector, 2));
+        vm.expectRevert(err(OrganizationManagerStorage.NonexistantOrganization.selector, 2));
         _manager.createForExistingOrganization(
             2,
             69, // Max users per guild 
@@ -412,7 +413,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         createDefaultOrgAndGuild();
         inviteAndAcceptGuildInvite(_org1, _guild1, leet);
 
-        uint32 maxMembers = _manager.guildMaxMembers(_org1, _guild1);
+        uint32 maxMembers = _manager.maxUsersForGuild(_org1, _guild1);
 
         for (uint i = 1; i <= maxMembers; i++) {
             address userCur = vm.addr(i);

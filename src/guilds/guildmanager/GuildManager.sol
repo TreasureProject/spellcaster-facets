@@ -1,50 +1,67 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {GuildManagerOrganization, GuildManagerStorage} from "./GuildManagerOrganization.sol";
+import {GuildManagerSettings, GuildManagerStorage, IGuildManager} from "./GuildManagerSettings.sol";
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
 
-contract GuildManager is GuildManagerOrganization {
+contract GuildManager is GuildManagerSettings {
 
-    function GuildManager_init() external facetInitializer(keccak256("GuildManager")) {
-        GuildManagerOrganization.__GuildManagerOrganization_init();
+    /**
+     * @dev Sets all necessary state and permissions for the contract
+     * @param _guildTokenImplementationAddress The token implementation address for guild token contracts to proxy to
+     */
+    function GuildManager_init(address _guildTokenImplementationAddress) external facetInitializer(keccak256("GuildManager")) {
+        GuildManagerSettings.__GuildManagerSettings_init();
+        GuildManagerStorage.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function createGuild(
         uint32 _organizationId)
+    external
     contractsAreSet
     whenNotPaused
-    external
     {
         GuildManagerStorage.createGuild(_organizationId);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function updateGuildInfo(
         uint32 _organizationId,
         uint32 _guildId,
         string calldata _name,
         string calldata _description)
+    external
     contractsAreSet
     whenNotPaused
-    external
     {
         GuildManagerStorage.updateGuildInfo(_organizationId, _guildId, _name, _description);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function updateGuildSymbol(
         uint32 _organizationId,
         uint32 _guildId,
         string calldata _symbolImageData,
         bool _isSymbolOnChain)
+    external
     contractsAreSet
     whenNotPaused
-    external
     {
         GuildManagerStorage.updateGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function inviteUsers(
         uint32 _organizationId,
         uint32 _guildId,
@@ -55,6 +72,9 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.inviteUsers(_organizationId, _guildId, _users);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function acceptInvitation(
         uint32 _organizationId,
         uint32 _guildId)
@@ -64,6 +84,9 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.acceptInvitation(_organizationId, _guildId);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function changeGuildAdmins(
         uint32 _organizationId,
         uint32 _guildId,
@@ -75,6 +98,9 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.changeGuildAdmins(_organizationId, _guildId, _users, _isAdmins);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function changeGuildOwner(
         uint32 _organizationId,
         uint32 _guildId,
@@ -85,6 +111,9 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.changeGuildOwner(_organizationId, _guildId, _newOwner);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function leaveGuild(
         uint32 _organizationId,
         uint32 _guildId)
@@ -94,6 +123,9 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.leaveGuild(_organizationId, _guildId);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function kickOrRemoveInvitations(
         uint32 _organizationId,
         uint32 _guildId,
@@ -104,27 +136,23 @@ contract GuildManager is GuildManagerOrganization {
         GuildManagerStorage.kickOrRemoveInvitations(_organizationId, _guildId, _users);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function userCanCreateGuild(
         uint32 _organizationId,
         address _user)
-    onlyValidOrganization(_organizationId)
     public
     view
+    onlyValidOrganization(_organizationId)
     returns(bool)
     {
         return GuildManagerStorage.userCanCreateGuild(_organizationId, _user);
     }
 
-    function maxUsersForGuild(
-        uint32 _organizationId,
-        uint32 _guildId)
-    public
-    view
-    returns(uint32)
-    {
-        return GuildManagerStorage.maxUsersForGuild(_organizationId, _guildId);
-    }
-
+    /**
+     * @inheritdoc IGuildManager
+     */
     function getGuildMemberStatus(
         uint32 _organizationId,
         uint32 _guildId,
@@ -136,54 +164,56 @@ contract GuildManager is GuildManagerOrganization {
         return GuildManagerStorage.getGuildMemberStatus(_organizationId, _guildId, _user);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function isValidGuild(uint32 _organizationId, uint32 _guildId) external view returns(bool) {
         return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
     }
 
-    function organizationToken(uint32 _organizationId) external view returns(address) {
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function guildTokenAddress(uint32 _organizationId) external view returns(address) {
         return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).tokenAddress;
     }
 
     /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the name of
+     * @inheritdoc IGuildManager
      */
     function guildName(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).name;
     }
 
     /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the description of
+     * @inheritdoc IGuildManager
      */
     function guildDescription(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).description;
     }
 
     /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the owner of
+     * @inheritdoc IGuildManager
      */
     function guildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address) {
         return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).currentOwner;
     }
 
     /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the maxMembers of
+     * @inheritdoc IGuildManager
      */
-    function guildMaxMembers(uint32 _organizationId, uint32 _guildId) external view returns(uint32) {
+    function maxUsersForGuild(
+        uint32 _organizationId,
+        uint32 _guildId)
+    public
+    view
+    returns(uint32)
+    {
         return GuildManagerStorage.maxUsersForGuild(_organizationId, _guildId);
     }
 
     /**
-     * @dev Retrieves the current owner for a given guild within a organization.
-     * @param _organizationId The organization to find the guild within
-     * @param _guildId The guild to return the symbol data of
+     * @inheritdoc IGuildManager
      */
     function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {
         GuildInfo storage _guildInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId);

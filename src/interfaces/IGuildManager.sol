@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  * @param creationRule Describes who can create a guild within this organization
  * @param maxGuildsPerUser The number of guilds a user can join within the organization.
  * @param timeoutAfterLeavingGuild The timeout a user has before joining a new guild after being kicked or leaving another guild
- * @param tokenAddress The address of the 1155 token that represents this organization
+ * @param tokenAddress The address of the 1155 token that represents guilds created within this organization
  * @param maxUsersPerGuildRule Indicates how the max number of users per guild is decided
  * @param maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
  * @param customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
@@ -95,6 +95,260 @@ enum MaxUsersPerGuildRule {
 interface IGuildManager {
 
     /**
+     * @dev Creates a new guild within the given organization. Must pass the guild creation requirements.
+     * @param _organizationId The organization to create the guild within
+     */
+    function createGuild(
+        uint32 _organizationId)
+    external;
+
+    /**
+     * @dev Updates the guild info for the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to update
+     * @param _name The new name of the guild
+     * @param _description The new description of the guild
+     */
+    function updateGuildInfo(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string calldata _name,
+        string calldata _description)
+    external;
+
+    /**
+     * @dev Updates the guild symbol for the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to update
+     * @param _symbolImageData The new symbol for the guild
+     * @param _isSymbolOnChain Indicates if symbolImageData is on chain or is a URL
+     */
+    function updateGuildSymbol(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string calldata _symbolImageData,
+        bool _isSymbolOnChain)
+    external;
+
+    /**
+     * @dev Invites users to the given guild. Can only be done by admins or the guild owner.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to invite users to
+     * @param _users The users to invite
+     */
+    function inviteUsers(
+        uint32 _organizationId,
+        uint32 _guildId,
+        address[] calldata _users)
+    external;
+
+    /**
+     * @dev Accepts an invitation to the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to accept the invitation to
+     */
+    function acceptInvitation(
+        uint32 _organizationId,
+        uint32 _guildId)
+    external;
+
+    /**
+     * @dev Changes the admin status of the given users within the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to change the admin status of users within
+     * @param _users The users to change the admin status of
+     * @param _isAdmins Indicates if the users should be admins or not
+     */
+    function changeGuildAdmins(
+        uint32 _organizationId,
+        uint32 _guildId,
+        address[] calldata _users,
+        bool[] calldata _isAdmins)
+    external;
+
+    /**
+     * @dev Changes the owner of the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to change the owner of
+     * @param _newOwner The new owner of the guild
+     */
+    function changeGuildOwner(
+        uint32 _organizationId,
+        uint32 _guildId,
+        address _newOwner)
+    external;
+
+    /**
+     * @dev Leaves the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to leave
+     */
+    function leaveGuild(
+        uint32 _organizationId,
+        uint32 _guildId)
+    external;
+
+    /**
+     * @dev Kicks or cancels any invites of the given users from the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to kick users from
+     * @param _users The users to kick
+     */
+    function kickOrRemoveInvitations(
+        uint32 _organizationId,
+        uint32 _guildId,
+        address[] calldata _users)
+    external;
+
+    /**
+     * @dev Returns whether or not the given user can create a guild within the given organization.
+     * @param _organizationId The organization to check
+     * @param _user The user to check
+     * @return Whether or not the user can create a guild within the given organization
+     */
+    function userCanCreateGuild(
+        uint32 _organizationId,
+        address _user)
+    external
+    view
+    returns(bool);
+
+    /**
+     * @dev Returns the membership status of the given user within the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to get the membership status of the user within
+     * @param _user The user to get the membership status of
+     * @return The membership status of the user within the guild
+     */
+    function getGuildMemberStatus(
+        uint32 _organizationId,
+        uint32 _guildId,
+        address _user)
+    external
+    view
+    returns(GuildUserStatus);
+
+    /**
+     * @dev Creates a new organization and initializes the Guild feature for it.
+     *  This can only be done by admins on the GuildManager contract.
+     * @param _name The name of the new organization
+     * @param _description The description of the new organization
+     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
+     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
+     * @param _guildCreationRule The rule for creating new guilds
+     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
+     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
+     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
+     */
+    function createForNewOrganization(
+        string calldata _name,
+        string calldata _description,
+        uint8 _maxGuildsPerUser,
+        uint32 _timeoutAfterLeavingGuild,
+        GuildCreationRule _guildCreationRule,
+        MaxUsersPerGuildRule _maxUsersPerGuildRule,
+        uint32 _maxUsersPerGuildConstant,
+        address _customGuildManagerAddress)
+    external;
+
+    /**
+     * @dev Creates a new organization and initializes the Guild feature for it.
+     *  This can only be done by admins on the GuildManager contract.
+     * @param _organizationId The id of the organization to initialize
+     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
+     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
+     * @param _guildCreationRule The rule for creating new guilds
+     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
+     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
+     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
+     */
+    function createForExistingOrganization(
+        uint32 _organizationId,
+        uint8 _maxGuildsPerUser,
+        uint32 _timeoutAfterLeavingGuild,
+        GuildCreationRule _guildCreationRule,
+        MaxUsersPerGuildRule _maxUsersPerGuildRule,
+        uint32 _maxUsersPerGuildConstant,
+        address _customGuildManagerAddress)
+    external;
+
+    /**
+     * @dev Sets the max number of guilds a user can join within the organization.
+     * @param _organizationId The id of the organization to set the max guilds per user for.
+     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
+     */
+    function setMaxGuildsPerUser(
+        uint32 _organizationId,
+        uint8 _maxGuildsPerUser)
+    external;
+
+    /**
+     * @dev Sets the cooldown period a user has to wait before joining a new guild within the organization.
+     * @param _organizationId The id of the organization to set the guild joining timeout for.
+     * @param _timeoutAfterLeavingGuild The cooldown period a user has to wait before joining a new guild within the organization.
+     */
+    function setTimeoutAfterLeavingGuild(
+        uint32 _organizationId,
+        uint32 _timeoutAfterLeavingGuild)
+    external;
+
+    /**
+     * @dev Sets the rule for creating new guilds within the organization.
+     * @param _organizationId The id of the organization to set the guild creation rule for.
+     * @param _guildCreationRule The rule that outlines how a user can create a new guild within the organization.
+     */
+    function setGuildCreationRule(
+        uint32 _organizationId,
+        GuildCreationRule _guildCreationRule)
+    external;
+
+    /**
+     * @dev Sets the max number of users per guild within the organization.
+     * @param _organizationId The id of the organization to set the max number of users per guild for
+     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided within the organization.
+     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max.
+     */
+    function setMaxUsersPerGuild(
+        uint32 _organizationId,
+        MaxUsersPerGuildRule _maxUsersPerGuildRule,
+        uint32 _maxUsersPerGuildConstant)
+    external;
+
+    /**
+     * @dev Sets the contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     * @param _organizationId The id of the organization to set the custom guild manager address for
+     * @param _customGuildManagerAddress The contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     *  This is used for guild creation if the saved `guildCreationRule` == CUSTOM_RULE
+     */
+    function setCustomGuildManagerAddress(
+        uint32 _organizationId,
+        address _customGuildManagerAddress)
+    external;
+
+    /**
+     * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from
+     *  calling the mapping directly from external contracts
+     * @param _organizationId The organization to return guild management info for
+     * @return The stored guild settings for a given organization
+     */
+    function getGuildOrganizationInfo(uint32 _organizationId) external view returns(GuildOrganizationInfo memory);
+
+    /**
+     * @dev Retrieves the token address for guilds within the given organization
+     * @param _organizationId The organization to return the guild token address for
+     * @return The token address for guilds within the given organization
+     */
+    function guildTokenAddress(uint32 _organizationId) external view returns(address);
+
+    /**
+     * @dev Retrieves the token implementation address for guild token contracts to proxy to
+     * @return The beacon token implementation address
+     */
+    function guildTokenImplementation() external view returns(address);
+
+    /**
      * @dev Determines if the given guild is valid for the given organization
      * @param _organizationId The organization to verify against
      * @param _guildId The guild to verify
@@ -126,4 +380,25 @@ interface IGuildManager {
      * @return isSymbolOnChain_ Whether or not the returned data is a URL or on-chain
      */
     function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory symbolImageData_, bool isSymbolOnChain_);
+
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the owner of
+     * @return The current owner of the given guild within the given organization
+     */
+    function guildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address);
+
+    /**
+     * @dev Retrieves the current owner for a given guild within a organization.
+     * @param _organizationId The organization to find the guild within
+     * @param _guildId The guild to return the maxMembers of
+     * @return The current maxMembers of the given guild within the given organization
+     */
+    function maxUsersForGuild(
+        uint32 _organizationId,
+        uint32 _guildId)
+    external
+    view
+    returns(uint32);
 }

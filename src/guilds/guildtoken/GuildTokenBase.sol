@@ -10,7 +10,7 @@ import {LibMeta} from "../../libraries/LibMeta.sol";
 import {LibUtilities} from "../../libraries/LibUtilities.sol";
 import {Modifiers} from "../../Modifiers.sol";
 
-abstract contract GuildTokenState is IGuildToken, AccessControlFacet, ERC1155Facet {
+abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Facet {
 
     function __GuildTokenState_init() internal onlyFacetInitializing {
         __ERC1155Facet_init("");

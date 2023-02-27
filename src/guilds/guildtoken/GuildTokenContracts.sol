@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
 import {GuildTokenStorage} from "../../libraries/GuildTokenStorage.sol";
-import {GuildTokenState} from "./GuildTokenState.sol";
+import {GuildTokenBase, IGuildToken} from "./GuildTokenBase.sol";
 
-abstract contract GuildTokenContracts is GuildTokenState {
+abstract contract GuildTokenContracts is GuildTokenBase {
 
     function __GuildTokenContracts_init() internal onlyFacetInitializing {
-        GuildTokenState.__GuildTokenState_init();
+        GuildTokenBase.__GuildTokenState_init();
     }
 
     function setContracts(

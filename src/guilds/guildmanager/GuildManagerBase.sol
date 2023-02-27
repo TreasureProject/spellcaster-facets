@@ -8,9 +8,9 @@ import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 import {Modifiers} from "../../Modifiers.sol";
 import {OrganizationFacet} from "../../organizations/OrganizationFacet.sol";
 
-abstract contract GuildManagerState is FacetInitializable, IGuildManager, Modifiers, OrganizationFacet {
+abstract contract GuildManagerBase is FacetInitializable, IGuildManager, Modifiers, OrganizationFacet {
 
-    function __GuildManagerState_init() internal onlyFacetInitializing {
+    function __GuildManagerBase_init() internal onlyFacetInitializing {
         OrganizationFacet_init();
         _pause();
     }

@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
-import {GuildManagerState, GuildManagerStorage} from "./GuildManagerState.sol";
+import {GuildManagerBase, GuildManagerStorage, IGuildManager} from "./GuildManagerBase.sol";
 
-abstract contract GuildManagerContracts is GuildManagerState {
+abstract contract GuildManagerContracts is GuildManagerBase {
 
     function __GuildManagerContracts_init() internal onlyFacetInitializing {
-        GuildManagerState.__GuildManagerState_init();
+        GuildManagerBase.__GuildManagerBase_init();
     }
 
     function setContracts(
@@ -26,9 +26,11 @@ abstract contract GuildManagerContracts is GuildManagerState {
         return address(GuildManagerStorage.getGuildTokenBeacon()) != address(0);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function guildTokenImplementation() external view returns(address) {
         // Beacon hasn't been setup yet.
-        //
         if(address(GuildManagerStorage.getGuildTokenBeacon()) == address(0)) {
             return address(0);
         }
