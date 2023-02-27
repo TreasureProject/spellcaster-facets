@@ -19,9 +19,7 @@ abstract contract Modifiers {
     /// @dev Pass-through to Openzeppelin's AccessControl onlyRole. Changed name to avoid name conflicts
     /// @param _role Role to be verified against the sender
     modifier onlyRole(bytes32 _role) {
-        if (!_hasRole(_role, LibMeta._msgSender())) {
-            revert LibAccessControlRoles.MissingRole(LibMeta._msgSender(), _role);
-        }
+        LibAccessControlRoles.requireRole(_role, LibMeta._msgSender());
         _;
     }
 

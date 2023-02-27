@@ -8,7 +8,6 @@ import {ERC1155Facet} from "../../token/ERC1155Facet.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {LibMeta} from "../../libraries/LibMeta.sol";
 import {LibUtilities} from "../../libraries/LibUtilities.sol";
-import {Modifiers} from "../../Modifiers.sol";
 
 abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Facet {
 

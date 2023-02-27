@@ -6,6 +6,8 @@ import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 
 library GuildTokenStorage {
 
+    error GuildOrganizationAlreadyInitialized(uint32 organizationId);
+
     struct Layout {
         /**
          * @notice The manager that created this guild collection.

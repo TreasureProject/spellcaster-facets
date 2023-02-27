@@ -49,6 +49,15 @@ contract AccessControlFacet is FacetInitializable, AccessControlEnumerableUpgrad
     }
 
     /**
+     * @dev Overrides to use custom error vs string building
+     */
+    function _checkRole(bytes32 role, address account) internal view override virtual {
+        if (!hasRole(role, account)) {
+            revert LibAccessControlRoles.MissingRole(account, role);
+        }
+    }
+
+    /**
      * @dev Overrides AccessControlEnumerableUpgradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ
      */

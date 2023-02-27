@@ -32,5 +32,15 @@ interface IGuildToken {
         uint256 _id,
         uint256 _amount)
     external;
+
+    /**
+     * @dev Returns the manager address for this token contract
+     */
+    function guildManager() external view returns (address manager_);
+
+    /**
+     * @dev Returns the organization id for this token contract
+     */
+    function organizationId() external view returns (uint32 organizationId_);
     
 }

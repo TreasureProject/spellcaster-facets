@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {PausableStorage} from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
+import {LibMeta} from "./LibMeta.sol";
 
 library LibUtilities {
     event Paused(address _account);
@@ -32,6 +33,15 @@ library LibUtilities {
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
+    function setPause(bool _paused) internal {
+        PausableStorage.layout()._paused = _paused;
+        if(_paused) {
+            emit Paused(LibMeta._msgSender());
+        } else {
+            emit Unpaused(LibMeta._msgSender());
+        }
     }
 
     function paused() internal view returns (bool) {

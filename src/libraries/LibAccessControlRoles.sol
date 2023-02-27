@@ -20,6 +20,12 @@ library LibAccessControlRoles {
         return AccessControlStorage.layout()._roles[_role].members[_account];
     }
 
+    function requireRole(bytes32 _role, address _account) internal view {
+        if (!hasRole(_role, _account)) {
+            revert MissingRole(_account, _role);
+        }
+    }
+
     function contractOwner() internal view returns (address contractOwner_) {
         contractOwner_ = LibDiamond.contractOwner();
     }

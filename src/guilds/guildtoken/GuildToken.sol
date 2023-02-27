@@ -11,11 +11,11 @@ contract GuildToken is GuildTokenContracts {
     /**
      * @inheritdoc IGuildToken
      */
-    function initialize(uint32 _organizationId) external facetInitializer(keccak256("GuildManager")) {
+    function initialize(uint32 _organizationId) external facetInitializer(keccak256("GuildToken")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         GuildTokenStorage.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
-        GuildTokenStorage.setGuildManager(msg.sender);
+        GuildTokenStorage.setGuildManager(LibMeta._msgSender());
 
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
         _grantRole(ADMIN_GRANTER_ROLE, LibMeta._msgSender());
@@ -52,6 +52,20 @@ contract GuildToken is GuildTokenContracts {
     }
 
     /**
+     * @inheritdoc IGuildToken
+     */
+    function guildManager() external view returns (address manager_) {
+        manager_ = address(GuildTokenStorage.getGuildManager());
+    }
+
+    /**
+     * @inheritdoc IGuildToken
+     */
+    function organizationId() external view returns (uint32 organizationId_) {
+        organizationId_ = GuildTokenStorage.getOrganizationId();
+    }
+
+    /**
      * @dev Returns the URI for a given token ID
      * @param _tokenId The id of the token to query
      * @return URI of the given token
@@ -74,8 +88,8 @@ contract GuildToken is GuildTokenContracts {
         bytes memory data
     ) internal virtual override {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-        require(!LibUtilities.paused(), "GuildToken: Cannot transfer while paused");
-        require(LibAccessControlRoles.hasRole(ADMIN_ROLE, msg.sender), "GuildToken: Only admin can transfer guild tokens");
+        LibUtilities.requireNotPaused();
+        LibAccessControlRoles.requireRole(ADMIN_ROLE, LibMeta._msgSender());
     }
 
 }
