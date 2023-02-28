@@ -1,55 +1,38 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import {LibBBase64} from "./LibBBase64.sol";
+import {GuildTokenStorage} from "src/guilds/guildtoken/GuildTokenStorage.sol";
 import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 
-library GuildTokenStorage {
-
-    error GuildOrganizationAlreadyInitialized(uint32 organizationId);
-
-    struct Layout {
-        /**
-         * @notice The manager that created this guild collection.
-        */
-        IGuildManager guildManager;
-        /**
-         * @notice The organization this 1155 collection is associated to.
-        */
-        uint32 organizationId;
-    }
-
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildtoken");
-
-    function layout() internal pure returns (Layout storage s) {
-        bytes32 position = FACET_STORAGE_POSITION;
-        assembly {
-            s.slot := position
-        }
-    }
+/**
+ * @title Guild Manager Library
+ * @dev This library is used to implement features that use/update storage data for the Guild Manager contracts
+ */
+library LibGuildToken {
 
     // =============================================================
     //                      State Helpers
     // =============================================================
 
     function getGuildManager() internal view returns (IGuildManager manager_) {
-        manager_ = layout().guildManager;
+        manager_ = GuildTokenStorage.layout().guildManager;
     }
 
     function getOrganizationId() internal view returns (uint32 orgId_) {
-        orgId_ = layout().organizationId;
+        orgId_ = GuildTokenStorage.layout().organizationId;
     }
 
     function setGuildManager(address _guildManagerAddress) internal {
-        layout().guildManager = IGuildManager(_guildManagerAddress);
+        GuildTokenStorage.layout().guildManager = IGuildManager(_guildManagerAddress);
     }
 
     function setOrganizationId(uint32 _orgId) internal {
-        layout().organizationId = _orgId;
+        GuildTokenStorage.layout().organizationId = _orgId;
     }
     
     function uri(uint256 _tokenId) internal view returns(string memory) {
-        Layout storage l = layout();
+        GuildTokenStorage.Layout storage l = GuildTokenStorage.layout();
         uint32 _castedtokenId = uint32(_tokenId);
         // For our purposes, token id and guild id are the same.
         //
@@ -110,7 +93,3 @@ library GuildTokenStorage {
         ));
     }
 }
-
-    
-
-    

@@ -8,7 +8,7 @@ import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../librarie
 import {LibMeta} from "../libraries/LibMeta.sol";
 
 import {IOrganizationManager, OrganizationInfo} from "../interfaces/IOrganizationManager.sol";
-import {OrganizationManagerStorage} from "../libraries/OrganizationManagerStorage.sol";
+import {OrganizationManagerStorage} from "./OrganizationManagerStorage.sol";
 
 /**
  * @title Organization Management Facet contract.

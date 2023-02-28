@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/libraries/LibAccessControlRoles.sol";
 import {LibMeta} from "src/libraries/LibMeta.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
-import {GuildTokenContracts, GuildTokenStorage, IGuildToken} from "./GuildTokenContracts.sol";
+import {GuildTokenContracts, LibGuildToken, IGuildToken} from "./GuildTokenContracts.sol";
 
 contract GuildToken is GuildTokenContracts {
 
@@ -13,9 +13,9 @@ contract GuildToken is GuildTokenContracts {
      */
     function initialize(uint32 _organizationId) external facetInitializer(keccak256("GuildToken")) {
         GuildTokenContracts.__GuildTokenContracts_init();
-        GuildTokenStorage.setOrganizationId(_organizationId);
+        LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
-        GuildTokenStorage.setGuildManager(LibMeta._msgSender());
+        LibGuildToken.setGuildManager(LibMeta._msgSender());
 
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
         _grantRole(ADMIN_GRANTER_ROLE, LibMeta._msgSender());
@@ -55,14 +55,14 @@ contract GuildToken is GuildTokenContracts {
      * @inheritdoc IGuildToken
      */
     function guildManager() external view returns (address manager_) {
-        manager_ = address(GuildTokenStorage.getGuildManager());
+        manager_ = address(LibGuildToken.getGuildManager());
     }
 
     /**
      * @inheritdoc IGuildToken
      */
     function organizationId() external view returns (uint32 organizationId_) {
-        organizationId_ = GuildTokenStorage.getOrganizationId();
+        organizationId_ = LibGuildToken.getOrganizationId();
     }
 
     /**
@@ -71,7 +71,7 @@ contract GuildToken is GuildTokenContracts {
      * @return URI of the given token
      */
     function uri(uint256 _tokenId) public view override returns(string memory) {
-        return GuildTokenStorage.uri(_tokenId);
+        return LibGuildToken.uri(_tokenId);
     }
 
     /**

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {GuildTokenStorage} from "src/libraries/GuildTokenStorage.sol";
+import {LibGuildToken} from "src/libraries/LibGuildToken.sol";
 import {GuildTokenBase, IGuildToken} from "./GuildTokenBase.sol";
 
 abstract contract GuildTokenContracts is GuildTokenBase {
@@ -15,7 +15,7 @@ abstract contract GuildTokenContracts is GuildTokenBase {
         address _guildManagerAddress)
     external onlyRole(ADMIN_ROLE)
     {
-        GuildTokenStorage.setGuildManager(_guildManagerAddress);
+        LibGuildToken.setGuildManager(_guildManagerAddress);
     }
 
     modifier contractsAreSet() {
@@ -24,6 +24,6 @@ abstract contract GuildTokenContracts is GuildTokenBase {
     }
 
     function areContractsSet() public view returns(bool) {
-        return address(GuildTokenStorage.getGuildManager()) != address(0);
+        return address(LibGuildToken.getGuildManager()) != address(0);
     }
 }

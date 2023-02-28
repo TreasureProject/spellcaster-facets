@@ -6,8 +6,8 @@ import {TestBase} from "./utils/TestBase.sol";
 import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
 import {DiamondUtils} from "./utils/DiamondUtils.sol";
 
-import {OrganizationFacet} from "../src/organizations/OrganizationFacet.sol";
-import {OrganizationManagerStorage} from "../src/libraries/OrganizationManagerStorage.sol";
+import {OrganizationFacet} from "src/organizations/OrganizationFacet.sol";
+import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
 import {
     IGuildManager,
     GuildCreationRule,
