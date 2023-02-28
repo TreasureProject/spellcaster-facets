@@ -5,6 +5,7 @@ import {GuildManagerSettings, GuildManagerStorage, IGuildManager} from "./GuildM
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
+import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
 
 contract GuildManager is GuildManagerSettings {
 
@@ -26,7 +27,7 @@ contract GuildManager is GuildManagerSettings {
     contractsAreSet
     whenNotPaused
     {
-        GuildManagerStorage.createGuild(_organizationId);
+        LibGuildManager.createGuild(_organizationId);
     }
 
     /**
@@ -41,7 +42,8 @@ contract GuildManager is GuildManagerSettings {
     contractsAreSet
     whenNotPaused
     {
-        GuildManagerStorage.updateGuildInfo(_organizationId, _guildId, _name, _description);
+        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_INFO");
+        GuildManagerStorage.setGuildInfo(_organizationId, _guildId, _name, _description);
     }
 
     /**
@@ -56,7 +58,8 @@ contract GuildManager is GuildManagerSettings {
     contractsAreSet
     whenNotPaused
     {
-        GuildManagerStorage.updateGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
+        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_SYMBOL");
+        GuildManagerStorage.setGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
     }
 
     /**
@@ -69,7 +72,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.inviteUsers(_organizationId, _guildId, _users);
+        LibGuildManager.inviteUsers(_organizationId, _guildId, _users);
     }
 
     /**
@@ -81,7 +84,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.acceptInvitation(_organizationId, _guildId);
+        LibGuildManager.acceptInvitation(_organizationId, _guildId);
     }
 
     /**
@@ -95,7 +98,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.changeGuildAdmins(_organizationId, _guildId, _users, _isAdmins);
+        LibGuildManager.changeGuildAdmins(_organizationId, _guildId, _users, _isAdmins);
     }
 
     /**
@@ -108,7 +111,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.changeGuildOwner(_organizationId, _guildId, _newOwner);
+        LibGuildManager.changeGuildOwner(_organizationId, _guildId, _newOwner);
     }
 
     /**
@@ -120,7 +123,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.leaveGuild(_organizationId, _guildId);
+        LibGuildManager.leaveGuild(_organizationId, _guildId);
     }
 
     /**
@@ -133,7 +136,7 @@ contract GuildManager is GuildManagerSettings {
     external
     whenNotPaused
     {
-        GuildManagerStorage.kickOrRemoveInvitations(_organizationId, _guildId, _users);
+        LibGuildManager.kickOrRemoveInvitations(_organizationId, _guildId, _users);
     }
 
     /**
@@ -147,7 +150,7 @@ contract GuildManager is GuildManagerSettings {
     onlyValidOrganization(_organizationId)
     returns(bool)
     {
-        return GuildManagerStorage.userCanCreateGuild(_organizationId, _user);
+        return LibGuildManager.userCanCreateGuild(_organizationId, _user);
     }
 
     /**
@@ -161,7 +164,7 @@ contract GuildManager is GuildManagerSettings {
     view
     returns(GuildUserStatus)
     {
-        return GuildManagerStorage.getGuildMemberStatus(_organizationId, _guildId, _user);
+        return GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
     }
 
     /**
@@ -209,7 +212,7 @@ contract GuildManager is GuildManagerSettings {
     view
     returns(uint32)
     {
-        return GuildManagerStorage.maxUsersForGuild(_organizationId, _guildId);
+        return GuildManagerStorage.getMaxUsersForGuild(_organizationId, _guildId);
     }
 
     /**

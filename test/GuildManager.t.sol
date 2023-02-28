@@ -8,7 +8,8 @@ import {DiamondUtils} from "./utils/DiamondUtils.sol";
 
 import {GuildToken} from "../src/guilds/guildtoken/GuildToken.sol";
 import {GuildManager} from "../src/guilds/guildmanager/GuildManager.sol";
-import {GuildManagerStorage} from "../src/libraries/GuildManagerStorage.sol";
+import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.sol";
+import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
 import {OrganizationManagerStorage} from "../src/libraries/OrganizationManagerStorage.sol";
 import {
     IGuildManager,

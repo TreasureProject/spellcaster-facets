@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
-import {GuildTokenStorage} from "../../libraries/GuildTokenStorage.sol";
+import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
+import {GuildTokenStorage} from "src/libraries/GuildTokenStorage.sol";
 import {GuildTokenBase, IGuildToken} from "./GuildTokenBase.sol";
 
 abstract contract GuildTokenContracts is GuildTokenBase {

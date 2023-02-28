@@ -49,7 +49,7 @@ contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
 
         vm.prank(alice);
         _token.adminBurn(leet, 1, 1);
-        
+
         assertEq(_token.balanceOf(leet, 1), 0);
     }
 
@@ -61,6 +61,10 @@ contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.prank(alice);
         vm.expectRevert(errMissingRole("ADMIN", alice));
         _token.adminBurn(alice, 1, 1);
+    }
+
+    function testMetaTransaction() public {
+        
     }
 
 }

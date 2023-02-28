@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ADMIN_ROLE} from "../../libraries/LibAccessControlRoles.sol";
+import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
 
-import {GuildManagerContracts, GuildManagerStorage, IGuildManager} from "./GuildManagerContracts.sol";
 import {GuildCreationRule, MaxUsersPerGuildRule, GuildOrganizationInfo} from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
+import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
+import {GuildManagerContracts, GuildManagerStorage, IGuildManager} from "./GuildManagerContracts.sol";
 
 abstract contract GuildManagerSettings is GuildManagerContracts {
 
@@ -30,7 +31,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     {
-        uint32 _newOrganizationId = GuildManagerStorage.createForNewOrganization(_name, _description);
+        uint32 _newOrganizationId = LibGuildManager.createForNewOrganization(_name, _description);
 
         GuildManagerStorage.setMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
         GuildManagerStorage.setTimeoutAfterLeavingGuild(_newOrganizationId, _timeoutAfterLeavingGuild);
@@ -56,7 +57,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyValidOrganization(_organizationId)
     {
-        GuildManagerStorage.createForExistingOrganization(_organizationId);
+        LibGuildManager.createForExistingOrganization(_organizationId);
 
         GuildManagerStorage.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
         GuildManagerStorage.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
