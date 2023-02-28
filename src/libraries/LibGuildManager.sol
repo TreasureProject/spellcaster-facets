@@ -27,6 +27,185 @@ import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.s
 library LibGuildManager {
 
     // =============================================================
+    //                    State Getters/Setters
+    // =============================================================
+
+    function setGuildTokenBeacon(address _beaconImplAddress) internal {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+
+        if(address(l.guildTokenBeacon) == address(0)) {
+            l.guildTokenBeacon = new UpgradeableBeacon(_beaconImplAddress);
+        } else if(l.guildTokenBeacon.implementation() != _beaconImplAddress) {
+            l.guildTokenBeacon.upgradeTo(_beaconImplAddress);
+        }
+    }
+
+    function getGuildTokenBeacon() internal view returns (UpgradeableBeacon beacon_) {
+        beacon_ = GuildManagerStorage.layout().guildTokenBeacon;
+    }
+
+    /**
+     * @param _orgId The id of the org to retrieve info for
+     * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
+     *  instead of using a memory copy overwrite
+     */
+    function getGuildOrganizationInfo(uint32 _orgId) internal view returns (GuildOrganizationInfo storage info_) {
+        info_ = GuildManagerStorage.layout().guildOrganizationInfo[_orgId];
+    }
+
+    /**
+     * @param _orgId The id of the org that contains the guild to retrieve info for
+     * @param _guildId The id of the guild within the given org to retrieve info for
+     * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
+     *  instead of using a memory copy overwrite
+     */
+    function getGuildInfo(uint32 _orgId, uint32 _guildId) internal view returns (GuildInfo storage info_) {
+        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_orgId][_guildId];
+    }
+
+    /**
+     * @param _orgId The id of the org that contains the user to retrieve info for
+     * @param _user The id of the user within the given org to retrieve info for
+     * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
+     *  instead of using a memory copy overwrite
+     */
+    function getUserInfo(uint32 _orgId, address _user) internal view returns (GuildOrganizationUserInfo storage info_) {
+        info_ = GuildManagerStorage.layout().organizationIdToAddressToInfo[_orgId][_user];
+    }
+
+    /**
+     * @param _orgId The id of the org that contains the user to retrieve info for
+     * @param _guildId The id of the guild within the given org to retrieve user info for
+     * @param _user The id of the user to retrieve info for
+     * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
+     *  instead of using a memory copy overwrite
+     */
+    function getGuildUserInfo(
+        uint32 _orgId,
+        uint32 _guildId,
+        address _user)
+    internal
+    view
+    returns (GuildUserInfo storage info_)
+    {
+        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_orgId][_guildId].addressToGuildUserInfo[_user];
+    }
+
+    // =============================================================
+    //                  GuildOrganization Settings
+    // =============================================================
+
+    function setMaxGuildsPerUser(
+        uint32 _organizationId,
+        uint8 _maxGuildsPerUser)
+    internal
+    {
+        require(_maxGuildsPerUser > 0, "maxGuildsPerUser must be greater than 0");
+
+        getGuildOrganizationInfo(_organizationId).maxGuildsPerUser = _maxGuildsPerUser;
+        emit GuildManagerStorage.MaxGuildsPerUserUpdated(_organizationId, _maxGuildsPerUser);
+    }
+
+    function setTimeoutAfterLeavingGuild(
+        uint32 _organizationId,
+        uint32 _timeoutAfterLeavingGuild)
+    internal
+    {
+        getGuildOrganizationInfo(_organizationId).timeoutAfterLeavingGuild = _timeoutAfterLeavingGuild;
+        emit GuildManagerStorage.TimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
+    }
+
+    function setGuildCreationRule(
+        uint32 _organizationId,
+        GuildCreationRule _guildCreationRule)
+    internal
+    {
+        getGuildOrganizationInfo(_organizationId).creationRule = _guildCreationRule;
+        emit GuildManagerStorage.GuildCreationRuleUpdated(_organizationId, _guildCreationRule);
+    }
+
+    function setMaxUsersPerGuild(
+        uint32 _organizationId,
+        MaxUsersPerGuildRule _maxUsersPerGuildRule,
+        uint32 _maxUsersPerGuildConstant)
+    internal
+    {
+        getGuildOrganizationInfo(_organizationId).maxUsersPerGuildRule = _maxUsersPerGuildRule;
+        getGuildOrganizationInfo(_organizationId).maxUsersPerGuildConstant = _maxUsersPerGuildConstant;
+        emit GuildManagerStorage.MaxUsersPerGuildUpdated(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
+    }
+
+    function setCustomGuildManagerAddress(
+        uint32 _organizationId,
+        address _customGuildManagerAddress)
+    internal
+    {
+        getGuildOrganizationInfo(_organizationId).customGuildManagerAddress = _customGuildManagerAddress;
+        emit GuildManagerStorage.CustomGuildManagerAddressUpdated(_organizationId, _customGuildManagerAddress);
+    }
+
+    // =============================================================
+    //                  Guild Settings
+    // =============================================================
+
+    /**
+     * @dev Assumes permissions have already been checked (only guild owner)
+     */
+    function setGuildInfo(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string calldata _name,
+        string calldata _description)
+    internal
+    {
+        GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
+
+        _guildInfo.name = _name;
+        _guildInfo.description = _description;
+
+        emit GuildManagerStorage.GuildInfoUpdated(_organizationId, _guildId, _name, _description);
+    }
+
+    /**
+     * @dev Assumes permissions have already been checked (only guild owner)
+     */
+    function setGuildSymbol(
+        uint32 _organizationId,
+        uint32 _guildId,
+        string calldata _symbolImageData,
+        bool _isSymbolOnChain)
+    internal
+    {
+        GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
+
+        _guildInfo.symbolImageData = _symbolImageData;
+        _guildInfo.isSymbolOnChain = _isSymbolOnChain;
+
+        emit GuildManagerStorage.GuildSymbolUpdated(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
+    }
+
+    function getMaxUsersForGuild(
+        uint32 _organizationId,
+        uint32 _guildId)
+    internal
+    view
+    returns(uint32)
+    {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+        address _guildOwner = l.organizationIdToGuildIdToInfo[_organizationId][_guildId].currentOwner;
+        require(_guildOwner != address(0), "Invalid guild");
+
+        GuildOrganizationInfo storage _orgInfo = l.guildOrganizationInfo[_organizationId];
+        if(_orgInfo.maxUsersPerGuildRule == MaxUsersPerGuildRule.CONSTANT) {
+            return _orgInfo.maxUsersPerGuildConstant;
+        } else {
+            require(_orgInfo.customGuildManagerAddress != address(0), "CUSTOM_RULE with no config set");
+            return ICustomGuildManager(_orgInfo.customGuildManagerAddress)
+                .maxUsersForGuild(_organizationId, _guildId);
+        }
+    }
+
+    // =============================================================
     //                        Create Functions
     // =============================================================
 
@@ -122,7 +301,7 @@ library LibGuildManager {
                 revert GuildManagerStorage.InvalidAddress(_userToInvite);
             }
 
-            GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _userToInvite).userStatus;
+            GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, _userToInvite).userStatus;
             if(_userStatus != GuildUserStatus.NOT_ASSOCIATED) {
                 revert GuildManagerStorage.UserAlreadyInGuild(_organizationId, _guildId, _userToInvite);
             }
@@ -136,7 +315,7 @@ library LibGuildManager {
         uint32 _guildId)
     internal
     {
-        GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
+        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
         require(_userStatus == GuildUserStatus.INVITED, "Not invited");
 
         // Will validate they are not joining too many guilds.
@@ -148,7 +327,7 @@ library LibGuildManager {
         uint32 _guildId)
     internal
     {
-        GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
+        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
         require(_userStatus != GuildUserStatus.OWNER, "Owner cannot leave guild");
         require(_userStatus == GuildUserStatus.MEMBER || _userStatus == GuildUserStatus.ADMIN, "Not member of guild");
 
@@ -165,7 +344,7 @@ library LibGuildManager {
 
         for(uint256 i = 0; i < _users.length; i++) {
             address _user = _users[i];
-            GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
+            GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
             if(_userStatus == GuildUserStatus.OWNER) {
                 revert("Cannot kick owner");
             } else if(_userStatus == GuildUserStatus.ADMIN) {
@@ -198,7 +377,7 @@ library LibGuildManager {
             address _user = _users[i];
             bool _willBeAdmin = _isAdmins[i];
 
-            GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
+            GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
 
             if(_willBeAdmin) {
                 if(_userStatus != GuildUserStatus.MEMBER) {
@@ -220,7 +399,7 @@ library LibGuildManager {
     onlyGuildOwner(_organizationId, _guildId, "TRANSFER_OWNER")
     {
 
-        GuildUserStatus _newOwnerOldStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _newOwner).userStatus;
+        GuildUserStatus _newOwnerOldStatus = getGuildUserInfo(_organizationId, _guildId, _newOwner).userStatus;
         require(_newOwnerOldStatus == GuildUserStatus.MEMBER || _newOwnerOldStatus == GuildUserStatus.ADMIN, "Can only make member owner");
 
         _changeUserStatus(_organizationId, _guildId, msg.sender, GuildUserStatus.MEMBER);
@@ -261,7 +440,7 @@ library LibGuildManager {
     view
     returns(bool)
     {
-        return GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus == GuildUserStatus.OWNER;
+        return getGuildUserInfo(_organizationId, _guildId, _user).userStatus == GuildUserStatus.OWNER;
     }
 
     function isGuildAdminOrOwner(
@@ -272,7 +451,7 @@ library LibGuildManager {
     view
     returns(bool)
     {
-        GuildUserStatus _userStatus = GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
+        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
         return _userStatus == GuildUserStatus.OWNER || _userStatus == GuildUserStatus.ADMIN;
     }
 
@@ -319,7 +498,7 @@ library LibGuildManager {
         GuildUserStatus _newStatus)
     private
     {
-        GuildUserInfo storage _guildUserInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId).addressToGuildUserInfo[_user];
+        GuildUserInfo storage _guildUserInfo = getGuildInfo(_organizationId, _guildId).addressToGuildUserInfo[_user];
 
         GuildUserStatus _oldStatus = _guildUserInfo.userStatus;
 
@@ -328,7 +507,7 @@ library LibGuildManager {
         _guildUserInfo.userStatus = _newStatus;
 
         if(_newStatus == GuildUserStatus.OWNER) {
-            GuildManagerStorage.getGuildInfo(_organizationId, _guildId).currentOwner = _user;
+            getGuildInfo(_organizationId, _guildId).currentOwner = _user;
         }
 
         bool _wasInGuild = _oldStatus != GuildUserStatus.NOT_ASSOCIATED && _oldStatus != GuildUserStatus.INVITED;
@@ -349,9 +528,9 @@ library LibGuildManager {
         address _user)
     private
     {
-        GuildOrganizationInfo storage orgInfo = GuildManagerStorage.getGuildOrganizationInfo(_organizationId);
-        GuildInfo storage guildInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId);
-        GuildOrganizationUserInfo storage _orgUserInfo = GuildManagerStorage.getUserInfo(_organizationId, _user);
+        GuildOrganizationInfo storage orgInfo = getGuildOrganizationInfo(_organizationId);
+        GuildInfo storage guildInfo = getGuildInfo(_organizationId, _guildId);
+        GuildOrganizationUserInfo storage _orgUserInfo = getUserInfo(_organizationId, _user);
         GuildUserInfo storage _guildUserInfo = guildInfo.addressToGuildUserInfo[_user];
 
         _orgUserInfo.guildIdsAMemberOf.push(_guildId);
@@ -362,7 +541,7 @@ library LibGuildManager {
 
         guildInfo.usersInGuild++;
 
-        uint32 _maxUsersForGuild = GuildManagerStorage.getMaxUsersForGuild(_organizationId, _guildId);
+        uint32 _maxUsersForGuild = getMaxUsersForGuild(_organizationId, _guildId);
         if(_maxUsersForGuild < guildInfo.usersInGuild) {
             revert GuildManagerStorage.GuildFull(_organizationId, _guildId);
         }
@@ -380,8 +559,8 @@ library LibGuildManager {
         address _user)
     private
     {
-        GuildUserInfo storage _guildUserInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId).addressToGuildUserInfo[_user];
-        GuildOrganizationUserInfo storage _orgUserInfo = GuildManagerStorage.getUserInfo(_organizationId, _user);
+        GuildUserInfo storage _guildUserInfo = getGuildInfo(_organizationId, _guildId).addressToGuildUserInfo[_user];
+        GuildOrganizationUserInfo storage _orgUserInfo = getUserInfo(_organizationId, _user);
 
         for(uint256 i = 0; i < _orgUserInfo.guildIdsAMemberOf.length; i++) {
             uint32 _guildIdAMemberOf = _orgUserInfo.guildIdsAMemberOf[i];
@@ -394,10 +573,10 @@ library LibGuildManager {
 
         delete _guildUserInfo.timeUserJoined;
 
-        GuildManagerStorage.getGuildInfo(_organizationId, _guildId).usersInGuild--;
+        getGuildInfo(_organizationId, _guildId).usersInGuild--;
 
         // Burn their membership NFT
-        IGuildToken(GuildManagerStorage.getGuildOrganizationInfo(_organizationId).tokenAddress).adminBurn(_user, _guildId, 1);
+        IGuildToken(getGuildOrganizationInfo(_organizationId).tokenAddress).adminBurn(_user, _guildId, 1);
 
         // Mark down when the user is leaving the guild.
         _orgUserInfo.timeUserLeftGuild = uint64(block.timestamp);

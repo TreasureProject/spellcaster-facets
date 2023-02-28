@@ -5,8 +5,7 @@ import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
 
 import {GuildCreationRule, MaxUsersPerGuildRule, GuildOrganizationInfo} from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
-import {GuildManagerContracts, GuildManagerStorage, IGuildManager} from "./GuildManagerContracts.sol";
+import {GuildManagerContracts, LibGuildManager, IGuildManager} from "./GuildManagerContracts.sol";
 
 abstract contract GuildManagerSettings is GuildManagerContracts {
 
@@ -33,11 +32,11 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     {
         uint32 _newOrganizationId = LibGuildManager.createForNewOrganization(_name, _description);
 
-        GuildManagerStorage.setMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
-        GuildManagerStorage.setTimeoutAfterLeavingGuild(_newOrganizationId, _timeoutAfterLeavingGuild);
-        GuildManagerStorage.setGuildCreationRule(_newOrganizationId, _guildCreationRule);
-        GuildManagerStorage.setMaxUsersPerGuild(_newOrganizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
-        GuildManagerStorage.setCustomGuildManagerAddress(_newOrganizationId, _customGuildManagerAddress);
+        LibGuildManager.setMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
+        LibGuildManager.setTimeoutAfterLeavingGuild(_newOrganizationId, _timeoutAfterLeavingGuild);
+        LibGuildManager.setGuildCreationRule(_newOrganizationId, _guildCreationRule);
+        LibGuildManager.setMaxUsersPerGuild(_newOrganizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
+        LibGuildManager.setCustomGuildManagerAddress(_newOrganizationId, _customGuildManagerAddress);
     }
 
     /**
@@ -59,11 +58,11 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     {
         LibGuildManager.createForExistingOrganization(_organizationId);
 
-        GuildManagerStorage.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
-        GuildManagerStorage.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
-        GuildManagerStorage.setGuildCreationRule(_organizationId, _guildCreationRule);
-        GuildManagerStorage.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
-        GuildManagerStorage.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
+        LibGuildManager.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
+        LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
+        LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
+        LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
+        LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
     /**
@@ -77,7 +76,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
+        LibGuildManager.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
     }
 
     /**
@@ -91,7 +90,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
+        LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
 
     /**
@@ -105,7 +104,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setGuildCreationRule(_organizationId, _guildCreationRule);
+        LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
     }
 
     /**
@@ -120,7 +119,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
+        LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
     }
 
     /**
@@ -134,7 +133,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        GuildManagerStorage.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
+        LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
     // =============================================================
@@ -145,6 +144,6 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function getGuildOrganizationInfo(uint32 _organizationId) external view returns(GuildOrganizationInfo memory) {
-        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId);
+        return LibGuildManager.getGuildOrganizationInfo(_organizationId);
     }
 }

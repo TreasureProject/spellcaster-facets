@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {GuildManagerSettings, GuildManagerStorage, IGuildManager} from "./GuildManagerSettings.sol";
+import {GuildManagerSettings, LibGuildManager, IGuildManager} from "./GuildManagerSettings.sol";
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
-import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
 
 contract GuildManager is GuildManagerSettings {
 
@@ -15,7 +14,7 @@ contract GuildManager is GuildManagerSettings {
      */
     function GuildManager_init(address _guildTokenImplementationAddress) external facetInitializer(keccak256("GuildManager")) {
         GuildManagerSettings.__GuildManagerSettings_init();
-        GuildManagerStorage.setGuildTokenBeacon(_guildTokenImplementationAddress);
+        LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }
 
     /**
@@ -43,7 +42,7 @@ contract GuildManager is GuildManagerSettings {
     whenNotPaused
     {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_INFO");
-        GuildManagerStorage.setGuildInfo(_organizationId, _guildId, _name, _description);
+        LibGuildManager.setGuildInfo(_organizationId, _guildId, _name, _description);
     }
 
     /**
@@ -59,7 +58,7 @@ contract GuildManager is GuildManagerSettings {
     whenNotPaused
     {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_SYMBOL");
-        GuildManagerStorage.setGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
+        LibGuildManager.setGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
     }
 
     /**
@@ -164,42 +163,42 @@ contract GuildManager is GuildManagerSettings {
     view
     returns(GuildUserStatus)
     {
-        return GuildManagerStorage.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
+        return LibGuildManager.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function isValidGuild(uint32 _organizationId, uint32 _guildId) external view returns(bool) {
-        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
+        return LibGuildManager.getGuildOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function guildTokenAddress(uint32 _organizationId) external view returns(address) {
-        return GuildManagerStorage.getGuildOrganizationInfo(_organizationId).tokenAddress;
+        return LibGuildManager.getGuildOrganizationInfo(_organizationId).tokenAddress;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function guildName(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
-        return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).name;
+        return LibGuildManager.getGuildInfo(_organizationId, _guildId).name;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function guildDescription(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
-        return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).description;
+        return LibGuildManager.getGuildInfo(_organizationId, _guildId).description;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function guildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address) {
-        return GuildManagerStorage.getGuildInfo(_organizationId, _guildId).currentOwner;
+        return LibGuildManager.getGuildInfo(_organizationId, _guildId).currentOwner;
     }
 
     /**
@@ -212,14 +211,14 @@ contract GuildManager is GuildManagerSettings {
     view
     returns(uint32)
     {
-        return GuildManagerStorage.getMaxUsersForGuild(_organizationId, _guildId);
+        return LibGuildManager.getMaxUsersForGuild(_organizationId, _guildId);
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {
-        GuildInfo storage _guildInfo = GuildManagerStorage.getGuildInfo(_organizationId, _guildId);
+        GuildInfo storage _guildInfo = LibGuildManager.getGuildInfo(_organizationId, _guildId);
         _symbolImageData = _guildInfo.symbolImageData;
         _isSymbolOnChain = _guildInfo.isSymbolOnChain;
     }

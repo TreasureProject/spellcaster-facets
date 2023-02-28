@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {GuildManagerBase, GuildManagerStorage, IGuildManager} from "./GuildManagerBase.sol";
+import {GuildManagerBase, LibGuildManager, IGuildManager} from "./GuildManagerBase.sol";
 
 abstract contract GuildManagerContracts is GuildManagerBase {
 
@@ -14,7 +14,7 @@ abstract contract GuildManagerContracts is GuildManagerBase {
         address _guildTokenImplementationAddress)
     external onlyRole(ADMIN_ROLE)
     {
-        GuildManagerStorage.setGuildTokenBeacon(_guildTokenImplementationAddress);
+        LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }
 
     modifier contractsAreSet() {
@@ -23,7 +23,7 @@ abstract contract GuildManagerContracts is GuildManagerBase {
     }
 
     function areContractsSet() public view returns(bool) {
-        return address(GuildManagerStorage.getGuildTokenBeacon()) != address(0);
+        return address(LibGuildManager.getGuildTokenBeacon()) != address(0);
     }
 
     /**
@@ -31,10 +31,10 @@ abstract contract GuildManagerContracts is GuildManagerBase {
      */
     function guildTokenImplementation() external view returns(address) {
         // Beacon hasn't been setup yet.
-        if(address(GuildManagerStorage.getGuildTokenBeacon()) == address(0)) {
+        if(address(LibGuildManager.getGuildTokenBeacon()) == address(0)) {
             return address(0);
         }
 
-        return GuildManagerStorage.getGuildTokenBeacon().implementation();
+        return LibGuildManager.getGuildTokenBeacon().implementation();
     }
 }
