@@ -6,8 +6,9 @@ interface IGuildToken {
     /**
      * @dev Sets initial state of this facet. Must be called for contract to work properly
      * @param _organizationId The id of the organization that owns this guild collection
+     * @param _systemDelegateApprover The contract that approves and records meta transaction delegates
      */
-    function initialize(uint32 _organizationId) external;
+    function initialize(bytes32 _organizationId, address _systemDelegateApprover) external;
 
     /**
      * @dev Mints ERC1155 tokens to the given address. Only callable by a privileged address (i.e. GuildManager contract)
@@ -41,6 +42,6 @@ interface IGuildToken {
     /**
      * @dev Returns the organization id for this token contract
      */
-    function organizationId() external view returns (uint32 organizationId_);
+    function organizationId() external view returns (bytes32 organizationId_);
     
 }

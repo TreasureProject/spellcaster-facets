@@ -14,16 +14,12 @@ library LibOrganizationManager {
     //                      Getters/Setters
     // =============================================================
 
-    function getOrganizationIdCur() internal view returns (uint32 orgIdCur_) {
-        orgIdCur_ = OrganizationManagerStorage.layout().organizationIdCur;
-    }
-
     /**
      * @param _orgId The id of the org to retrieve info for
      * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
      *  instead of using a memory copy overwrite
      */
-    function getOrganizationInfo(uint32 _orgId) internal view returns (OrganizationInfo storage info_) {
+    function getOrganizationInfo(bytes32 _orgId) internal view returns (OrganizationInfo storage info_) {
         info_ = OrganizationManagerStorage.layout().organizationIdToInfo[_orgId];
     }
 
@@ -31,7 +27,7 @@ library LibOrganizationManager {
      * @dev Assumes that sender permissions have already been checked
      */
     function setOrganizationNameAndDescription(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         string calldata _name,
         string calldata _description)
     internal
@@ -46,11 +42,11 @@ library LibOrganizationManager {
      * @dev Assumes that sender permissions have already been checked
      */
     function setOrganizationAdmin(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _admin)
     internal
     {
-        if(_admin == address(0) || _admin == OrganizationManagerStorage.getOrganizationInfo(_organizationId).admin) {
+        if(_admin == address(0) || _admin == getOrganizationInfo(_organizationId).admin) {
             revert OrganizationManagerStorage.InvalidOrganizationAdmin(_admin);
         }
         getOrganizationInfo(_organizationId).admin = _admin;
@@ -62,27 +58,25 @@ library LibOrganizationManager {
     // =============================================================
 
     function createOrganization(
+        bytes32 _newOrganizationId,
         string calldata _name,
         string calldata _description)
     internal
-    returns(uint32 newOrganizationId_)
-    {
-        OrganizationManagerStorage.Layout storage l = OrganizationManagerStorage.layout();
+    {   
+        if(getOrganizationInfo(_newOrganizationId).admin != address(0)) {
+            revert OrganizationManagerStorage.OrganizationAlreadyExists(_newOrganizationId);
+        }
+        setOrganizationNameAndDescription(_newOrganizationId, _name, _description);
+        setOrganizationAdmin(_newOrganizationId, msg.sender);
 
-        newOrganizationId_ = l.organizationIdCur;
-        l.organizationIdCur++;
-
-        setOrganizationNameAndDescription(newOrganizationId_, _name, _description);
-        setOrganizationAdmin(newOrganizationId_, msg.sender);
-
-        emit OrganizationManagerStorage.OrganizationCreated(newOrganizationId_);
+        emit OrganizationManagerStorage.OrganizationCreated(_newOrganizationId);
     }
 
     // =============================================================
     //                       Helper Functionr
     // =============================================================
 
-    function requireOrganizationAdmin(address _sender, uint32 _organizationId) internal view {
+    function requireOrganizationAdmin(address _sender, bytes32 _organizationId) internal view {
         if(_sender != getOrganizationInfo(_organizationId).admin) {
             revert OrganizationManagerStorage.NotOrganizationAdmin(msg.sender);
         }
@@ -92,7 +86,7 @@ library LibOrganizationManager {
     //                         Modifiers
     // =============================================================
 
-    modifier onlyOrganizationAdmin(uint32 _organizationId) {
+    modifier onlyOrganizationAdmin(bytes32 _organizationId) {
         requireOrganizationAdmin(msg.sender, _organizationId);
         _;
     }

@@ -17,6 +17,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function createForNewOrganization(
+        bytes32 _newOrganizationId,
         string calldata _name,
         string calldata _description,
         uint8 _maxGuildsPerUser,
@@ -30,7 +31,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     {
-        uint32 _newOrganizationId = LibGuildManager.createForNewOrganization(_name, _description);
+        LibGuildManager.createForNewOrganization(_newOrganizationId, _name, _description);
 
         LibGuildManager.setMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
         LibGuildManager.setTimeoutAfterLeavingGuild(_newOrganizationId, _timeoutAfterLeavingGuild);
@@ -43,7 +44,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function createForExistingOrganization(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint8 _maxGuildsPerUser,
         uint32 _timeoutAfterLeavingGuild,
         GuildCreationRule _guildCreationRule,
@@ -69,7 +70,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function setMaxGuildsPerUser(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint8 _maxGuildsPerUser)
     external
     contractsAreSet
@@ -83,7 +84,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function setTimeoutAfterLeavingGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _timeoutAfterLeavingGuild)
     external
     contractsAreSet
@@ -97,7 +98,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function setGuildCreationRule(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         GuildCreationRule _guildCreationRule)
     external
     contractsAreSet
@@ -111,7 +112,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function setMaxUsersPerGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant)
     external
@@ -126,7 +127,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      * @inheritdoc IGuildManager
      */
     function setCustomGuildManagerAddress(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _customGuildManagerAddress)
     external
     contractsAreSet
@@ -143,7 +144,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     /**
      * @inheritdoc IGuildManager
      */
-    function getGuildOrganizationInfo(uint32 _organizationId) external view returns(GuildOrganizationInfo memory) {
+    function getGuildOrganizationInfo(bytes32 _organizationId) external view returns(GuildOrganizationInfo memory) {
         return LibGuildManager.getGuildOrganizationInfo(_organizationId);
     }
 }

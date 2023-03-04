@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {MetaTxFacetStorage} from "src/metatx/MetaTxFacetStorage.sol";
+
 /// @title Library for handling meta transactions with the EIP2771 standard
 /// @notice The logic for getting msgSender and msgData are were copied from OpenZeppelin's 
 ///  ERC2771ContextUpgradeable contract
@@ -31,8 +33,11 @@ library LibMeta {
     //                      Meta Tx Helpers
     // =============================================================
 
+    /**
+     * @dev The only valid forwarding contract is the one that is going to run the executing function
+     */
     function _msgSender() internal view returns (address sender_) {
-        if (isTrustedForwarder(msg.sender)) {
+        if (msg.sender == address(this)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
             /// @solidity memory-safe-assembly
             assembly {
@@ -43,11 +48,18 @@ library LibMeta {
         }
     }
 
+    /**
+     * @dev The only valid forwarding contract is the one that is going to run the executing function
+     */
     function _msgData() internal view returns (bytes calldata data_) {
-        if (isTrustedForwarder(msg.sender)) {
+        if (msg.sender == address(this)) {
             data_ = msg.data[:msg.data.length - 20];
         } else {
             data_ = msg.data;
         }
+    }
+
+    function getMetaDelegateAddress() internal view returns (address delegateAddress_) {
+        return address(MetaTxFacetStorage.layout().systemDelegateApprover);
     }
 }

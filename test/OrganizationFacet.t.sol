@@ -23,8 +23,6 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
 
     OrganizationFacet internal _orgs;
 
-    uint32 constant _org1 = 1;
-
     function setUp() public {
         FacetInfo[] memory facetInfo = new FacetInfo[](1);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
@@ -50,22 +48,24 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     // =============================================================
 
     function testAllowAdminCreateOrganization() public {
-        assertEq("", _orgs.getOrganizationInfo(1).name);
-        assertEq("", _orgs.getOrganizationInfo(1).description);
+        assertEq("", _orgs.getOrganizationInfo(_org1).name);
+        assertEq("", _orgs.getOrganizationInfo(_org1).description);
         
         _orgs.createOrganization(
+            _org1,
             "My org",
             "My descr"
         );
 
-        assertEq("My org", _orgs.getOrganizationInfo(1).name);
-        assertEq("My descr", _orgs.getOrganizationInfo(1).description);
+        assertEq("My org", _orgs.getOrganizationInfo(_org1).name);
+        assertEq("My descr", _orgs.getOrganizationInfo(_org1).description);
     }
 
     function testRevertNonAdminCreateOrganization() public {
         _diamond.revokeRole("ADMIN", deployer);
         vm.expectRevert(errMissingRole("ADMIN", deployer));
         _orgs.createOrganization(
+            _org1,
             "My org",
             "My descr"
         );
@@ -73,45 +73,48 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
 
     function testAllowAdminEditOrganizationNameAndDesc() public {
         _orgs.createOrganization(
+            _org1,
             "My org",
             "My descr"
         );
         
-        assertEq("My org", _orgs.getOrganizationInfo(1).name);
-        assertEq("My descr", _orgs.getOrganizationInfo(1).description);
+        assertEq("My org", _orgs.getOrganizationInfo(_org1).name);
+        assertEq("My descr", _orgs.getOrganizationInfo(_org1).description);
 
-        _orgs.setOrganizationNameAndDescription(1, "New name", "New descr");
+        _orgs.setOrganizationNameAndDescription(_org1, "New name", "New descr");
 
-        assertEq("New name", _orgs.getOrganizationInfo(1).name);
-        assertEq("New descr", _orgs.getOrganizationInfo(1).description);
+        assertEq("New name", _orgs.getOrganizationInfo(_org1).name);
+        assertEq("New descr", _orgs.getOrganizationInfo(_org1).description);
 
         vm.prank(leet);
         vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, leet));
-        _orgs.setOrganizationNameAndDescription(1, "New name2", "New descr2");
+        _orgs.setOrganizationNameAndDescription(_org1, "New name2", "New descr2");
     }
 
     function testAllowAdminToBeChanged() public {
         _orgs.createOrganization(
+            _org1,
             "My org",
             "My descr"
         );
 
-        assertEq(deployer, _orgs.getOrganizationInfo(1).admin);
+        assertEq(deployer, _orgs.getOrganizationInfo(_org1).admin);
 
-        _orgs.setOrganizationAdmin(1, leet);
+        _orgs.setOrganizationAdmin(_org1, leet);
 
-        assertEq(leet, _orgs.getOrganizationInfo(1).admin);
+        assertEq(leet, _orgs.getOrganizationInfo(_org1).admin);
     }
 
     function testRevertNonAdminChangeAdmin() public {
         _orgs.createOrganization(
+            _org1,
             "My org",
             "My descr"
         );
 
         vm.prank(alice);
         vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, alice));
-        _orgs.setOrganizationAdmin(1, leet);
+        _orgs.setOrganizationAdmin(_org1, leet);
     }
 
 }

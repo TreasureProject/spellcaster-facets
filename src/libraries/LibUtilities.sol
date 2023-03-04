@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {PausableStorage} from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-diamond/utils/StringsUpgradeable.sol";
 import {LibMeta} from "./LibMeta.sol";
 
 library LibUtilities {
@@ -59,4 +60,23 @@ library LibUtilities {
             revert IsPaused();
         }
     }
+
+    function toString(uint256 _value) internal pure returns (string memory) {
+        return StringsUpgradeable.toString(_value);
+    }
+
+  /**
+   * @notice This function takes the first 4 MSB of the given bytes32 and converts them to a bytes4
+   * @dev This function is useful for grabbing function selectors from calldata
+   * @param inBytes The bytes to convert to bytes4
+   */
+  function convertBytesToBytes4(bytes memory inBytes) internal pure returns (bytes4 outBytes4) {
+    if (inBytes.length == 0) {
+      return 0x0;
+    }
+
+    assembly {
+      outBytes4 := mload(add(inBytes, 32))
+    }
+  }
 }

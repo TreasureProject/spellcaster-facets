@@ -19,7 +19,7 @@ library LibGuildToken {
         manager_ = GuildTokenStorage.layout().guildManager;
     }
 
-    function getOrganizationId() internal view returns (uint32 orgId_) {
+    function getOrganizationId() internal view returns (bytes32 orgId_) {
         orgId_ = GuildTokenStorage.layout().organizationId;
     }
 
@@ -27,7 +27,7 @@ library LibGuildToken {
         GuildTokenStorage.layout().guildManager = IGuildManager(_guildManagerAddress);
     }
 
-    function setOrganizationId(uint32 _orgId) internal {
+    function setOrganizationId(bytes32 _orgId) internal {
         GuildTokenStorage.layout().organizationId = _orgId;
     }
     

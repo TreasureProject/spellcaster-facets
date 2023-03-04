@@ -16,8 +16,9 @@ import {
 } from "src/interfaces/IGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
+import {LibOrganizationManager} from "src/libraries/LibOrganizationManager.sol";
+import {LibMeta} from "src/libraries/LibMeta.sol";
 
-import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
 import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.sol";
 
 /**
@@ -45,50 +46,50 @@ library LibGuildManager {
     }
 
     /**
-     * @param _orgId The id of the org to retrieve info for
+     * @param _organizationId The id of the org to retrieve info for
      * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
      *  instead of using a memory copy overwrite
      */
-    function getGuildOrganizationInfo(uint32 _orgId) internal view returns (GuildOrganizationInfo storage info_) {
-        info_ = GuildManagerStorage.layout().guildOrganizationInfo[_orgId];
+    function getGuildOrganizationInfo(bytes32 _organizationId) internal view returns (GuildOrganizationInfo storage info_) {
+        info_ = GuildManagerStorage.layout().guildOrganizationInfo[_organizationId];
     }
 
     /**
-     * @param _orgId The id of the org that contains the guild to retrieve info for
+     * @param _organizationId The id of the org that contains the guild to retrieve info for
      * @param _guildId The id of the guild within the given org to retrieve info for
      * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
      *  instead of using a memory copy overwrite
      */
-    function getGuildInfo(uint32 _orgId, uint32 _guildId) internal view returns (GuildInfo storage info_) {
-        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_orgId][_guildId];
+    function getGuildInfo(bytes32 _organizationId, uint32 _guildId) internal view returns (GuildInfo storage info_) {
+        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_organizationId][_guildId];
     }
 
     /**
-     * @param _orgId The id of the org that contains the user to retrieve info for
+     * @param _organizationId The id of the org that contains the user to retrieve info for
      * @param _user The id of the user within the given org to retrieve info for
      * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
      *  instead of using a memory copy overwrite
      */
-    function getUserInfo(uint32 _orgId, address _user) internal view returns (GuildOrganizationUserInfo storage info_) {
-        info_ = GuildManagerStorage.layout().organizationIdToAddressToInfo[_orgId][_user];
+    function getUserInfo(bytes32 _organizationId, address _user) internal view returns (GuildOrganizationUserInfo storage info_) {
+        info_ = GuildManagerStorage.layout().organizationIdToAddressToInfo[_organizationId][_user];
     }
 
     /**
-     * @param _orgId The id of the org that contains the user to retrieve info for
+     * @param _organizationId The id of the org that contains the user to retrieve info for
      * @param _guildId The id of the guild within the given org to retrieve user info for
      * @param _user The id of the user to retrieve info for
      * @return info_ The return struct is storage. This means all state changes to the struct will save automatically,
      *  instead of using a memory copy overwrite
      */
     function getGuildUserInfo(
-        uint32 _orgId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     internal
     view
     returns (GuildUserInfo storage info_)
     {
-        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_orgId][_guildId].addressToGuildUserInfo[_user];
+        info_ = GuildManagerStorage.layout().organizationIdToGuildIdToInfo[_organizationId][_guildId].addressToGuildUserInfo[_user];
     }
 
     // =============================================================
@@ -96,7 +97,7 @@ library LibGuildManager {
     // =============================================================
 
     function setMaxGuildsPerUser(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint8 _maxGuildsPerUser)
     internal
     {
@@ -107,7 +108,7 @@ library LibGuildManager {
     }
 
     function setTimeoutAfterLeavingGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _timeoutAfterLeavingGuild)
     internal
     {
@@ -116,7 +117,7 @@ library LibGuildManager {
     }
 
     function setGuildCreationRule(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         GuildCreationRule _guildCreationRule)
     internal
     {
@@ -125,7 +126,7 @@ library LibGuildManager {
     }
 
     function setMaxUsersPerGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant)
     internal
@@ -136,7 +137,7 @@ library LibGuildManager {
     }
 
     function setCustomGuildManagerAddress(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _customGuildManagerAddress)
     internal
     {
@@ -152,7 +153,7 @@ library LibGuildManager {
      * @dev Assumes permissions have already been checked (only guild owner)
      */
     function setGuildInfo(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string calldata _name,
         string calldata _description)
@@ -170,7 +171,7 @@ library LibGuildManager {
      * @dev Assumes permissions have already been checked (only guild owner)
      */
     function setGuildSymbol(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string calldata _symbolImageData,
         bool _isSymbolOnChain)
@@ -185,7 +186,7 @@ library LibGuildManager {
     }
 
     function getMaxUsersForGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     internal
     view
@@ -210,23 +211,23 @@ library LibGuildManager {
     // =============================================================
 
     function createForNewOrganization(
+        bytes32 _newOrganizationId,
         string calldata _name,
         string calldata _description)
     internal
-    returns(uint32 newOrganizationId_)
     {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
-        newOrganizationId_ = OrganizationManagerStorage.createOrganization(_name, _description);
+        LibOrganizationManager.createOrganization(_newOrganizationId, _name, _description);
 
         // Create new 1155 token to represent this organization.
-        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (newOrganizationId_));
+        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (_newOrganizationId, LibMeta.getMetaDelegateAddress()));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
-        l.guildOrganizationInfo[newOrganizationId_].tokenAddress = _guildTokenAddress;
+        l.guildOrganizationInfo[_newOrganizationId].tokenAddress = _guildTokenAddress;
 
         // The first guild created will be ID 1.
-        l.guildOrganizationInfo[newOrganizationId_].guildIdCur = 1;
+        l.guildOrganizationInfo[_newOrganizationId].guildIdCur = 1;
 
-        emit GuildManagerStorage.GuildOrganizationInitialized(newOrganizationId_, _guildTokenAddress);
+        emit GuildManagerStorage.GuildOrganizationInitialized(_newOrganizationId, _guildTokenAddress);
     }
 
     /**
@@ -235,7 +236,7 @@ library LibGuildManager {
      * @param _organizationId The id of the organization to create a guild for
      */
     function createForExistingOrganization(
-        uint32 _organizationId)
+        bytes32 _organizationId)
     internal
     {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
@@ -244,7 +245,7 @@ library LibGuildManager {
         }
 
         // Create new 1155 token to represent this organization.
-        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (_organizationId));
+        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (_organizationId, LibMeta.getMetaDelegateAddress()));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
         l.guildOrganizationInfo[_organizationId].tokenAddress = _guildTokenAddress;
 
@@ -255,7 +256,7 @@ library LibGuildManager {
     }
 
     function createGuild(
-        uint32 _organizationId)
+        bytes32 _organizationId)
     internal
     {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
@@ -287,7 +288,7 @@ library LibGuildManager {
     // =============================================================
 
     function inviteUsers(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users)
     internal
@@ -311,7 +312,7 @@ library LibGuildManager {
     }
 
     function acceptInvitation(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     internal
     {
@@ -323,7 +324,7 @@ library LibGuildManager {
     }
 
     function leaveGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     internal
     {
@@ -335,7 +336,7 @@ library LibGuildManager {
     }
 
     function kickOrRemoveInvitations(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users)
     internal
@@ -363,7 +364,7 @@ library LibGuildManager {
     // =============================================================
 
     function changeGuildAdmins(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users,
         bool[] calldata _isAdmins)
@@ -392,7 +393,7 @@ library LibGuildManager {
     }
 
     function changeGuildOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _newOwner)
     internal
@@ -411,7 +412,7 @@ library LibGuildManager {
     // =============================================================
 
     function userCanCreateGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _user)
     internal
     view
@@ -422,7 +423,7 @@ library LibGuildManager {
         if(_creationRule == GuildCreationRule.ANYONE) {
             return true;
         } else if(_creationRule == GuildCreationRule.ADMIN_ONLY) {
-            return _user == OrganizationManagerStorage.getOrganizationInfo(_organizationId).admin;
+            return _user == LibOrganizationManager.getOrganizationInfo(_organizationId).admin;
         } else {
             // CUSTOM_RULE
             address _customGuildManagerAddress = l.guildOrganizationInfo[_organizationId].customGuildManagerAddress;
@@ -433,7 +434,7 @@ library LibGuildManager {
     }
 
     function isGuildOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     internal
@@ -444,7 +445,7 @@ library LibGuildManager {
     }
 
     function isGuildAdminOrOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     internal
@@ -460,7 +461,7 @@ library LibGuildManager {
     // =============================================================
 
     function requireGuildOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string memory _action)
     internal
@@ -472,7 +473,7 @@ library LibGuildManager {
     }
 
     function requireGuildOwnerOrAdmin(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string memory _action)
     internal
@@ -492,7 +493,7 @@ library LibGuildManager {
     // This function does not do ANY permissions check to see if this user should be set
     // to the status.
     function _changeUserStatus(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user,
         GuildUserStatus _newStatus)
@@ -523,7 +524,7 @@ library LibGuildManager {
     }
 
     function _onUserJoinedGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     private
@@ -554,7 +555,7 @@ library LibGuildManager {
     }
 
     function _onUserLeftGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     private
@@ -587,7 +588,7 @@ library LibGuildManager {
     // =============================================================
 
     modifier onlyGuildOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string memory _action)
     {
@@ -596,7 +597,7 @@ library LibGuildManager {
     }
 
     modifier onlyGuildOwnerOrAdmin(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string memory _action)
     {

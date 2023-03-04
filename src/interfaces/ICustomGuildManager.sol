@@ -9,7 +9,7 @@ interface ICustomGuildManager {
      * @param _user The user to check if they can create a guild.
      * @param _organizationId The organization to find the guild within.
      */
-    function canCreateGuild(address _user, uint32 _organizationId) external view returns(bool);
+    function canCreateGuild(address _user, bytes32 _organizationId) external view returns(bool);
     
     /**
      * @dev Called after a guild is created by the given owner. Additional state changes
@@ -18,7 +18,7 @@ interface ICustomGuildManager {
      * @param _organizationId The organization to find the guild within. 
      * @param _createdGuildId The guild that was created.
      */
-    function onGuildCreation(address _owner, uint32 _organizationId, uint32 _createdGuildId) external;
+    function onGuildCreation(address _owner, bytes32 _organizationId, uint32 _createdGuildId) external;
 
     /**
      * @dev Returns the maximum number of users that can be in a guild.
@@ -26,5 +26,5 @@ interface ICustomGuildManager {
      * @param _organizationId The organization to find the guild within.
      * @param _guildId The guild to find the max users for.
      */
-    function maxUsersForGuild(uint32 _organizationId, uint32 _guildId) external view returns(uint32);
+    function maxUsersForGuild(bytes32 _organizationId, uint32 _guildId) external view returns(uint32);
 }

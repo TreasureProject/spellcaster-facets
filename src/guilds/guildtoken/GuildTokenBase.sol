@@ -3,16 +3,17 @@ pragma solidity ^0.8.0;
 
 import {ContextUpgradeable} from "@openzeppelin/contracts-diamond/utils/ContextUpgradeable.sol";
 
-import {AccessControlFacet} from "../../access/AccessControlFacet.sol";
-import {ERC1155Facet} from "../../token/ERC1155Facet.sol";
+import {AccessControlFacet} from "src/access/AccessControlFacet.sol";
+import {ERC1155Facet} from "src/token/ERC1155Facet.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {LibMeta} from "src/libraries/LibMeta.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
 
 abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Facet {
 
-    function __GuildTokenState_init() internal onlyFacetInitializing {
+    function __GuildTokenBase_init() internal onlyFacetInitializing {
         __ERC1155Facet_init("");
+        __AccessControlEnumerable_init();
     }
     
     /**
@@ -25,6 +26,14 @@ abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Face
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev Overrides the _msgSender function for all dependent contracts that implement it.
+     *  This must be done outside of the OZ-wrapped facets to avoid conflicting overrides needing explicit declaration
+     */
+    function _msgSender() internal view override returns (address) {
+        return LibMeta._msgSender();
     }
 
     modifier whenNotPaused() {

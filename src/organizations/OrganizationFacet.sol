@@ -6,8 +6,9 @@ import {FacetInitializable} from "../utils/FacetInitializable.sol";
 import {LibUtilities} from "../libraries/LibUtilities.sol";
 import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
 import {LibMeta} from "../libraries/LibMeta.sol";
+import {LibOrganizationManager} from "src/libraries/LibOrganizationManager.sol";
 
-import {IOrganizationManager, OrganizationInfo} from "../interfaces/IOrganizationManager.sol";
+import {IOrganizationManager, OrganizationInfo} from "src/interfaces/IOrganizationManager.sol";
 import {OrganizationManagerStorage} from "./OrganizationManagerStorage.sol";
 
 /**
@@ -21,7 +22,6 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
      * Ideally referenced in an initialization script facet
      */
     function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet")) {
-        OrganizationManagerStorage.layout().organizationIdCur = 1;
     }
 
     // =============================================================
@@ -32,22 +32,22 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
      * @inheritdoc IOrganizationManager
      */
     function createOrganization(
+        bytes32 _newOrganizationId,
         string calldata _name,
         string calldata _description)
     public
     override
     onlyRole(ADMIN_ROLE)
     whenNotPaused
-    returns(uint32 newOrganizationId_)
     {
-        newOrganizationId_ = OrganizationManagerStorage.createOrganization(_name, _description);
+        LibOrganizationManager.createOrganization(_newOrganizationId, _name, _description);
     }
 
     /**
      * @inheritdoc IOrganizationManager
      */
     function setOrganizationNameAndDescription(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         string calldata _name,
         string calldata _description)
     public
@@ -55,21 +55,21 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        OrganizationManagerStorage.setOrganizationNameAndDescription(_organizationId, _name, _description);
+        LibOrganizationManager.setOrganizationNameAndDescription(_organizationId, _name, _description);
     }
 
     /**
      * @inheritdoc IOrganizationManager
      */
     function setOrganizationAdmin(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _admin)
     public
     override
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
     {
-        OrganizationManagerStorage.setOrganizationAdmin(_organizationId, _admin);
+        LibOrganizationManager.setOrganizationAdmin(_organizationId, _admin);
     }
 
     // =============================================================
@@ -79,21 +79,21 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
     /**
      * @inheritdoc IOrganizationManager
      */
-    function getOrganizationInfo(uint32 _organizationId) external override view returns(OrganizationInfo memory) {
-        return OrganizationManagerStorage.getOrganizationInfo(_organizationId);
+    function getOrganizationInfo(bytes32 _organizationId) external override view returns(OrganizationInfo memory) {
+        return LibOrganizationManager.getOrganizationInfo(_organizationId);
     }
 
     // =============================================================
     //                         MODIFIERS
     // =============================================================
 
-    modifier onlyOrganizationAdmin(uint32 _organizationId) {
-        OrganizationManagerStorage.requireOrganizationAdmin(msg.sender, _organizationId);
+    modifier onlyOrganizationAdmin(bytes32 _organizationId) {
+        LibOrganizationManager.requireOrganizationAdmin(msg.sender, _organizationId);
         _;
     }
 
-    modifier onlyValidOrganization(uint32 _organizationId) {
-        if(OrganizationManagerStorage.getOrganizationInfo(_organizationId).admin == address(0)) {
+    modifier onlyValidOrganization(bytes32 _organizationId) {
+        if(LibOrganizationManager.getOrganizationInfo(_organizationId).admin == address(0)) {
             revert OrganizationManagerStorage.NonexistantOrganization(_organizationId);
         }
         _;

@@ -19,14 +19,15 @@ struct OrganizationInfo {
 interface IOrganizationManager {
     /**
      * @dev Creates a new organization. For now, this can only be done by admins on the GuildManager contract.
+     * @param _newOrganizationId The id of the organization being created.
      * @param _name The name of the organization.
      * @param _description The description of the organization.
      */
     function createOrganization(
+        bytes32 _newOrganizationId,
         string calldata _name,
         string calldata _description)
-    external
-    returns(uint32 newOrganizationId_);
+    external;
 
     /**
      * @dev Sets the name and description for an organization.
@@ -35,7 +36,7 @@ interface IOrganizationManager {
      * @param _description The new description of the organization.
      */
     function setOrganizationNameAndDescription(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         string calldata _name,
         string calldata _description)
     external;
@@ -46,7 +47,7 @@ interface IOrganizationManager {
      * @param _admin The new admin of the organization.
      */
     function setOrganizationAdmin(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _admin)
     external;
 
@@ -56,5 +57,5 @@ interface IOrganizationManager {
      *  calling the mapping directly from external contracts
      * @param _organizationId The organization to return info for
      */
-    function getOrganizationInfo(uint32 _organizationId) external view returns(OrganizationInfo memory);
+    function getOrganizationInfo(bytes32 _organizationId) external view returns(OrganizationInfo memory);
 }

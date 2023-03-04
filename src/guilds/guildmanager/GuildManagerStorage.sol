@@ -26,28 +26,28 @@ import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerS
 library GuildManagerStorage {
 
     // Guild Management Events
-    event GuildOrganizationInitialized(uint32 organizationId, address tokenAddress);
-    event TimeoutAfterLeavingGuild(uint32 organizationId, uint32 timeoutAfterLeavingGuild);
-    event MaxGuildsPerUserUpdated(uint32 organizationId, uint8 maxGuildsPerUser);
-    event MaxUsersPerGuildUpdated(uint32 organizationId, MaxUsersPerGuildRule rule, uint32 maxUsersPerGuildConstant);
-    event GuildCreationRuleUpdated(uint32 organizationId, GuildCreationRule creationRule);
-    event CustomGuildManagerAddressUpdated(uint32 organizationId, address customGuildManagerAddress);
+    event GuildOrganizationInitialized(bytes32 organizationId, address tokenAddress);
+    event TimeoutAfterLeavingGuild(bytes32 organizationId, uint32 timeoutAfterLeavingGuild);
+    event MaxGuildsPerUserUpdated(bytes32 organizationId, uint8 maxGuildsPerUser);
+    event MaxUsersPerGuildUpdated(bytes32 organizationId, MaxUsersPerGuildRule rule, uint32 maxUsersPerGuildConstant);
+    event GuildCreationRuleUpdated(bytes32 organizationId, GuildCreationRule creationRule);
+    event CustomGuildManagerAddressUpdated(bytes32 organizationId, address customGuildManagerAddress);
 
     // Guild Events
-    event GuildCreated(uint32 organizationId, uint32 guildId);
-    event GuildInfoUpdated(uint32 organizationId, uint32 guildId, string name, string description);
-    event GuildSymbolUpdated(uint32 organizationId, uint32 guildId, string symbolImageData, bool isSymbolOnChain);
-    event GuildUserStatusChanged(uint32 organizationId, uint32 guildId, address user, GuildUserStatus status);
+    event GuildCreated(bytes32 organizationId, uint32 guildId);
+    event GuildInfoUpdated(bytes32 organizationId, uint32 guildId, string name, string description);
+    event GuildSymbolUpdated(bytes32 organizationId, uint32 guildId, string symbolImageData, bool isSymbolOnChain);
+    event GuildUserStatusChanged(bytes32 organizationId, uint32 guildId, address user, GuildUserStatus status);
 
     // Errors
-    error GuildOrganizationAlreadyInitialized(uint32 organizationId);
-    error UserCannotCreateGuild(uint32 organizationId, address user);
+    error GuildOrganizationAlreadyInitialized(bytes32 organizationId);
+    error UserCannotCreateGuild(bytes32 organizationId, address user);
     error NotGuildOwner(address sender, string action);
     error NotGuildOwnerOrAdmin(address sender, string action);
-    error GuildFull(uint32 organizationId, uint32 guildId);
-    error UserAlreadyInGuild(uint32 organizationId, uint32 guildId, address user);
-    error UserInTooManyGuilds(uint32 organizationId, address user);
-    error UserNotGuildMember(uint32 organizationId, uint32 guildId, address user);
+    error GuildFull(bytes32 organizationId, uint32 guildId);
+    error UserAlreadyInGuild(bytes32 organizationId, uint32 guildId, address user);
+    error UserInTooManyGuilds(bytes32 organizationId, address user);
+    error UserNotGuildMember(bytes32 organizationId, uint32 guildId, address user);
     error InvalidAddress(address user);
 
     struct Layout {
@@ -58,15 +58,15 @@ library GuildManagerStorage {
         /**
          * @dev The organizationId is the key for this mapping
          */
-        mapping(uint32 => GuildOrganizationInfo) guildOrganizationInfo;
+        mapping(bytes32 => GuildOrganizationInfo) guildOrganizationInfo;
         /**
          * @dev The organizationId is the key for the first mapping, the guildId is the key for the second mapping
          */
-        mapping(uint32 => mapping(uint32 => GuildInfo)) organizationIdToGuildIdToInfo;
+        mapping(bytes32 => mapping(uint32 => GuildInfo)) organizationIdToGuildIdToInfo;
         /**
          * @dev The organizationId is the key for the first mapping, the user is the key for the second mapping
          */
-        mapping(uint32 => mapping(address => GuildOrganizationUserInfo)) organizationIdToAddressToInfo;
+        mapping(bytes32 => mapping(address => GuildOrganizationUserInfo)) organizationIdToAddressToInfo;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildmanager");

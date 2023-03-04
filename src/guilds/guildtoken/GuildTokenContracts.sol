@@ -8,7 +8,7 @@ import {GuildTokenBase, IGuildToken} from "./GuildTokenBase.sol";
 abstract contract GuildTokenContracts is GuildTokenBase {
 
     function __GuildTokenContracts_init() internal onlyFacetInitializing {
-        GuildTokenBase.__GuildTokenState_init();
+        GuildTokenBase.__GuildTokenBase_init();
     }
 
     function setContracts(

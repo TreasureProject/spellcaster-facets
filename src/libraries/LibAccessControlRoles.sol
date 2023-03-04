@@ -14,6 +14,7 @@ library LibAccessControlRoles {
     error MissingEitherRole(address _account, bytes32 _roleOption1, bytes32 _roleOption2);
     error MissingRoleAndNotOwner(address _account, bytes32 _role);
     error MissingRole(address _account, bytes32 _role);
+    error IsNotContractOwner(address _account);
 
     // Taken from AccessControlUpgradeable
     function hasRole(bytes32 _role, address _account) internal view returns (bool) {
@@ -23,6 +24,12 @@ library LibAccessControlRoles {
     function requireRole(bytes32 _role, address _account) internal view {
         if (!hasRole(_role, _account)) {
             revert MissingRole(_account, _role);
+        }
+    }
+
+    function requireOwner(address _account) internal view {
+        if (_account != contractOwner()) {
+            revert IsNotContractOwner(_account);
         }
     }
 

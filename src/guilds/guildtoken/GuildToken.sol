@@ -5,13 +5,14 @@ import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/librari
 import {LibMeta} from "src/libraries/LibMeta.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
 import {GuildTokenContracts, LibGuildToken, IGuildToken} from "./GuildTokenContracts.sol";
+import {MetaTxFacet} from "src/metatx/MetaTxFacet.sol";
 
-contract GuildToken is GuildTokenContracts {
+contract GuildToken is GuildTokenContracts, MetaTxFacet {
 
     /**
      * @inheritdoc IGuildToken
      */
-    function initialize(uint32 _organizationId) external facetInitializer(keccak256("GuildToken")) {
+    function initialize(bytes32 _organizationId, address _systemDelegateApprover) external facetInitializer(keccak256("GuildToken")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
@@ -22,6 +23,8 @@ contract GuildToken is GuildTokenContracts {
 
         // Give admin to the owner. May be revoked to prevent permanent administrative rights as owner
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
+
+        __MetaTxFacet_init(_systemDelegateApprover);
     }
 
     /**
@@ -61,7 +64,7 @@ contract GuildToken is GuildTokenContracts {
     /**
      * @inheritdoc IGuildToken
      */
-    function organizationId() external view returns (uint32 organizationId_) {
+    function organizationId() external view returns (bytes32 organizationId_) {
         organizationId_ = LibGuildToken.getOrganizationId();
     }
 

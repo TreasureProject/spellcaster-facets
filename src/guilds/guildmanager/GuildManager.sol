@@ -5,23 +5,27 @@ import {GuildManagerSettings, LibGuildManager, IGuildManager} from "./GuildManag
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
+import {MetaTxFacet} from "src/metatx/MetaTxFacet.sol";
+import {LibUtilities} from "src/libraries/LibUtilities.sol";
 
-contract GuildManager is GuildManagerSettings {
+contract GuildManager is GuildManagerSettings, MetaTxFacet {
 
     /**
      * @dev Sets all necessary state and permissions for the contract
      * @param _guildTokenImplementationAddress The token implementation address for guild token contracts to proxy to
      */
-    function GuildManager_init(address _guildTokenImplementationAddress) external facetInitializer(keccak256("GuildManager")) {
+    function GuildManager_init(address _guildTokenImplementationAddress, address _systemDelegateApprover) external facetInitializer(keccak256("GuildManager")) {
         GuildManagerSettings.__GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
+
+        __MetaTxFacet_init(_systemDelegateApprover);
     }
 
     /**
      * @inheritdoc IGuildManager
      */
     function createGuild(
-        uint32 _organizationId)
+        bytes32 _organizationId)
     external
     contractsAreSet
     whenNotPaused
@@ -33,7 +37,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function updateGuildInfo(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string calldata _name,
         string calldata _description)
@@ -49,7 +53,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function updateGuildSymbol(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         string calldata _symbolImageData,
         bool _isSymbolOnChain)
@@ -65,7 +69,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function inviteUsers(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users)
     external
@@ -78,7 +82,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function acceptInvitation(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     external
     whenNotPaused
@@ -90,7 +94,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function changeGuildAdmins(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users,
         bool[] calldata _isAdmins)
@@ -104,7 +108,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function changeGuildOwner(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _newOwner)
     external
@@ -117,7 +121,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function leaveGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     external
     whenNotPaused
@@ -129,7 +133,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function kickOrRemoveInvitations(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users)
     external
@@ -142,7 +146,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function userCanCreateGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         address _user)
     public
     view
@@ -156,7 +160,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function getGuildMemberStatus(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId,
         address _user)
     public
@@ -169,35 +173,35 @@ contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function isValidGuild(uint32 _organizationId, uint32 _guildId) external view returns(bool) {
+    function isValidGuild(bytes32 _organizationId, uint32 _guildId) external view returns(bool) {
         return LibGuildManager.getGuildOrganizationInfo(_organizationId).guildIdCur > _guildId && _guildId != 0;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
-    function guildTokenAddress(uint32 _organizationId) external view returns(address) {
+    function guildTokenAddress(bytes32 _organizationId) external view returns(address) {
         return LibGuildManager.getGuildOrganizationInfo(_organizationId).tokenAddress;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
-    function guildName(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
+    function guildName(bytes32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return LibGuildManager.getGuildInfo(_organizationId, _guildId).name;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
-    function guildDescription(uint32 _organizationId, uint32 _guildId) external view returns(string memory) {
+    function guildDescription(bytes32 _organizationId, uint32 _guildId) external view returns(string memory) {
         return LibGuildManager.getGuildInfo(_organizationId, _guildId).description;
     }
 
     /**
      * @inheritdoc IGuildManager
      */
-    function guildOwner(uint32 _organizationId, uint32 _guildId) external view returns(address) {
+    function guildOwner(bytes32 _organizationId, uint32 _guildId) external view returns(address) {
         return LibGuildManager.getGuildInfo(_organizationId, _guildId).currentOwner;
     }
 
@@ -205,7 +209,7 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function maxUsersForGuild(
-        uint32 _organizationId,
+        bytes32 _organizationId,
         uint32 _guildId)
     public
     view
@@ -217,7 +221,7 @@ contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function guildSymbolInfo(uint32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {
+    function guildSymbolInfo(bytes32 _organizationId, uint32 _guildId) external view returns(string memory _symbolImageData, bool _isSymbolOnChain) {
         GuildInfo storage _guildInfo = LibGuildManager.getGuildInfo(_organizationId, _guildId);
         _symbolImageData = _guildInfo.symbolImageData;
         _isSymbolOnChain = _guildInfo.isSymbolOnChain;

@@ -6,7 +6,7 @@ import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 
 library GuildTokenStorage {
 
-    error GuildOrganizationAlreadyInitialized(uint32 organizationId);
+    error GuildOrganizationAlreadyInitialized(bytes32 organizationId);
 
     struct Layout {
         /**
@@ -16,7 +16,7 @@ library GuildTokenStorage {
         /**
          * @notice The organization this 1155 collection is associated to.
         */
-        uint32 organizationId;
+        bytes32 organizationId;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildtoken");
