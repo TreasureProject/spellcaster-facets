@@ -14,7 +14,7 @@ import {LibMeta} from "../src/libraries/LibMeta.sol";
 
 import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
-contract GuildTokenMetaTXTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
+contract GuildTokenMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
