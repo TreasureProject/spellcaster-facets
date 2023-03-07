@@ -262,8 +262,8 @@ library LibGuildManager {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
         // Check to make sure the user can create a guild
-        if(!userCanCreateGuild(_organizationId, msg.sender)) {
-            revert GuildManagerStorage.UserCannotCreateGuild(_organizationId, msg.sender);
+        if(!userCanCreateGuild(_organizationId, LibMeta._msgSender())) {
+            revert GuildManagerStorage.UserCannotCreateGuild(_organizationId, LibMeta._msgSender());
         }
 
         uint32 _newGuildId = l.guildOrganizationInfo[_organizationId].guildIdCur;
@@ -274,12 +274,12 @@ library LibGuildManager {
         // Set the created user as the OWNER.
         // May revert depending on how many guilds this user is already apart of
         // and the rules of the organization.
-        _changeUserStatus(_organizationId, _newGuildId, msg.sender, GuildUserStatus.OWNER);
+        _changeUserStatus(_organizationId, _newGuildId, LibMeta._msgSender(), GuildUserStatus.OWNER);
 
         // Call the hook if they have it setup.
         if(l.guildOrganizationInfo[_organizationId].customGuildManagerAddress != address(0))  {
             return ICustomGuildManager(l.guildOrganizationInfo[_organizationId].customGuildManagerAddress)
-                .onGuildCreation(msg.sender, _organizationId, _newGuildId);
+                .onGuildCreation(LibMeta._msgSender(), _organizationId, _newGuildId);
         }
     }
 
@@ -316,11 +316,11 @@ library LibGuildManager {
         uint32 _guildId)
     internal
     {
-        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
+        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus == GuildUserStatus.INVITED, "Not invited");
 
         // Will validate they are not joining too many guilds.
-        _changeUserStatus(_organizationId, _guildId, msg.sender, GuildUserStatus.MEMBER);
+        _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.MEMBER);
     }
 
     function leaveGuild(
@@ -328,11 +328,11 @@ library LibGuildManager {
         uint32 _guildId)
     internal
     {
-        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, msg.sender).userStatus;
+        GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus != GuildUserStatus.OWNER, "Owner cannot leave guild");
         require(_userStatus == GuildUserStatus.MEMBER || _userStatus == GuildUserStatus.ADMIN, "Not member of guild");
 
-        _changeUserStatus(_organizationId, _guildId, msg.sender, GuildUserStatus.NOT_ASSOCIATED);
+        _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.NOT_ASSOCIATED);
     }
 
     function kickOrRemoveInvitations(
@@ -403,7 +403,7 @@ library LibGuildManager {
         GuildUserStatus _newOwnerOldStatus = getGuildUserInfo(_organizationId, _guildId, _newOwner).userStatus;
         require(_newOwnerOldStatus == GuildUserStatus.MEMBER || _newOwnerOldStatus == GuildUserStatus.ADMIN, "Can only make member owner");
 
-        _changeUserStatus(_organizationId, _guildId, msg.sender, GuildUserStatus.MEMBER);
+        _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.MEMBER);
         _changeUserStatus(_organizationId, _guildId, _newOwner, GuildUserStatus.OWNER);
     }
 
@@ -467,8 +467,8 @@ library LibGuildManager {
     internal
     view
     {
-        if(!isGuildOwner(_organizationId, _guildId, msg.sender)) {
-            revert GuildManagerStorage.NotGuildOwner(msg.sender, _action);
+        if(!isGuildOwner(_organizationId, _guildId, LibMeta._msgSender())) {
+            revert GuildManagerStorage.NotGuildOwner(LibMeta._msgSender(), _action);
         }
     }
 
@@ -479,8 +479,8 @@ library LibGuildManager {
     internal
     view
     {
-        if(!isGuildAdminOrOwner(_organizationId, _guildId, msg.sender)) {
-            revert GuildManagerStorage.NotGuildOwnerOrAdmin(msg.sender, _action);
+        if(!isGuildAdminOrOwner(_organizationId, _guildId, LibMeta._msgSender())) {
+            revert GuildManagerStorage.NotGuildOwnerOrAdmin(LibMeta._msgSender(), _action);
         }
     }
 

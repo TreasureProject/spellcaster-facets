@@ -39,6 +39,8 @@ library MetaTxFacetStorage {
 
     error InvalidDelegateApprover();
     error CannotCallExecuteFromExecute();
+    error SessionOrganizationIdNotConsumed();
+    error SessionOrganizationIdMismatch(bytes32 sessionOrganizationId, bytes32 functionOrganizationId);
     error NonceAlreadyUsedForSender(address sender, uint256 nonce);
     error UnauthorizedSignerForSender(address signer, address sender);
 
@@ -53,6 +55,11 @@ library MetaTxFacetStorage {
          * @dev Key1: from address, Key2: nonce, Value: used or not
         */
         mapping(address => mapping(uint256 => bool)) nonces;
+        /**
+         * @dev The organization id of the session. Set before invoking a meta transaction and requires the function to clear it
+         *  to ensure the session organization matches the function organizationId
+         */
+        bytes32 sessionOrganizationId;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.facet.metatx");

@@ -5,9 +5,8 @@ import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/librari
 import {LibMeta} from "src/libraries/LibMeta.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
 import {GuildTokenContracts, LibGuildToken, IGuildToken} from "./GuildTokenContracts.sol";
-import {MetaTxFacet} from "src/metatx/MetaTxFacet.sol";
 
-contract GuildToken is GuildTokenContracts, MetaTxFacet {
+contract GuildToken is GuildTokenContracts {
 
     /**
      * @inheritdoc IGuildToken
@@ -24,7 +23,7 @@ contract GuildToken is GuildTokenContracts, MetaTxFacet {
         // Give admin to the owner. May be revoked to prevent permanent administrative rights as owner
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
 
-        __MetaTxFacet_init(_systemDelegateApprover);
+        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
@@ -37,6 +36,7 @@ contract GuildToken is GuildTokenContracts, MetaTxFacet {
     external
     onlyRole(ADMIN_ROLE)
     whenNotPaused
+    supportsMetaTxNoId
     {
         _mint(_to, _id, _amount, "");
     }
@@ -50,7 +50,9 @@ contract GuildToken is GuildTokenContracts, MetaTxFacet {
         uint256 _amount)
     external
     onlyRole(ADMIN_ROLE)
-    whenNotPaused {
+    whenNotPaused
+    supportsMetaTxNoId
+    {
         _burn(_account, _id, _amount);
     }
 

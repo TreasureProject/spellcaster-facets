@@ -5,20 +5,18 @@ import {GuildManagerSettings, LibGuildManager, IGuildManager} from "./GuildManag
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {GuildInfo, GuildUserStatus} from "src/interfaces/IGuildManager.sol";
-import {MetaTxFacet} from "src/metatx/MetaTxFacet.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
 
-contract GuildManager is GuildManagerSettings, MetaTxFacet {
+contract GuildManager is GuildManagerSettings {
 
     /**
-     * @dev Sets all necessary state and permissions for the contract
-     * @param _guildTokenImplementationAddress The token implementation address for guild token contracts to proxy to
+     * @inheritdoc IGuildManager
      */
     function GuildManager_init(address _guildTokenImplementationAddress, address _systemDelegateApprover) external facetInitializer(keccak256("GuildManager")) {
-        GuildManagerSettings.__GuildManagerSettings_init();
+        __GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
 
-        __MetaTxFacet_init(_systemDelegateApprover);
+        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
@@ -29,6 +27,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
     external
     contractsAreSet
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.createGuild(_organizationId);
     }
@@ -44,6 +43,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
     external
     contractsAreSet
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_INFO");
         LibGuildManager.setGuildInfo(_organizationId, _guildId, _name, _description);
@@ -60,6 +60,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
     external
     contractsAreSet
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_SYMBOL");
         LibGuildManager.setGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
@@ -74,6 +75,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         address[] calldata _users)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.inviteUsers(_organizationId, _guildId, _users);
     }
@@ -86,6 +88,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         uint32 _guildId)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.acceptInvitation(_organizationId, _guildId);
     }
@@ -100,6 +103,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         bool[] calldata _isAdmins)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.changeGuildAdmins(_organizationId, _guildId, _users, _isAdmins);
     }
@@ -113,6 +117,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         address _newOwner)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.changeGuildOwner(_organizationId, _guildId, _newOwner);
     }
@@ -125,6 +130,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         uint32 _guildId)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.leaveGuild(_organizationId, _guildId);
     }
@@ -138,6 +144,7 @@ contract GuildManager is GuildManagerSettings, MetaTxFacet {
         address[] calldata _users)
     external
     whenNotPaused
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.kickOrRemoveInvitations(_organizationId, _guildId, _users);
     }

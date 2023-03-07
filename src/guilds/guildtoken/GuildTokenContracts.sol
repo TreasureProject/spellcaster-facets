@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {LibGuildToken} from "src/libraries/LibGuildToken.sol";
-import {GuildTokenBase, IGuildToken} from "./GuildTokenBase.sol";
+import {GuildTokenBase, IGuildToken, LibGuildToken} from "./GuildTokenBase.sol";
 
 abstract contract GuildTokenContracts is GuildTokenBase {
 

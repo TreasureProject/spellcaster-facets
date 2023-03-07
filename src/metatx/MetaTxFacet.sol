@@ -10,10 +10,9 @@ import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
 
 import {MetaTxFacetStorage, ForwardRequest, ISystem_Delegate_Approver, FORWARD_REQ_TYPEHASH} from "./MetaTxFacetStorage.sol";
+import {SupportsMetaTx} from "./SupportsMetaTx.sol";
 
-import "forge-std/console.sol";
-
-abstract contract MetaTxFacet is FacetInitializable, EIP712Upgradeable {
+contract MetaTxFacet is SupportsMetaTx {
   using ECDSAUpgradeable for bytes32;
 
   event ExecutedMetaTx(address userAddress, address payable relayerAddress, bytes functionSignature);
@@ -25,20 +24,13 @@ abstract contract MetaTxFacet is FacetInitializable, EIP712Upgradeable {
    *  behalf of the real sending account
    */
   function __MetaTxFacet_init(address _organizationDelegateApprover) internal onlyFacetInitializing {
-    if(_organizationDelegateApprover == address(0)) {
-      revert MetaTxFacetStorage.InvalidDelegateApprover();
-    }
-    __EIP712_init("Spellcaster", "1.0.0");
-
-    MetaTxFacetStorage.layout().systemDelegateApprover = ISystem_Delegate_Approver(_organizationDelegateApprover);
+    __SupportsMetaTx_init(_organizationDelegateApprover);
   }
 
   function verify(ForwardRequest calldata req, bytes calldata signature, bool shouldRevert) public view returns (bool) {
     address signer = _hashTypedDataV4(
       keccak256(abi.encode(FORWARD_REQ_TYPEHASH, req.from, req.nonce, req.organizationId, keccak256(req.data)))
     ).recover(signature);
-    console.log("signer: %s", signer);
-    console.log("req.from: %s", req.from);
     if(MetaTxFacetStorage.layout().nonces[req.from][req.nonce])  {
       if(!shouldRevert) {
         return false;
@@ -54,18 +46,35 @@ abstract contract MetaTxFacet is FacetInitializable, EIP712Upgradeable {
     return true;
   }
 
-  function execute(ForwardRequest calldata req, bytes calldata signature) public payable returns (bool, bytes memory) {
+  function execute(ForwardRequest calldata req, bytes calldata signature) public payable returns (bytes memory) {
     bytes4 functionSelector = LibUtilities.convertBytesToBytes4(req.data);
     if(functionSelector == msg.sig) {
       revert MetaTxFacetStorage.CannotCallExecuteFromExecute();
     }
     verify(req, signature, true);
-    MetaTxFacetStorage.layout().nonces[req.from][req.nonce] = true;
+
+    MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
+    l.nonces[req.from][req.nonce] = true;
+    l.sessionOrganizationId = req.organizationId;
 
     (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(req.data, req.from));
-    emit ExecutedMetaTx(req.from, payable(msg.sender), req.data);
 
-    return (success, returnData);
+    if(!success) {
+      if (returnData.length > 0) {
+          // bubble up the error
+          assembly {
+              revert(add(32, returnData), mload(returnData))
+          }
+      } else {
+          revert("MetaTx error: execute function reverted");
+      }
+    }
+
+    if(l.sessionOrganizationId != "") {
+      revert MetaTxFacetStorage.SessionOrganizationIdNotConsumed();
+    }
+    emit ExecutedMetaTx(req.from, payable(msg.sender), req.data);
+    return returnData;
   }
 
   /**

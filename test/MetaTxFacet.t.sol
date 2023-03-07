@@ -34,7 +34,11 @@ contract MetaTxImpl is MetaTxFacet, AccessControlFacet, ERC1155Facet {
         return LibMeta._msgSender();
     }
 
-    function adminMint(uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) {
+    function adminMint(uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) supportsMetaTxNoId {
+        _mint(_msgSender(), _id, _amount, "");
+    }
+
+    function adminMintForOrg(bytes32 _organizationId, uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) supportsMetaTx(_organizationId) {
         _mint(_msgSender(), _id, _amount, "");
     }
 
@@ -120,9 +124,21 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         assertEq(_meta.isApprovedForAll(deployer, alice), true);
     }
 
+    function testRevertOrganizationIdMismatch() public {
+        _meta.grantRole(ADMIN_ROLE, signingAuthority);
+
+        vm.expectRevert(err(MetaTxFacetStorage.SessionOrganizationIdMismatch.selector, _org2, _org1));
+        signAndExecuteMetaTx(ForwardRequest({
+                from: signingAuthority,
+                nonce: 0,
+                organizationId: _org2,
+                data: abi.encodeWithSelector(MetaTxImpl.adminMintForOrg.selector, _org1, 1, 1)
+        }), address(_meta));
+    }
+
     function testRevertInvalidSigner() public {
         vm.expectRevert(err(MetaTxFacetStorage.UnauthorizedSignerForSender.selector, signingAuthority, deployer));
-        signAndExecuteInvalidMetaTx(ForwardRequest({
+        signAndExecuteMetaTx(ForwardRequest({
                 from: deployer,
                 nonce: 0,
                 organizationId: _org2,
@@ -140,7 +156,7 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         }), address(_meta));
 
         vm.expectRevert(err(MetaTxFacetStorage.NonceAlreadyUsedForSender.selector, signingAuthority, 0));
-        signAndExecuteInvalidMetaTx(ForwardRequest({
+        signAndExecuteMetaTx(ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
                 organizationId: _org2,
@@ -149,12 +165,13 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function testRevertNonAdminSender() public {
-        signAndExecuteMetaTxReverts(ForwardRequest({
+        vm.expectRevert(errMissingRole("ADMIN", signingAuthority));
+        signAndExecuteMetaTx(ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
                 organizationId: _org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
-        }), address(_meta), errMissingRole("ADMIN", signingAuthority));
+        }), address(_meta));
     }
 
     function testRevertNonApproved1155Sender() public {
@@ -168,12 +185,13 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
 
         _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
 
-        signAndExecuteMetaTxReverts(ForwardRequest({
+        vm.expectRevert("ERC1155: caller is not token owner or approved");
+        signAndExecuteMetaTx(ForwardRequest({
                 from: deployer,
                 nonce: 1,
                 organizationId: _org2,
                 data: abi.encodeWithSignature("safeTransferFrom(address,address,uint256,uint256,bytes)", signingAuthority, alice, 1, 1, "")
-        }), address(_meta), "ERC1155: caller is not token owner or approved");
+        }), address(_meta));
     }
 
 }

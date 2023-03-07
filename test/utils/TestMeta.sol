@@ -33,17 +33,7 @@ abstract contract TestMeta is Test, TestUtilities {
 
     function signAndExecuteMetaTx(ForwardRequest memory req, address executingContract) internal {
         bytes memory sig = signHash(signingPK, reqToHash(req, executingContract));
-        executeMetaTx(MetaTxFacet(executingContract), req, sig, "");
-    }
-
-    function signAndExecuteMetaTxReverts(ForwardRequest memory req, address executingContract, bytes memory expectedError) internal {
-        bytes memory sig = signHash(signingPK, reqToHash(req, executingContract));
-        executeMetaTx(MetaTxFacet(executingContract), req, sig, expectedError);
-    }
-
-    function signAndExecuteInvalidMetaTx(ForwardRequest memory req, address executingContract) internal {
-        bytes memory sig = signHash(signingPK, reqToHash(req, executingContract));
-        executeInvalidMetaTx(MetaTxFacet(executingContract), req, sig);
+        executeMetaTx(MetaTxFacet(executingContract), req, sig);
     }
 
     function reqToHash(ForwardRequest memory req, address _signatureRecipientAddress) public view returns (bytes32) {
@@ -55,25 +45,7 @@ abstract contract TestMeta is Test, TestUtilities {
         );
     }
 
-    function executeMetaTx(MetaTxFacet contractToCall, ForwardRequest memory req, bytes memory sig, bytes memory expectedError) internal {
-        (bool success, bytes memory returndata) = contractToCall.execute(req, sig);
-        if(expectedError.length > 0) {
-            assertFalse(success, "MetaTx did not revert as expected");
-            vm.expectRevert(expectedError);
-        }
-        if (!success) {
-            if (returndata.length > 0) {
-                // bubble up the error
-                assembly {
-                    revert(add(32, returndata), mload(returndata))
-                }
-            } else {
-                revert("MetaTx error: execute function reverted");
-            }
-        }
-    }
-
-    function executeInvalidMetaTx(MetaTxFacet contractToCall, ForwardRequest memory req, bytes memory sig) internal {
+    function executeMetaTx(MetaTxFacet contractToCall, ForwardRequest memory req, bytes memory sig) internal {
         contractToCall.execute(req, sig);
     }
 }

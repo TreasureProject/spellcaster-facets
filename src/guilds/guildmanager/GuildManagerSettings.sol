@@ -30,6 +30,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     onlyRole(ADMIN_ROLE)
     contractsAreSet
     whenNotPaused
+    supportsMetaTx(_newOrganizationId)
     {
         LibGuildManager.createForNewOrganization(_newOrganizationId, _name, _description);
 
@@ -56,6 +57,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyValidOrganization(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.createForExistingOrganization(_organizationId);
 
@@ -76,6 +78,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
     }
@@ -90,6 +93,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
@@ -104,6 +108,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
     }
@@ -119,6 +124,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
     }
@@ -133,6 +139,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     contractsAreSet
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }

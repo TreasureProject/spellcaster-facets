@@ -7,6 +7,7 @@ import {LibUtilities} from "../libraries/LibUtilities.sol";
 import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
 import {LibMeta} from "../libraries/LibMeta.sol";
 import {LibOrganizationManager} from "src/libraries/LibOrganizationManager.sol";
+import {SupportsMetaTx} from "src/metatx/SupportsMetaTx.sol";
 
 import {IOrganizationManager, OrganizationInfo} from "src/interfaces/IOrganizationManager.sol";
 import {OrganizationManagerStorage} from "./OrganizationManagerStorage.sol";
@@ -15,7 +16,7 @@ import {OrganizationManagerStorage} from "./OrganizationManagerStorage.sol";
  * @title Organization Management Facet contract.
  * @dev Use this facet to consume the ability to segment feature adoption by organization. 
  */
-contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManager {
+contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManager, SupportsMetaTx {
 
     /**
      * @dev Initialize the facet. Can be called externally or internally.
@@ -39,6 +40,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
     override
     onlyRole(ADMIN_ROLE)
     whenNotPaused
+    supportsMetaTx(_newOrganizationId)
     {
         LibOrganizationManager.createOrganization(_newOrganizationId, _name, _description);
     }
@@ -54,6 +56,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
     override
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibOrganizationManager.setOrganizationNameAndDescription(_organizationId, _name, _description);
     }
@@ -68,6 +71,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
     override
     whenNotPaused
     onlyOrganizationAdmin(_organizationId)
+    supportsMetaTx(_organizationId)
     {
         LibOrganizationManager.setOrganizationAdmin(_organizationId, _admin);
     }

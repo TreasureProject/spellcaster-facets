@@ -8,8 +8,16 @@ import {ERC1155Facet} from "src/token/ERC1155Facet.sol";
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {LibMeta} from "src/libraries/LibMeta.sol";
 import {LibUtilities} from "src/libraries/LibUtilities.sol";
+import {MetaTxFacet, MetaTxFacetStorage} from "src/metatx/MetaTxFacet.sol";
+import {LibGuildToken} from "src/libraries/LibGuildToken.sol";
 
-abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Facet {
+/**
+ * @title Guild Token Contract
+ * @notice Token contract to manage all of the guilds within an organization. Each tokenId is a different guild
+ * @dev This contract is not expected to me part of a diamond since it is an asset contract that is dynamically created
+ *  by the GuildManager contract.
+ */
+abstract contract GuildTokenBase is IGuildToken, MetaTxFacet, AccessControlFacet, ERC1155Facet {
 
     function __GuildTokenBase_init() internal onlyFacetInitializing {
         __ERC1155Facet_init("");
@@ -38,6 +46,11 @@ abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Face
 
     modifier whenNotPaused() {
         LibUtilities.requireNotPaused();
+        _;
+    }
+
+    modifier supportsMetaTxNoId() override {
+        verifyAndConsumeSessionId(LibGuildToken.getOrganizationId());
         _;
     }
 }

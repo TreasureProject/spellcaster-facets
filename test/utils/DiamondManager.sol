@@ -2,13 +2,14 @@
 pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
-import {IDiamondCut} from "../../src/diamond/IDiamondCut.sol";
-import {Diamond} from "../../src/diamond/Diamond.sol";
-import {DiamondCutFacet} from "../../src/diamond/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "../../src/diamond/DiamondLoupeFacet.sol";
-import {AccessControlFacet} from "../../src/access/AccessControlFacet.sol";
-import {OwnershipFacet} from "../../src/access/OwnershipFacet.sol";
-import {PausableFacet} from "../../src/security/PausableFacet.sol";
+import {IDiamondCut} from "src/diamond/IDiamondCut.sol";
+import {Diamond} from "src/diamond/Diamond.sol";
+import {DiamondCutFacet} from "src/diamond/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "src/diamond/DiamondLoupeFacet.sol";
+import {AccessControlFacet} from "src/access/AccessControlFacet.sol";
+import {OwnershipFacet} from "src/access/OwnershipFacet.sol";
+import {PausableFacet} from "src/security/PausableFacet.sol";
+import {MetaTxFacet} from "src/metatx/MetaTxFacet.sol";
 
 struct FacetInfo {
     address addr;
@@ -59,13 +60,15 @@ contract DiamondManager is Script {
         OwnershipFacet ownership = new OwnershipFacet();
         AccessControlFacet accessControl = new AccessControlFacet();
         PausableFacet pausable = new PausableFacet();
+        MetaTxFacet meta = new MetaTxFacet();
         
-        FacetInfo[5] memory staticFacets = [
+        FacetInfo[6] memory staticFacets = [
             FacetInfo(address(diamondCut), "DiamondCutFacet", IDiamondCut.FacetCutAction.Add),
             FacetInfo(address(diamondLoupe), "DiamondLoupeFacet", IDiamondCut.FacetCutAction.Add),
             FacetInfo(address(ownership), "OwnershipFacet", IDiamondCut.FacetCutAction.Add),
             FacetInfo(address(pausable), "PausableFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(accessControl), "AccessControlFacet", IDiamondCut.FacetCutAction.Add)
+            FacetInfo(address(accessControl), "AccessControlFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(meta), "MetaTxFacet", IDiamondCut.FacetCutAction.Add)
         ];
 
         IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](staticFacets.length + _facets.length + _optionalFacets.length);

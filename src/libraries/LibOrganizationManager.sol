@@ -7,6 +7,7 @@ import {
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
+import {LibMeta} from "src/libraries/LibMeta.sol";
 
 /// @title Library for handling storage interfacing for Guild Manager contracts
 library LibOrganizationManager {
@@ -62,12 +63,12 @@ library LibOrganizationManager {
         string calldata _name,
         string calldata _description)
     internal
-    {   
+    {
         if(getOrganizationInfo(_newOrganizationId).admin != address(0)) {
             revert OrganizationManagerStorage.OrganizationAlreadyExists(_newOrganizationId);
         }
         setOrganizationNameAndDescription(_newOrganizationId, _name, _description);
-        setOrganizationAdmin(_newOrganizationId, msg.sender);
+        setOrganizationAdmin(_newOrganizationId, LibMeta._msgSender());
 
         emit OrganizationManagerStorage.OrganizationCreated(_newOrganizationId);
     }
@@ -78,7 +79,7 @@ library LibOrganizationManager {
 
     function requireOrganizationAdmin(address _sender, bytes32 _organizationId) internal view {
         if(_sender != getOrganizationInfo(_organizationId).admin) {
-            revert OrganizationManagerStorage.NotOrganizationAdmin(msg.sender);
+            revert OrganizationManagerStorage.NotOrganizationAdmin(LibMeta._msgSender());
         }
     }
 
@@ -87,7 +88,7 @@ library LibOrganizationManager {
     // =============================================================
 
     modifier onlyOrganizationAdmin(bytes32 _organizationId) {
-        requireOrganizationAdmin(msg.sender, _organizationId);
+        requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
         _;
     }
 

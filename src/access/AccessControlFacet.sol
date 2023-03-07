@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-diamond/access/AccessControlEnumerableUpgradeable.sol";
+import {SupportsMetaTx} from "src/metatx/SupportsMetaTx.sol";
 import {FacetInitializable} from "../utils/FacetInitializable.sol";
 import {LibUtilities} from "../libraries/LibUtilities.sol";
 import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
@@ -10,7 +11,7 @@ import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../librarie
  * @title AccessControl facet wrapper for OZ's pausable contract.
  * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared 
  */
-contract AccessControlFacet is FacetInitializable, AccessControlEnumerableUpgradeable {
+contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControlEnumerableUpgradeable {
 
     function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet")) {
         __AccessControlEnumerable_init();

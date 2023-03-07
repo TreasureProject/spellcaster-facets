@@ -6,8 +6,8 @@ import {TestBase} from "./utils/TestBase.sol";
 import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
 import {DiamondUtils} from "./utils/DiamondUtils.sol";
 
-import {GuildToken} from "../src/guilds/guildtoken/GuildToken.sol";
-import {GuildManager} from "../src/guilds/guildmanager/GuildManager.sol";
+import {GuildToken} from "src/guilds/guildtoken/GuildToken.sol";
+import {GuildManager} from "src/guilds/guildmanager/GuildManager.sol";
 import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.sol";
 import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
 import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
@@ -271,7 +271,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             kickGuildMemberAsAdmin(_user, alice);
             // Kick members as admin or owner
             kickGuildMemberAsAdmin(_user, uint160(leet) % 2 == 1 ? leet : deployer);
-        } else {
+        } else if(_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.ADMIN) {
             // Kick admins as owner
             kickGuildMemberAsAdmin(_user, deployer);
             // Ensure admin cannot kick admin
@@ -303,10 +303,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testCanCreateForExistingOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-        bytes32 org2 = keccak256("2");
-        _manager.createOrganization(org2, "Organization2", "Org description2");
+        _manager.createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
-            org2,
+            _org2,
             69, // Max users per guild 
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
@@ -315,19 +314,18 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             address(0) // optional contract for customizable guild rules
         );
 
-        assertEq("Organization2", _manager.getOrganizationInfo(org2).name);
-        assertEq("Org description2", _manager.getOrganizationInfo(org2).description);
-        assertEq(69, _manager.getGuildOrganizationInfo(org2).maxGuildsPerUser);
-        assertEq(420, _manager.getGuildOrganizationInfo(org2).maxUsersPerGuildConstant);
+        assertEq("Organization2", _manager.getOrganizationInfo(_org2).name);
+        assertEq("Org description2", _manager.getOrganizationInfo(_org2).description);
+        assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
+        assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }
 
     function testCannotCreateForAlreadyInitializedOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-        bytes32 org2 = keccak256("2");
-        _manager.createOrganization(org2, "Organization2", "Org description2");
+        _manager.createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
-            org2,
+            _org2,
             69, // Max users per guild 
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
@@ -336,9 +334,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             address(0) // optional contract for customizable guild rules
         );
 
-        vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, org2));
+        vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, _org2));
         _manager.createForExistingOrganization(
-            org2,
+            _org2,
             69, // Max users per guild 
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,

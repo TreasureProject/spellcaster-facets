@@ -42,6 +42,10 @@ abstract contract TestErrors {
         return abi.encodeWithSelector(selector, arg1, arg2);
     }
     
+    function err(bytes4 selector, bytes32 arg1, bytes32 arg2) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(selector, arg1, arg2);
+    }
+    
     function err(bytes4 selector, uint256 arg1, uint256 arg2) internal pure returns (bytes memory) {
         return abi.encodeWithSelector(selector, arg1, arg2);
     }
