@@ -26,8 +26,6 @@ struct CraftingRecipe {
     Ingredient[] ingredients;
     //Store array of outputs
     Result[] results;
-    //Store whether this has been anointed. Defaults to false.
-    bool anointed;
     //Store when this was anointed, must have been more than x time ago.
     uint256 anointmentTime;
 }

@@ -71,11 +71,16 @@ contract SimpleCraftingTest is TestBase, ERC1155HolderUpgradeable {
         CraftingRecipe memory _craftingRecipe = CraftingRecipe(
             ingredients,
             results,
-            true,
             block.timestamp
         );
 
         _simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
+
+        _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_", address(_ERC20Consumer))), deployer);
+        _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_", address(_ERC721Consumer))), deployer);
+        _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_", address(_ERC1155Consumer))), deployer);
+
+        _simpleCrafting.anoint(0, block.timestamp);
 
         _simpleCrafting.craft(0);
 
