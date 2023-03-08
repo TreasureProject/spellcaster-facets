@@ -10,3 +10,6 @@ artifacts
 _out
 bin
 cache_hardhat
+
+# cargo custom target dir
+_target
