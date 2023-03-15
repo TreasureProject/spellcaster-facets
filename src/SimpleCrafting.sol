@@ -5,31 +5,63 @@ import "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgrade
 import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
-import "./libraries/SimpleCraftingStorage.sol";
+import "./libraries/LibSimpleCraftingRecipeAllowlist.sol";
+import "./libraries/LibSimpleCraftingStorage.sol";
 import "./interfaces/IERC20Consumer.sol";
 import "./utilities/AccessControlEnumerableUpgradeableV2.sol";
+import "./Modifiers.sol";
 
 import "forge-std/console.sol";
 
+/*
+events
+Create new recipe
+Craft
+
+
+*/
+
+interface Ownable {
+    function owner() external view returns(address);
+}
+
 contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlEnumerableUpgradeableV2 {
+
+    
+    function setRecipeToAllowedAsAdmin(address _collection, uint256 _recipeId) public {
+        //Ensure they are an admin of this collection.
+        require(
+            msg.sender == Ownable(_collection).owner() || 
+            hasRole(
+                keccak256(
+                    abi.encodePacked(
+                        "ADMIN_ROLE_SIMPLE_CRAFTING_V1_",
+                        _collection
+                        )
+                    ), 
+                msg.sender
+            ), "User not permitted."
+        );
+
+        LibSimpleCraftingRecipeAllowlist.setCollectionToRecipeIdToAllowed(_collection, _recipeId, true);
+    }
+
     function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipeInput)
         public
     {
         uint256 _currentRecipeId = SimpleCraftingStorage
-            .getState()
+            .getSimpleCraftingState()
             ._currentRecipeId;
 
         CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage
-            .getState()
+            .getSimpleCraftingState()
             .craftingRecipes[_currentRecipeId];
 
-        _craftingRecipe.anointmentTime = 2**256 - 1;
-
-        for(uint256 i = 0;i < _craftingRecipeInput.ingredients.length; i++){
+        for(uint256 i = 0; i < _craftingRecipeInput.ingredients.length; i++){
             _craftingRecipe.ingredients.push(_craftingRecipeInput.ingredients[i]);
         }
 
-        for(uint256 i = 0;i < _craftingRecipeInput.results.length; i++){
+        for(uint256 i = 0; i < _craftingRecipeInput.results.length; i++){
             _craftingRecipe.results.push(_craftingRecipeInput.results[i]);
         }
 
@@ -41,18 +73,13 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlEnumerableUpgr
         view
         returns (CraftingRecipe memory)
     {
-        return SimpleCraftingStorage.getState().craftingRecipes[_recipeId];
+        return SimpleCraftingStorage.getSimpleCraftingState().craftingRecipes[_recipeId];
     }
 
     function craft(uint256 _recipeId) public {
         CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage
-            .getState()
+            .getSimpleCraftingState()
             .craftingRecipes[_recipeId];
-
-        //10 minutes
-        //TODO
-        //Adjust anointment timelock method.
-        require(block.timestamp >= _craftingRecipe.anointmentTime, "Not past anointment time.");
 
         for (uint256 i = 0; i < _craftingRecipe.ingredients.length; i++) {
             //Pull all the ingredients
@@ -91,9 +118,10 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlEnumerableUpgr
         for (uint256 i = 0; i < _craftingRecipe.results.length; i++) {
             Result storage _result = _craftingRecipe.results[i];
 
+            require(LibSimpleCraftingRecipeAllowlist.getCollectionToRecipeIdToAllowed(_result.target, _recipeId), "Recipe not allowed yet!");
+
             (bool success, bytes memory data) = address(_result.target).call{
-                value: 0,
-                gas: 150000
+                value: 0
             }(
                 abi.encodePacked(
                     _result.selector,
@@ -104,43 +132,6 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlEnumerableUpgr
         }
     }
 
-    modifier onlyCollectionAdmin(uint256 _recipeId) {
-        CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage
-            .getState()
-            .craftingRecipes[_recipeId];
-
-            
-        for (uint256 i = 0; i < _craftingRecipe.results.length; i++) {
-            //Pull all the results
-            Result storage _result = _craftingRecipe.results[i];
-            require(hasRole(keccak256(abi.encodePacked("ADMIN_ROLE_",_result.target)), msg.sender), "Does not have role!");
-        }
-
-        _;
-    }
-
-    function anoint(
-        uint256 _recipeId,
-        uint256 _anointmentTime
-    ) public onlyCollectionAdmin(_recipeId) {
-        CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage
-            .getState()
-            .craftingRecipes[_recipeId];
-
-        _craftingRecipe.anointmentTime = _anointmentTime;
-    }
-
-    function unanoint(
-        uint256 _recipeId 
-    ) public onlyCollectionAdmin(_recipeId) {
-        CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage
-            .getState()
-            .craftingRecipes[_recipeId];
-
-        _craftingRecipe.anointmentTime = 2**256 - 1;
-    }
-
-    
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155ReceiverUpgradeable, AccessControlEnumerableUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

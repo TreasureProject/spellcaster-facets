@@ -26,21 +26,19 @@ struct CraftingRecipe {
     Ingredient[] ingredients;
     //Store array of outputs
     Result[] results;
-    //Store when this was anointed, must have been more than x time ago.
-    uint256 anointmentTime;
 }
 
 
 library SimpleCraftingStorage {
 
-    struct State {
+    struct SimpleCraftingState {
         mapping(uint256 => CraftingRecipe) craftingRecipes;
         uint256 _currentRecipeId;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("world.simple.crafting.diamond");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("simple.crafting.diamond");
 
-    function getState() internal pure returns (State storage s) {
+    function getSimpleCraftingState() internal pure returns (SimpleCraftingState storage s) {
         bytes32 position = FACET_STORAGE_POSITION;
         assembly {
             s.slot := position
