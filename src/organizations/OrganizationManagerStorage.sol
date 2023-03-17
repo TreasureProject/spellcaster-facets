@@ -7,16 +7,11 @@ import {
 import {IGuildToken} from "src/interfaces/IGuildToken.sol";
 import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
 
-/// @title Library for handling storage interfacing for Guild Manager contracts
+/**
+ * @title OrganizationManagerStorage library
+ * @notice This library contains the storage layout and events/errors for the OrganizationFacet contract.
+ */
 library OrganizationManagerStorage {
-    event OrganizationCreated(bytes32 organizationId);
-    event OrganizationInfoUpdated(bytes32 organizationId, string name, string description);
-    event OrganizationAdminUpdated(bytes32 organizationId, address admin);
-
-    error NotOrganizationAdmin(address sender);
-    error InvalidOrganizationAdmin(address admin);
-    error NonexistantOrganization(bytes32 organizationId);
-    error OrganizationAlreadyExists(bytes32 organizationId);
 
     struct Layout {
         mapping(bytes32 => OrganizationInfo) organizationIdToInfo;
@@ -30,5 +25,51 @@ library OrganizationManagerStorage {
             l.slot := position
         }
     }
+
+    /**
+     * @dev Emitted when a new organization is created.
+     * @param organizationId The ID of the newly created organization
+     */
+    event OrganizationCreated(bytes32 organizationId);
+
+    /**
+     * @dev Emitted when an organization's information is updated.
+     * @param organizationId The ID of the organization being updated
+     * @param name The updated organization name
+     * @param description The updated organization description
+     */
+    event OrganizationInfoUpdated(bytes32 organizationId, string name, string description);
+
+    /**
+     * @dev Emitted when an organization's admin is updated.
+     * @param organizationId The ID of the organization being updated
+     * @param admin The updated organization admin address
+     */
+    event OrganizationAdminUpdated(bytes32 organizationId, address admin);
+
+    /**
+     * @dev Emitted when the sender is not an organization admin and tries to perform an admin-only action.
+     * @param sender The address of the sender attempting the action
+     */
+    error NotOrganizationAdmin(address sender);
+
+    /**
+     * @dev Emitted when an invalid organization admin address is provided.
+     * @param admin The invalid admin address
+     */
+    error InvalidOrganizationAdmin(address admin);
+
+    /**
+     * @dev Emitted when an organization does not exist.
+     * @param organizationId The ID of the non-existent organization
+     */
+    error NonexistantOrganization(bytes32 organizationId);
+
+    /**
+     * @dev Emitted when an organization already exists.
+     * @param organizationId The ID of the existing organization
+     */
+    error OrganizationAlreadyExists(bytes32 organizationId);
+
 
 }

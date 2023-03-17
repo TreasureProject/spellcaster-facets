@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 import {LibBBase64} from "src/libraries/LibBBase64.sol";
 import {IGuildManager} from "src/interfaces/IGuildManager.sol";
 
+/**
+ * @title GuildTokenStorage library
+ * @notice This library contains the storage layout and events/errors for the GuildTokenFacet contract.
+ */
 library GuildTokenStorage {
-
-    error GuildOrganizationAlreadyInitialized(bytes32 organizationId);
 
     struct Layout {
         /**
@@ -27,6 +29,12 @@ library GuildTokenStorage {
             s.slot := position
         }
     }
+
+    /**
+     * @dev Emitted when a guild organization has already been initialized.
+     * @param organizationId The ID of the guild organization
+     */
+    error GuildOrganizationAlreadyInitialized(bytes32 organizationId);
 }
 
     
