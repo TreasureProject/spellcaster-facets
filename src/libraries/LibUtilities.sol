@@ -18,6 +18,12 @@ library LibUtilities {
     //                      Array Helpers
     // =============================================================
 
+    function requireArrayLengthMatch(uint256 _length1, uint256 _length2) internal pure {
+        if(_length1 != _length2) {
+            revert ArrayLengthMismatch(_length1, _length2);
+        }
+    }
+
     function asSingletonArray(uint256 _item) internal pure returns (uint256[] memory array_) {
         array_ = new uint256[](1);
         array_[0] = _item;

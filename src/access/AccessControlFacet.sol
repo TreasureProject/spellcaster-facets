@@ -34,9 +34,7 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
     /// @param _accounts Addresses to grant the role in the same index of the _roles array
     function grantRoles(bytes32[] calldata _roles, address[] calldata _accounts) external {
         uint256 roleLength = _roles.length;
-        if(roleLength != _accounts.length) {
-            revert LibUtilities.ArrayLengthMismatch(roleLength, _accounts.length);
-        }
+        LibUtilities.requireArrayLengthMatch(roleLength, _accounts.length);
         for (uint256 i = 0; i < roleLength; i++) {
             grantRole(_roles[i], _accounts[i]);   
         }
