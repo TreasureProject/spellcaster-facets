@@ -36,4 +36,16 @@ library LibAccessControlRoles {
     function contractOwner() internal view returns (address contractOwner_) {
         contractOwner_ = LibDiamond.contractOwner();
     }
+
+    function isCollectionAdmin(address _user, address _collection) internal view returns(bool) {
+        return hasRole(
+            keccak256(
+                abi.encodePacked(
+                    "ADMIN_ROLE_SIMPLE_CRAFTING_V1_",
+                    _collection
+                )
+            ),
+            _user
+        );
+    }
 }

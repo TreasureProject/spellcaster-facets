@@ -3,15 +3,23 @@ pragma solidity ^0.8.0;
 
 import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
+import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
+import {DiamondUtils} from "./utils/DiamondUtils.sol";
+
 import {TestBase} from "./utils/TestBase.sol";
-import {SimpleCrafting, CraftingRecipe, Ingredient, Result, TOKENTYPE} from "../src/SimpleCrafting.sol";
+
+import {SimpleCrafting} from "../src/crafting/SimpleCrafting.sol";
+import {CraftingRecipe, Ingredient, Result, TOKENTYPE} from "../src/crafting/SimpleCraftingStorage.sol";
+
 import {ERC20Consumer} from "../src/mocks/ERC20Consumer.sol";
 import {ERC721Consumer} from "../src/mocks/ERC721Consumer.sol";
 import {ERC1155Consumer} from "../src/mocks/ERC1155Consumer.sol";
 
 import "forge-std/console.sol";
 
-contract SimpleCraftingTest is TestBase, ERC1155HolderUpgradeable {
+contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
+    using DiamondUtils for Diamond;
+
     SimpleCrafting internal _simpleCrafting;
 
     ERC20Consumer internal _ERC20Consumer;
@@ -19,12 +27,21 @@ contract SimpleCraftingTest is TestBase, ERC1155HolderUpgradeable {
     ERC1155Consumer internal _ERC1155Consumer;
 
     function setUp() public {
+        FacetInfo[] memory facetInfo = new FacetInfo[](1);
+        
+        facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
+        
+        init(facetInfo);
+
+        _simpleCrafting = SimpleCrafting(address(_diamond));
+
+        _diamond.grantRole("ADMIN", deployer);
+
         _ERC20Consumer = new ERC20Consumer();
         _ERC721Consumer = new ERC721Consumer();
         _ERC1155Consumer = new ERC1155Consumer();
 
         _simpleCrafting = new SimpleCrafting();
-
 
         _ERC20Consumer.initialize();
         _ERC721Consumer.initialize();
@@ -75,11 +92,10 @@ contract SimpleCraftingTest is TestBase, ERC1155HolderUpgradeable {
 
         _simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
 
+
         _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC20Consumer))), deployer);
         _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC721Consumer))), deployer);
         _simpleCrafting.grantRole(keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC1155Consumer))), deployer);
-
-
 
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC20Consumer), 0);
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC721Consumer), 0);
