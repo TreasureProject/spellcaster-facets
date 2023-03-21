@@ -11,4 +11,8 @@ optimizer = true
 optimizer_runs = 200
 ffi = true
 
+[fmt]
+multiline_func_header = "params_first"
+bracket_spacing = true
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

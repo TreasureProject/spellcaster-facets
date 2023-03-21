@@ -29,7 +29,11 @@ library LibPayments {
      * @return priceFeed_ The price feed for the gas token valued in the ERC20 token
      */
     function getGasTokenERC20PriceFeed(address _erc20Addr) internal view returns (AggregatorV3Interface priceFeed_) {
-        priceFeed_ = PaymentsStorage.layout().gasTokenERC20PriceFeeds[_erc20Addr];
+        priceFeed_ = PaymentsStorage.layout().erc20ToInfo[_erc20Addr].gasTokenPricedInERC20Aggregator;
+    }
+
+    function getMagicAddress() internal view returns(address magicAddress_) {
+        magicAddress_ = PaymentsStorage.layout().magicAddress;
     }
 
     /**
@@ -44,6 +48,13 @@ library LibPayments {
      * @param _priceFeedAddr The address of the price feed to set
      */
     function setGasTokenERC20PriceFeed(address _erc20Addr, address _priceFeedAddr) internal {
-        PaymentsStorage.layout().gasTokenERC20PriceFeeds[_erc20Addr] = AggregatorV3Interface(_priceFeedAddr);
+        PaymentsStorage.layout().erc20ToInfo[_erc20Addr].gasTokenPricedInERC20Aggregator = AggregatorV3Interface(_priceFeedAddr);
+    }
+
+    /**
+     * @param _magicAddress The address of the $MAGIC token
+     */
+    function setMagicAddress(address _magicAddress) internal {
+        PaymentsStorage.layout().magicAddress = _magicAddress;
     }
 }

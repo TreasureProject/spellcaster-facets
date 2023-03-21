@@ -1,214 +1,327 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-diamond/proxy/utils/Initializable.sol";
-import {PausableStorage} from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
-import {UD60x18, ud, convert} from "@prb/math/UD60x18.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {FacetInitializable} from "src/utils/FacetInitializable.sol";
-import {Modifiers} from "src/Modifiers.sol";
+import { IERC165Upgradeable } from "@openzeppelin/contracts-diamond/utils/introspection/IERC165Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-diamond/security/ReentrancyGuardUpgradeable.sol";
+import { UD60x18, ud, convert } from "@prb/math/UD60x18.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { FacetInitializable } from "src/utils/FacetInitializable.sol";
+import { Modifiers } from "src/Modifiers.sol";
 
-import {IPayments, ERC20Info, DenominatingType} from "src/interfaces/IPayments.sol";
+import { IPayments, ERC20Info, PriceType } from "src/interfaces/IPayments.sol";
+import { IPaymentsReceiver } from "src/interfaces/IPaymentsReceiver.sol";
 
-import {LibUtilities} from "src/libraries/LibUtilities.sol";
-import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
-import {LibPayments} from "src/libraries/LibPayments.sol";
-import {PaymentsStorage} from "src/payments/PaymentsStorage.sol";
+import { LibUtilities } from "src/libraries/LibUtilities.sol";
+import { ADMIN_ROLE } from "src/libraries/LibAccessControlRoles.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { LibPayments } from "src/libraries/LibPayments.sol";
+import { PaymentsStorage } from "src/payments/PaymentsStorage.sol";
 
 /**
  * @title Payments Facet contract.
  * @dev This facet exposes functionality to easily allow users to accept payments in ERC20 tokens or gas tokens (ETH, MATIC, etc.)
- *      Users can also denominate a price in USD, ERC20, or gas tokens.
+ *      Users can also pay in a token amount priced in USD, other ERC20, or gas tokens.
  */
-contract PaymentsFacet is FacetInitializable, Modifiers, IPayments {
+contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifiers, IPayments {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using AddressUpgradeable for address payable;
 
     /**
      * @dev Initialize the facet. Can be called externally or internally.
      * Ideally referenced in an initialization script facet
      */
-    function ERC20PaymentsFacet_init(address _gasTokenUSDPriceFeed) public facetInitializer(keccak256("ERC20PaymentsFacet")) {
+    function PaymentsFacet_init(address _gasTokenUSDPriceFeed) public facetInitializer(keccak256("PaymentsFacet")) {
         LibPayments.setGasTokenUSDPriceFeed(_gasTokenUSDPriceFeed);
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function takePaymentERC20(address _payor, address _erc20ToTake, uint256 _price) external {
-        IERC20Upgradeable(_erc20ToTake).transferFrom(_payor, LibMeta._msgSender(), _price);
+    function makeStaticERC20Payment(
+        address _recipient,
+        address _paymentERC20,
+        uint256 _paymentAmount
+    ) external nonReentrant onlyReceiver(_recipient) {
+        _sendERC20(_recipient, _paymentERC20, _paymentAmount, _paymentAmount, PriceType.STATIC, address(0));
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function takePaymentGasToken(uint256 _price) external payable {
-        if(msg.value != _price) {
-            revert PaymentsStorage.IncorrectPaymentAmount();
-        }
+    function makeStaticGasTokenPayment(
+        address _recipient,
+        uint256 _paymentAmount
+    ) external payable nonReentrant onlyReceiver(_recipient) {
+        _sendGasToken(_recipient, _paymentAmount, _paymentAmount, PriceType.STATIC, address(0));
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function takePaymentERC20FromDenominating(
-        address _payor,
-        address _erc20ToTake,
-        uint256 _priceInDenominator,
-        DenominatingType _denominatingType,
-        address _denominatingAddress
-    ) external
-    {
-        if(_denominatingType == DenominatingType.SAME_AS_INPUT) {
-            IERC20Upgradeable(_erc20ToTake).transferFrom(_payor, LibMeta._msgSender(), _priceInDenominator);
+    function makeERC20PaymentByPriceType(
+        address _recipient,
+        address _paymentERC20,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) external nonReentrant onlyReceiver(_recipient) {
+        if (
+            _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentERC20)
+        ) {
+            _sendERC20(
+                _recipient,
+                _paymentERC20,
+                _paymentAmountInPricedToken,
+                _paymentAmountInPricedToken,
+                PriceType.STATIC,
+                address(0)
+            );
             return;
         }
-        ERC20Info storage _baseInfo = LibPayments.getERC20Info(_erc20ToTake);
+        ERC20Info storage _baseInfo = LibPayments.getERC20Info(_paymentERC20);
         AggregatorV3Interface priceFeed;
-        
-        if(_denominatingType == DenominatingType.USD) {
+
+        if (_priceType == PriceType.PRICED_IN_USD) {
             priceFeed = _baseInfo.usdAggregator;
-        } else if(_denominatingType == DenominatingType.ERC20) {
-            priceFeed = _baseInfo.priceFeeds[_denominatingAddress];
-        } else if(_denominatingType == DenominatingType.GAS_TOKEN) {
-            priceFeed = _baseInfo.gasTokenAggregator;
+        } else if (_priceType == PriceType.PRICED_IN_ERC20) {
+            priceFeed = _baseInfo.priceFeeds[_pricedERC20];
+        } else if (_priceType == PriceType.PRICED_IN_GAS_TOKEN) {
+            priceFeed = _baseInfo.pricedInGasTokenAggregator;
         } else {
-            revert PaymentsStorage.InvalidDenominatingType();
+            revert PaymentsStorage.InvalidPriceType();
         }
-        if(address(priceFeed) == address(0)) {
-            revert PaymentsStorage.NonexistantPriceFeed(_erc20ToTake, _denominatingType, _denominatingAddress);
+        if (address(priceFeed) == address(0)) {
+            revert PaymentsStorage.NonexistantPriceFeed(_paymentERC20, _priceType, _pricedERC20);
         }
 
-        uint256 price = _denominatingPriceToPaymentPrice(
-            _priceInDenominator,
-            priceFeed,
-            _baseInfo.decimals
-        );
+        uint256 price = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, _baseInfo.decimals);
 
-        IERC20Upgradeable(_erc20ToTake).transferFrom(_payor, LibMeta._msgSender(), price);
+        _sendERC20(_recipient, _paymentERC20, price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function takePaymentGasTokenFromDenominating(
-        uint256 _priceInDenominator,
-        DenominatingType _denominatingType,
-        address _denominatingAddress
-    ) external payable
-    {
-        if(_denominatingType == DenominatingType.SAME_AS_INPUT || _denominatingType == DenominatingType.GAS_TOKEN) {
-            if(msg.value != _priceInDenominator) {
+    function makeGasTokenPaymentByPriceType(
+        address _recipient,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) external payable nonReentrant onlyReceiver(_recipient) {
+        if (_priceType == PriceType.STATIC || _priceType == PriceType.PRICED_IN_GAS_TOKEN) {
+            if (msg.value != _paymentAmountInPricedToken) {
                 revert PaymentsStorage.IncorrectPaymentAmount();
             }
+            _sendGasToken(
+                _recipient, _paymentAmountInPricedToken, _paymentAmountInPricedToken, PriceType.STATIC, address(0)
+            );
             return;
         }
         AggregatorV3Interface priceFeed;
 
-        if(_denominatingType == DenominatingType.USD) {
+        if (_priceType == PriceType.PRICED_IN_USD) {
             priceFeed = LibPayments.getGasTokenUSDPriceFeed();
-        } else if(_denominatingType == DenominatingType.ERC20) {
-            priceFeed = LibPayments.getGasTokenERC20PriceFeed(_denominatingAddress);
+        } else if (_priceType == PriceType.PRICED_IN_ERC20) {
+            priceFeed = LibPayments.getGasTokenERC20PriceFeed(_pricedERC20);
         } else {
-            revert PaymentsStorage.InvalidDenominatingType();
+            revert PaymentsStorage.InvalidPriceType();
         }
-        if(address(priceFeed) == address(0)) {
-            revert PaymentsStorage.NonexistantPriceFeed(address(0), _denominatingType, _denominatingAddress);
+        if (address(priceFeed) == address(0)) {
+            revert PaymentsStorage.NonexistantPriceFeed(address(0), _priceType, _pricedERC20);
         }
 
-        uint256 price = _denominatingPriceToPaymentPrice(
-            _priceInDenominator,
+        uint256 price = _pricedTokenToPaymentAmount(
+            _paymentAmountInPricedToken,
             priceFeed,
             18 // GasToken assumed to have 18 decimals (ETH, MATIC, etc.)
         );
 
-        if(msg.value != price) {
-            revert PaymentsStorage.IncorrectPaymentAmount();
-        }
+        _sendGasToken(_recipient, price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
     }
 
     /**
      * @inheritdoc IPayments
      */
     function initializeERC20(
-        address _coin,
+        address _erc20,
         uint8 _decimals,
-        address _gasTokenAggregator,
+        address _pricedInGasTokenAggregator,
         address _usdAggregator,
-        address[] calldata _denominatingERC20s,
+        address[] calldata _pricedERC20s,
         address[] calldata _priceFeeds
-    ) external onlyRole(ADMIN_ROLE)
-    {
-        uint256 numQuotes = _denominatingERC20s.length;
+    ) external onlyRole(ADMIN_ROLE) {
+        uint256 numQuotes = _pricedERC20s.length;
         LibUtilities.requireArrayLengthMatch(numQuotes, _priceFeeds.length);
-        ERC20Info storage coinInfo = LibPayments.getERC20Info(_coin);
-        coinInfo.decimals = _decimals;
-        coinInfo.gasTokenAggregator = AggregatorV3Interface(_gasTokenAggregator);
-        coinInfo.usdAggregator = AggregatorV3Interface(_usdAggregator);
-        for(uint256 i = 0; i < numQuotes; i++) {
-            coinInfo.priceFeeds[_denominatingERC20s[i]] = AggregatorV3Interface(_priceFeeds[i]);
+        ERC20Info storage info = LibPayments.getERC20Info(_erc20);
+        info.decimals = _decimals;
+        info.pricedInGasTokenAggregator = AggregatorV3Interface(_pricedInGasTokenAggregator);
+        info.usdAggregator = AggregatorV3Interface(_usdAggregator);
+        for (uint256 i = 0; i < numQuotes; i++) {
+            info.priceFeeds[_pricedERC20s[i]] = AggregatorV3Interface(_priceFeeds[i]);
         }
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function setPriceFeedForERC20(address _coin, address _denominatingERC20, address _priceFeed) external onlyRole(ADMIN_ROLE) {
-        ERC20Info storage coinInfo = LibPayments.getERC20Info(_coin);
-        coinInfo.priceFeeds[_denominatingERC20] = AggregatorV3Interface(_priceFeed);
+    function setERC20PriceFeedForERC20(
+        address _erc20,
+        address _pricedERC20,
+        address _priceFeed
+    ) external onlyRole(ADMIN_ROLE) {
+        ERC20Info storage info = LibPayments.getERC20Info(_erc20);
+        info.priceFeeds[_pricedERC20] = AggregatorV3Interface(_priceFeed);
     }
 
     /**
      * @inheritdoc IPayments
      */
-    function setPriceFeedForGasToken(address _denominatingERC20, address _priceFeed) external onlyRole(ADMIN_ROLE) {
-        LibPayments.setGasTokenERC20PriceFeed(_denominatingERC20, _priceFeed);
+    function setERC20PriceFeedForGasToken(address _pricedERC20, address _priceFeed) external onlyRole(ADMIN_ROLE) {
+        LibPayments.setGasTokenERC20PriceFeed(_pricedERC20, _priceFeed);
     }
 
     /**
-     * @dev returns the given price in the given decimal format after converting the price into the related value from the price feed
-     * @param _priceInDenominator The price to convert to the value from the given price feed
-     * @param _priceFeed The price feed to use to convert the price
-     * @param _paymentDecimals The number of decimals to format the price as
-     * @return price_ The price in the given decimal format
+     * @inheritdoc IPayments
      */
-    function _denominatingPriceToPaymentPrice(
-        uint256 _priceInDenominator,
-        AggregatorV3Interface _priceFeed,
-        uint8 _paymentDecimals
-    ) internal view returns(uint256 price_)
-    {
-        price_ = _convertFromDenominatorToPayment(
-            _priceInDenominator,
-            _getQuotePrice(_priceFeed),
-            _paymentDecimals
+    function getMagicAddress() external view override returns (address magicAddress_) {
+        magicAddress_ = LibPayments.getMagicAddress();
+    }
+
+    /**
+     * @inheritdoc IPayments
+     */
+    function isValidPriceType(
+        address _paymentToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) external view override returns (bool supported_) {
+        if (
+            _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentToken)
+                || (_priceType == PriceType.PRICED_IN_GAS_TOKEN && _pricedERC20 == address(0))
+        ) {
+            return true;
+        }
+        AggregatorV3Interface priceFeed = _getPriceFeed(_paymentToken, _pricedERC20, _priceType);
+        return address(priceFeed) != address(0);
+    }
+
+    /**
+     * @inheritdoc IPayments
+     */
+    function calculatePaymentAmountByPriceType(
+        address _paymentToken,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedToken
+    ) external view override returns (uint256 paymentAmount_) {
+        if (
+            _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedToken == _paymentToken)
+                || (_priceType == PriceType.PRICED_IN_GAS_TOKEN && _paymentToken == address(0))
+        ) {
+            return _paymentAmountInPricedToken;
+        }
+        AggregatorV3Interface priceFeed = _getPriceFeed(_paymentToken, _pricedToken, _priceType);
+        if (address(priceFeed) == address(0)) {
+            revert PaymentsStorage.NonexistantPriceFeed(_paymentToken, _priceType, _pricedToken);
+        }
+        // GasToken conversion, assume 18 decimals
+        if (_paymentToken == address(0)) {
+            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, 18);
+        } else {
+            ERC20Info storage _baseInfo = LibPayments.getERC20Info(_paymentToken);
+            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, _baseInfo.decimals);
+        }
+    }
+
+    /**
+     * @dev Sends payment and invokes the acceptance function on the recipient
+     */
+    function _sendERC20(
+        address _recipient,
+        address _paymentERC20,
+        uint256 _paymentAmount,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) internal {
+        IERC20Upgradeable(_paymentERC20).safeTransferFrom(LibMeta._msgSender(), _recipient, _paymentAmount);
+        IPaymentsReceiver(_recipient).acceptERC20(
+            LibMeta._msgSender(), _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
         );
     }
 
     /**
+     * @dev Sends gas token payment and invokes the acceptance function on the recipient
+     */
+    function _sendGasToken(
+        address _recipient,
+        uint256 _paymentAmount,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) internal {
+        if (msg.value < _paymentAmount) {
+            revert PaymentsStorage.IncorrectPaymentAmount();
+        }
+        uint256 _overpayment;
+        if (msg.value > _paymentAmount) {
+            _overpayment = msg.value - _paymentAmount;
+        }
+        IPaymentsReceiver(_recipient).acceptGasToken{ value: _paymentAmount }(
+            LibMeta._msgSender(), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
+        );
+        // Send back overpayments
+        if (_overpayment > 0) {
+            payable(LibMeta._msgSender()).sendValue(_overpayment);
+        }
+    }
+
+    function _getPriceFeed(
+        address _paymentToken,
+        address _pricedToken,
+        PriceType _priceType
+    ) internal view returns (AggregatorV3Interface priceFeed_) {
+        bool _baseIsGasToken = _paymentToken == address(0);
+        if (_priceType == PriceType.PRICED_IN_USD) {
+            priceFeed_ = _baseIsGasToken
+                ? LibPayments.getGasTokenUSDPriceFeed()
+                : LibPayments.getERC20Info(_paymentToken).usdAggregator;
+        } else if (_priceType == PriceType.PRICED_IN_ERC20) {
+            priceFeed_ = _baseIsGasToken
+                ? LibPayments.getGasTokenERC20PriceFeed(_pricedToken)
+                : LibPayments.getERC20Info(_paymentToken).priceFeeds[_pricedToken];
+        } else if (_priceType == PriceType.PRICED_IN_GAS_TOKEN) {
+            priceFeed_ = LibPayments.getERC20Info(_paymentToken).pricedInGasTokenAggregator;
+        } else {
+            priceFeed_ = AggregatorV3Interface(address(0));
+        }
+    }
+
+    /**
      * @dev returns the given price in the given decimal format after converting the price into the related value from the price feed
-     * @param _priceInDenominator The price to convert to the value from the given price feed
-     * @param _paymentToDenominatorQuote The current value of the denominator coin relative to the payment coin
+     * @param _paymentAmountInPricedToken The price to convert to the value from the given price feed
+     * @param _priceFeed The price feed to use to convert the price
      * @param _paymentDecimals The number of decimals to format the price as
      * @return paymentAmount_ The price in the given decimal format
      */
-    function _convertFromDenominatorToPayment(
-        uint256 _priceInDenominator,
-        uint256 _paymentToDenominatorQuote,
-        uint256 _paymentDecimals
-    ) internal pure returns(uint256 paymentAmount_)
-    {
-        // Rounding example: Quote price is 10 USD and denominating price for $MONEY is 1.82 USD, 10 / 1.82 = 5.494505494505495 $MONEY
-        //  Because fixed precision is e18, value will be 5494505494505494505 and needs to be converted to payment coin decimal
-        // NOTE: It is assumed that the _priceInDenominator and the price feed's price are in the same decimal unit
-        UD60x18 priceFP = ud(_priceInDenominator).div(ud(uint256(_paymentToDenominatorQuote)));
-        // Lastly, we must convert the price into the payment coin's decimal amount
-        if(_paymentDecimals > 18) {
-            // Add digits equal to the difference of fp's 18 decimals and the payment coin's decimals
-            paymentAmount_ = priceFP.unwrap() * 10 ** (_paymentDecimals - 18);
+    function _pricedTokenToPaymentAmount(
+        uint256 _paymentAmountInPricedToken,
+        AggregatorV3Interface _priceFeed,
+        uint8 _paymentDecimals
+    ) internal view returns (uint256 paymentAmount_) {
+        //  Because fixed precision is e18, value will be 5494505494505494505 and needs to be converted to payment token decimal
+        // NOTE: It is assumed that the  _paymentAmountInPricedToken and the price feed's price are in the same decimal unit
+        UD60x18 _priceFP = ud(_paymentAmountInPricedToken).div(ud(uint256(_getQuotePrice(_priceFeed))));
+        // Lastly, we must convert the price into the payment token's decimal amount
+        if (_paymentDecimals > 18) {
+            // Add digits equal to the difference of fp's 18 decimals and the payment token's decimals
+            paymentAmount_ = _priceFP.unwrap() * 10 ** (_paymentDecimals - 18);
         } else {
-            // Remove digits equal to the difference of fp's 18 decimals and the payment coin's decimals
-            paymentAmount_ = priceFP.unwrap() / 10 ** (18 - _paymentDecimals);
+            // Remove digits equal to the difference of fp's 18 decimals and the payment token's decimals
+            paymentAmount_ = _priceFP.unwrap() / 10 ** (18 - _paymentDecimals);
         }
     }
 
@@ -217,12 +330,19 @@ contract PaymentsFacet is FacetInitializable, Modifiers, IPayments {
      * @param _priceFeed The price feed to get the price of
      * @return price_ The current relative price of the given price feed
      */
-    function _getQuotePrice(AggregatorV3Interface _priceFeed) internal view returns(uint256 price_) {
-        (, int256 quotePrice,,,) = _priceFeed.latestRoundData();
+    function _getQuotePrice(AggregatorV3Interface _priceFeed) internal view returns (uint256 price_) {
+        (, int256 _quotePrice,,,) = _priceFeed.latestRoundData();
         // Unfortunately no way to determine this ahead of time, and likely will never occur, but is a possibility of the oracle
-        if(quotePrice < 0) {
+        if (_quotePrice < 0) {
             revert PaymentsStorage.InvalidPriceFeedQuote(address(_priceFeed), address(0));
         }
-        price_ = uint256(quotePrice);
+        price_ = uint256(_quotePrice);
+    }
+
+    modifier onlyReceiver(address _recipient) {
+        if (!IERC165Upgradeable(_recipient).supportsInterface(type(IPaymentsReceiver).interfaceId)) {
+            revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
+        }
+        _;
     }
 }

@@ -1,0 +1,22 @@
+
+
+# Contents
+- [ICustomGuildManager](ICustomGuildManager.sol/interface.ICustomGuildManager.md)
+- [IERC1155Consumer](IERC1155Consumer.sol/interface.IERC1155Consumer.md)
+- [IERC20Consumer](IERC20Consumer.sol/interface.IERC20Consumer.md)
+- [IERC721Consumer](IERC721Consumer.sol/interface.IERC721Consumer.md)
+- [GuildOrganizationInfo](IGuildManager.sol/struct.GuildOrganizationInfo.md)
+- [GuildOrganizationUserInfo](IGuildManager.sol/struct.GuildOrganizationUserInfo.md)
+- [GuildInfo](IGuildManager.sol/struct.GuildInfo.md)
+- [GuildUserInfo](IGuildManager.sol/struct.GuildUserInfo.md)
+- [GuildUserStatus](IGuildManager.sol/enum.GuildUserStatus.md)
+- [GuildCreationRule](IGuildManager.sol/enum.GuildCreationRule.md)
+- [MaxUsersPerGuildRule](IGuildManager.sol/enum.MaxUsersPerGuildRule.md)
+- [IGuildManager](IGuildManager.sol/interface.IGuildManager.md)
+- [IGuildToken](IGuildToken.sol/interface.IGuildToken.md)
+- [OrganizationInfo](IOrganizationManager.sol/struct.OrganizationInfo.md)
+- [IOrganizationManager](IOrganizationManager.sol/interface.IOrganizationManager.md)
+- [ERC20Info](IPayments.sol/struct.ERC20Info.md)
+- [PriceType](IPayments.sol/enum.PriceType.md)
+- [IPayments](IPayments.sol/interface.IPayments.md)
+- [IPaymentsReceiver](IPaymentsReceiver.sol/interface.IPaymentsReceiver.md)
