@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 // Assumes we are going to use the AccessControlFacet at src/access/AccessControlStorage.sol
-import {AccessControlStorage} from "@openzeppelin/contracts-diamond/access/AccessControlStorage.sol";
-import {LibDiamond} from "../diamond/LibDiamond.sol";
+import { AccessControlStorage } from "@openzeppelin/contracts-diamond/access/AccessControlStorage.sol";
+import { LibDiamond } from "../diamond/LibDiamond.sol";
 
 bytes32 constant ADMIN_ROLE = keccak256("ADMIN");
 bytes32 constant ADMIN_GRANTER_ROLE = keccak256("ADMIN_GRANTER");
@@ -37,15 +37,7 @@ library LibAccessControlRoles {
         contractOwner_ = LibDiamond.contractOwner();
     }
 
-    function isCollectionAdmin(address _user, address _collection) internal view returns(bool) {
-        return hasRole(
-            keccak256(
-                abi.encodePacked(
-                    "ADMIN_ROLE_SIMPLE_CRAFTING_V1_",
-                    _collection
-                )
-            ),
-            _user
-        );
+    function isCollectionAdmin(address _user, address _collection) internal view returns (bool) {
+        return hasRole(keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", _collection)), _user);
     }
 }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {IPayments, ERC20Info, PriceType} from "src/interfaces/IPayments.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { IPayments, ERC20Info, PriceType } from "src/interfaces/IPayments.sol";
 
 /**
  * @title PaymentsReceiverStorage library
@@ -40,5 +40,4 @@ library PaymentsReceiverStorage {
      * @param paymentType The provided payment type
      */
     error PaymentTypeNotAccepted(string paymentType);
-
 }

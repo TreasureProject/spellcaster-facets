@@ -63,7 +63,7 @@ struct GuildInfo {
 }
 
 /**
- * @dev Provides information regarding a user in a specific guild 
+ * @dev Provides information regarding a user in a specific guild
  * @param userStatus Indicates the status of this user (i.e member, admin, invited)
  * @param timeUserJoined The time this user joined this guild
  */
@@ -103,9 +103,7 @@ interface IGuildManager {
      * @dev Creates a new guild within the given organization. Must pass the guild creation requirements.
      * @param _organizationId The organization to create the guild within
      */
-    function createGuild(
-        bytes32 _organizationId)
-    external;
+    function createGuild(bytes32 _organizationId) external;
 
     /**
      * @dev Updates the guild info for the given guild.
@@ -118,8 +116,8 @@ interface IGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         string calldata _name,
-        string calldata _description)
-    external;
+        string calldata _description
+    ) external;
 
     /**
      * @dev Updates the guild symbol for the given guild.
@@ -132,8 +130,8 @@ interface IGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         string calldata _symbolImageData,
-        bool _isSymbolOnChain)
-    external;
+        bool _isSymbolOnChain
+    ) external;
 
     /**
      * @dev Invites users to the given guild. Can only be done by admins or the guild owner.
@@ -141,21 +139,14 @@ interface IGuildManager {
      * @param _guildId The guild to invite users to
      * @param _users The users to invite
      */
-    function inviteUsers(
-        bytes32 _organizationId,
-        uint32 _guildId,
-        address[] calldata _users)
-    external;
+    function inviteUsers(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) external;
 
     /**
      * @dev Accepts an invitation to the given guild.
      * @param _organizationId The organization the guild is within
      * @param _guildId The guild to accept the invitation to
      */
-    function acceptInvitation(
-        bytes32 _organizationId,
-        uint32 _guildId)
-    external;
+    function acceptInvitation(bytes32 _organizationId, uint32 _guildId) external;
 
     /**
      * @dev Changes the admin status of the given users within the given guild.
@@ -168,8 +159,8 @@ interface IGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users,
-        bool[] calldata _isAdmins)
-    external;
+        bool[] calldata _isAdmins
+    ) external;
 
     /**
      * @dev Changes the owner of the given guild.
@@ -177,21 +168,14 @@ interface IGuildManager {
      * @param _guildId The guild to change the owner of
      * @param _newOwner The new owner of the guild
      */
-    function changeGuildOwner(
-        bytes32 _organizationId,
-        uint32 _guildId,
-        address _newOwner)
-    external;
+    function changeGuildOwner(bytes32 _organizationId, uint32 _guildId, address _newOwner) external;
 
     /**
      * @dev Leaves the given guild.
      * @param _organizationId The organization the guild is within
      * @param _guildId The guild to leave
      */
-    function leaveGuild(
-        bytes32 _organizationId,
-        uint32 _guildId)
-    external;
+    function leaveGuild(bytes32 _organizationId, uint32 _guildId) external;
 
     /**
      * @dev Kicks or cancels any invites of the given users from the given guild.
@@ -199,11 +183,7 @@ interface IGuildManager {
      * @param _guildId The guild to kick users from
      * @param _users The users to kick
      */
-    function kickOrRemoveInvitations(
-        bytes32 _organizationId,
-        uint32 _guildId,
-        address[] calldata _users)
-    external;
+    function kickOrRemoveInvitations(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) external;
 
     /**
      * @dev Returns whether or not the given user can create a guild within the given organization.
@@ -211,12 +191,7 @@ interface IGuildManager {
      * @param _user The user to check
      * @return Whether or not the user can create a guild within the given organization
      */
-    function userCanCreateGuild(
-        bytes32 _organizationId,
-        address _user)
-    external
-    view
-    returns(bool);
+    function userCanCreateGuild(bytes32 _organizationId, address _user) external view returns (bool);
 
     /**
      * @dev Returns the membership status of the given user within the given guild.
@@ -228,10 +203,8 @@ interface IGuildManager {
     function getGuildMemberStatus(
         bytes32 _organizationId,
         uint32 _guildId,
-        address _user)
-    external
-    view
-    returns(GuildUserStatus);
+        address _user
+    ) external view returns (GuildUserStatus);
 
     /**
      * @dev Creates a new organization and initializes the Guild feature for it.
@@ -256,8 +229,8 @@ interface IGuildManager {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress)
-    external;
+        address _customGuildManagerAddress
+    ) external;
 
     /**
      * @dev Creates a new organization and initializes the Guild feature for it.
@@ -278,38 +251,29 @@ interface IGuildManager {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress)
-    external;
+        address _customGuildManagerAddress
+    ) external;
 
     /**
      * @dev Sets the max number of guilds a user can join within the organization.
      * @param _organizationId The id of the organization to set the max guilds per user for.
      * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
      */
-    function setMaxGuildsPerUser(
-        bytes32 _organizationId,
-        uint8 _maxGuildsPerUser)
-    external;
+    function setMaxGuildsPerUser(bytes32 _organizationId, uint8 _maxGuildsPerUser) external;
 
     /**
      * @dev Sets the cooldown period a user has to wait before joining a new guild within the organization.
      * @param _organizationId The id of the organization to set the guild joining timeout for.
      * @param _timeoutAfterLeavingGuild The cooldown period a user has to wait before joining a new guild within the organization.
      */
-    function setTimeoutAfterLeavingGuild(
-        bytes32 _organizationId,
-        uint32 _timeoutAfterLeavingGuild)
-    external;
+    function setTimeoutAfterLeavingGuild(bytes32 _organizationId, uint32 _timeoutAfterLeavingGuild) external;
 
     /**
      * @dev Sets the rule for creating new guilds within the organization.
      * @param _organizationId The id of the organization to set the guild creation rule for.
      * @param _guildCreationRule The rule that outlines how a user can create a new guild within the organization.
      */
-    function setGuildCreationRule(
-        bytes32 _organizationId,
-        GuildCreationRule _guildCreationRule)
-    external;
+    function setGuildCreationRule(bytes32 _organizationId, GuildCreationRule _guildCreationRule) external;
 
     /**
      * @dev Sets the max number of users per guild within the organization.
@@ -320,8 +284,8 @@ interface IGuildManager {
     function setMaxUsersPerGuild(
         bytes32 _organizationId,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
-        uint32 _maxUsersPerGuildConstant)
-    external;
+        uint32 _maxUsersPerGuildConstant
+    ) external;
 
     /**
      * @dev Sets the contract address that handles custom guild creation requirements (i.e owning specific NFTs).
@@ -329,10 +293,7 @@ interface IGuildManager {
      * @param _customGuildManagerAddress The contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      *  This is used for guild creation if the saved `guildCreationRule` == CUSTOM_RULE
      */
-    function setCustomGuildManagerAddress(
-        bytes32 _organizationId,
-        address _customGuildManagerAddress)
-    external;
+    function setCustomGuildManagerAddress(bytes32 _organizationId, address _customGuildManagerAddress) external;
 
     /**
      * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from
@@ -340,20 +301,20 @@ interface IGuildManager {
      * @param _organizationId The organization to return guild management info for
      * @return The stored guild settings for a given organization
      */
-    function getGuildOrganizationInfo(bytes32 _organizationId) external view returns(GuildOrganizationInfo memory);
+    function getGuildOrganizationInfo(bytes32 _organizationId) external view returns (GuildOrganizationInfo memory);
 
     /**
      * @dev Retrieves the token address for guilds within the given organization
      * @param _organizationId The organization to return the guild token address for
      * @return The token address for guilds within the given organization
      */
-    function guildTokenAddress(bytes32 _organizationId) external view returns(address);
+    function guildTokenAddress(bytes32 _organizationId) external view returns (address);
 
     /**
      * @dev Retrieves the token implementation address for guild token contracts to proxy to
      * @return The beacon token implementation address
      */
-    function guildTokenImplementation() external view returns(address);
+    function guildTokenImplementation() external view returns (address);
 
     /**
      * @dev Determines if the given guild is valid for the given organization
@@ -361,15 +322,15 @@ interface IGuildManager {
      * @param _guildId The guild to verify
      * @return If the given guild is valid within the given organization
      */
-    function isValidGuild(bytes32 _organizationId, uint32 _guildId) external view returns(bool);
+    function isValidGuild(bytes32 _organizationId, uint32 _guildId) external view returns (bool);
 
-    /** 
+    /**
      * @dev Get a given guild's name
      * @param _organizationId The organization to find the given guild within
      * @param _guildId The guild to retrieve the name from
      * @return The name of the given guild within the given organization
      */
-    function guildName(bytes32 _organizationId, uint32 _guildId) external view returns(string memory);
+    function guildName(bytes32 _organizationId, uint32 _guildId) external view returns (string memory);
 
     /**
      * @dev Get a given guild's description
@@ -377,7 +338,7 @@ interface IGuildManager {
      * @param _guildId The guild to retrieve the description from
      * @return The description of the given guild within the given organization
      */
-    function guildDescription(bytes32 _organizationId, uint32 _guildId) external view returns(string memory);
+    function guildDescription(bytes32 _organizationId, uint32 _guildId) external view returns (string memory);
 
     /**
      * @dev Get a given guild's symbol info
@@ -386,7 +347,10 @@ interface IGuildManager {
      * @return symbolImageData_ The symbol data of the given guild within the given organization
      * @return isSymbolOnChain_ Whether or not the returned data is a URL or on-chain
      */
-    function guildSymbolInfo(bytes32 _organizationId, uint32 _guildId) external view returns(string memory symbolImageData_, bool isSymbolOnChain_);
+    function guildSymbolInfo(
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) external view returns (string memory symbolImageData_, bool isSymbolOnChain_);
 
     /**
      * @dev Retrieves the current owner for a given guild within a organization.
@@ -394,7 +358,7 @@ interface IGuildManager {
      * @param _guildId The guild to return the owner of
      * @return The current owner of the given guild within the given organization
      */
-    function guildOwner(bytes32 _organizationId, uint32 _guildId) external view returns(address);
+    function guildOwner(bytes32 _organizationId, uint32 _guildId) external view returns (address);
 
     /**
      * @dev Retrieves the current owner for a given guild within a organization.
@@ -402,10 +366,5 @@ interface IGuildManager {
      * @param _guildId The guild to return the maxMembers of
      * @return The current maxMembers of the given guild within the given organization
      */
-    function maxUsersForGuild(
-        bytes32 _organizationId,
-        uint32 _guildId)
-    external
-    view
-    returns(uint32);
+    function maxUsersForGuild(bytes32 _organizationId, uint32 _guildId) external view returns (uint32);
 }

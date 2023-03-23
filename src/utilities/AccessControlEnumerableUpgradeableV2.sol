@@ -8,21 +8,33 @@ contract AccessControlEnumerableUpgradeableV2 is AccessControlEnumerableUpgradea
     bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 internal constant ROLE_GRANTER_ROLE = keccak256("ROLE_GRANTER");
 
-
-    constructor(){
+    constructor() {
         _grantRole(OWNER_ROLE, msg.sender);
     }
 
-    function grantRole(bytes32 _role, address _account) public override(AccessControlUpgradeable, IAccessControlUpgradeable) requiresEitherRole(ROLE_GRANTER_ROLE, OWNER_ROLE) {
+    function grantRole(
+        bytes32 _role,
+        address _account
+    )
+        public
+        override(AccessControlUpgradeable, IAccessControlUpgradeable)
+        requiresEitherRole(ROLE_GRANTER_ROLE, OWNER_ROLE)
+    {
         require(_role != OWNER_ROLE, "Cannot change owner role through grantRole");
         _grantRole(_role, _account);
     }
 
-    function revokeRole(bytes32 _role, address _account) public override(AccessControlUpgradeable, IAccessControlUpgradeable) requiresEitherRole(ROLE_GRANTER_ROLE, OWNER_ROLE) {
+    function revokeRole(
+        bytes32 _role,
+        address _account
+    )
+        public
+        override(AccessControlUpgradeable, IAccessControlUpgradeable)
+        requiresEitherRole(ROLE_GRANTER_ROLE, OWNER_ROLE)
+    {
         require(_role != OWNER_ROLE, "Cannot change owner role through grantRole");
         _revokeRole(_role, _account);
     }
-
 
     modifier requiresRole(bytes32 _role) {
         require(hasRole(_role, msg.sender), "Does not have required role");

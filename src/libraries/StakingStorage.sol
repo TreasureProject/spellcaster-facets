@@ -7,7 +7,6 @@ struct ERC721TokenStorageData {
 }
 
 library StakingStorage {
-
     struct State {
         mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
         mapping(address => mapping(address => uint256)) tokenAddressToAddressToTokensStored;
@@ -24,11 +23,18 @@ library StakingStorage {
         }
     }
 
-    function getERC721TokenStorageData(address _tokenAddress, uint256 _tokenId) internal view returns (ERC721TokenStorageData memory) {
+    function getERC721TokenStorageData(
+        address _tokenAddress,
+        uint256 _tokenId
+    ) internal view returns (ERC721TokenStorageData memory) {
         return getState().tokenAddressToTokenIdToERC721TokenStorageData[_tokenAddress][_tokenId];
     }
 
-    function setERC721TokenStorageData(address _tokenAddress, uint256 _tokenId, ERC721TokenStorageData memory _tokenStorageData) internal {
+    function setERC721TokenStorageData(
+        address _tokenAddress,
+        uint256 _tokenId,
+        ERC721TokenStorageData memory _tokenStorageData
+    ) internal {
         getState().tokenAddressToTokenIdToERC721TokenStorageData[_tokenAddress][_tokenId] = _tokenStorageData;
     }
 
@@ -40,30 +46,32 @@ library StakingStorage {
         getState().tokenAddressToAddressToTokensStored[_tokenAddress][_user] = _amount;
     }
 
-    function getERC1155TokensStored(address _tokenAddress, uint256 _tokenId, address _user) internal view returns (uint256) {
+    function getERC1155TokensStored(
+        address _tokenAddress,
+        uint256 _tokenId,
+        address _user
+    ) internal view returns (uint256) {
         return getState().tokenAddressToTokenIdToUserToQuantityStored[_tokenAddress][_tokenId][_user];
     }
 
-    function setERC1155TokensStored(address _tokenAddress, uint256 _tokenId, address _user, uint256 _quantity) internal {
+    function setERC1155TokensStored(
+        address _tokenAddress,
+        uint256 _tokenId,
+        address _user,
+        uint256 _quantity
+    ) internal {
         getState().tokenAddressToTokenIdToUserToQuantityStored[_tokenAddress][_tokenId][_user] = _quantity;
     }
 
-
-
-
-    function getUsedNonce(uint256 _nonce) internal view returns(bool){
+    function getUsedNonce(uint256 _nonce) internal view returns (bool) {
         return getState().usedNonces[_nonce];
-    }  
+    }
 
-    function setUsedNonce(uint256 _nonce, bool _set) internal{
+    function setUsedNonce(uint256 _nonce, bool _set) internal {
         getState().usedNonces[_nonce] = _set;
-    }  
+    }
 
     function compareStrings(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 }
-
-    
-
-    

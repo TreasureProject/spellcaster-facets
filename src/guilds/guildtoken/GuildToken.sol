@@ -1,17 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
-import {LibUtilities} from "src/libraries/LibUtilities.sol";
-import {GuildTokenContracts, LibGuildToken, IGuildToken} from "./GuildTokenContracts.sol";
+import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libraries/LibAccessControlRoles.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { LibUtilities } from "src/libraries/LibUtilities.sol";
+import { GuildTokenContracts, LibGuildToken, IGuildToken } from "./GuildTokenContracts.sol";
 
 contract GuildToken is GuildTokenContracts {
-
     /**
      * @inheritdoc IGuildToken
      */
-    function initialize(bytes32 _organizationId, address _systemDelegateApprover) external facetInitializer(keccak256("GuildToken")) {
+    function initialize(
+        bytes32 _organizationId,
+        address _systemDelegateApprover
+    ) external facetInitializer(keccak256("GuildToken")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
@@ -32,12 +34,8 @@ contract GuildToken is GuildTokenContracts {
     function adminMint(
         address _to,
         uint256 _id,
-        uint256 _amount)
-    external
-    onlyRole(ADMIN_ROLE)
-    whenNotPaused
-    supportsMetaTxNoId
-    {
+        uint256 _amount
+    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
         _mint(_to, _id, _amount, "");
     }
 
@@ -47,12 +45,8 @@ contract GuildToken is GuildTokenContracts {
     function adminBurn(
         address _account,
         uint256 _id,
-        uint256 _amount)
-    external
-    onlyRole(ADMIN_ROLE)
-    whenNotPaused
-    supportsMetaTxNoId
-    {
+        uint256 _amount
+    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
         _burn(_account, _id, _amount);
     }
 
@@ -75,14 +69,14 @@ contract GuildToken is GuildTokenContracts {
      * @param _tokenId The id of the token to query
      * @return URI of the given token
      */
-    function uri(uint256 _tokenId) public view override returns(string memory) {
+    function uri(uint256 _tokenId) public view override returns (string memory) {
         return LibGuildToken.uri(_tokenId);
     }
 
     /**
      * @dev Adds the following restrictions to transferring guild tokens:
      * - Only token admins can transfer guild tokens
-     * - Guild tokens cannot be transferred while the contract is paused 
+     * - Guild tokens cannot be transferred while the contract is paused
      */
     function _beforeTokenTransfer(
         address operator,
@@ -96,5 +90,4 @@ contract GuildToken is GuildTokenContracts {
         LibUtilities.requireNotPaused();
         LibAccessControlRoles.requireRole(ADMIN_ROLE, LibMeta._msgSender());
     }
-
 }

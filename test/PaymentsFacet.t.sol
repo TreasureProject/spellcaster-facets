@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
-import {TestBase} from "./utils/TestBase.sol";
-import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
-import {DiamondUtils} from "./utils/DiamondUtils.sol";
-import {ERC20MockDecimals} from "test/mocks/ERC20MockDecimals.sol";
-import {MockPaymentsReceiver} from "test/mocks/MockPaymentsReceiver.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
+import { DiamondUtils } from "./utils/DiamondUtils.sol";
+import { ERC20MockDecimals } from "test/mocks/ERC20MockDecimals.sol";
+import { MockPaymentsReceiver } from "test/mocks/MockPaymentsReceiver.sol";
 
-import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/libraries/LibAccessControlRoles.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
+import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libraries/LibAccessControlRoles.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
 
-import {MockV3Aggregator} from "@chainlink/contracts/src/v0.8/tests/MockV3Aggregator.sol";
-import {PaymentsFacet, PaymentsStorage, PriceType} from "src/payments/PaymentsFacet.sol";
-import {PaymentsReceiver} from "src/payments/PaymentsReceiver.sol";
+import { MockV3Aggregator } from "@chainlink/contracts/src/v0.8/tests/MockV3Aggregator.sol";
+import { PaymentsFacet, PaymentsStorage, PriceType } from "src/payments/PaymentsFacet.sol";
+import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 
 import "forge-std/console.sol";
 
@@ -25,7 +26,14 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
 
     // Events copied from other contracts for testing
     event PaymentSent(address _payor, address _token, uint256 _amount, address _paymentsReceiver);
-    event PaymentReceived(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _paymentAmountInPricedToken, PriceType _priceType, address _pricedERC20);
+    event PaymentReceived(
+        address _payor,
+        address _paymentERC20,
+        uint256 _paymentAmount,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    );
 
     PaymentsFacet internal payments;
     MockPaymentsReceiver internal receiver;
@@ -64,13 +72,22 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         facetInfo[0] = FacetInfo(address(new PaymentsFacet()), "PaymentsFacet", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
-            initData: abi.encodeWithSelector(PaymentsFacet.PaymentsFacet_init.selector, address(ethUsdPriceFeed), address(mockMagic))
+            initData: abi.encodeWithSelector(
+                PaymentsFacet.PaymentsFacet_init.selector, address(ethUsdPriceFeed), address(mockMagic)
+                )
         });
 
         init(facetInfo, initializations);
 
         payments = PaymentsFacet(address(_diamond));
-        payments.initializeERC20(address(mockMagic), 18, address(magicEthPriceFeed), address(magicUsdPriceFeed), new address[](0), new address[](0));
+        payments.initializeERC20(
+            address(mockMagic),
+            18,
+            address(magicEthPriceFeed),
+            address(magicUsdPriceFeed),
+            new address[](0),
+            new address[](0)
+        );
         payments.setERC20PriceFeedForGasToken(address(mockMagic), address(ethMagicPriceFeed));
 
         receiver = new MockPaymentsReceiver();
@@ -108,10 +125,16 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
 
     function testCalculateStaticPaymentAmountsCorrectly() public {
         uint256 expectedAmount = 150; // Amount before accounting for token decimals
-        
-        uint256 magicPaymentAmount = payments.calculatePaymentAmountByPriceType(address(mockMagic), expectedAmount * 10 ** 18, PriceType.STATIC, address(0));
-        uint256 usdcPaymentAmount = payments.calculatePaymentAmountByPriceType(address(mockUSDC), expectedAmount * 10 ** 6, PriceType.STATIC, address(0));
-        uint256 gasTokenPaymentAmount = payments.calculatePaymentAmountByPriceType(address(0), expectedAmount * 10 ** 18, PriceType.STATIC, address(0));
+
+        uint256 magicPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
+        );
+        uint256 usdcPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockUSDC), expectedAmount * 10 ** 6, PriceType.STATIC, address(0)
+        );
+        uint256 gasTokenPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(0), expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
+        );
 
         assertEq(magicPaymentAmount, expectedAmount * 10 ** 18);
         assertEq(usdcPaymentAmount, expectedAmount * 10 ** 6);
@@ -125,8 +148,11 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         uint256 expectedGasTokenAmountFromUSD = usdAmount * 10 ** 18 / uint256(usdToEthPrice); // Convert to 18 decimals before converting
         uint256 expectedGasTokenAmountFromMagic = magicAmount * 10 ** 18 / uint256(magicToEthPrice); // Increase decimals to allow for division back to 18 decimals
 
-        uint256 gasTokenUSDAmount = payments.calculatePaymentAmountByPriceType(address(0), usdAmount, PriceType.PRICED_IN_USD, address(0));
-        uint256 gasTokenMagicAmount = payments.calculatePaymentAmountByPriceType(address(0), magicAmount, PriceType.PRICED_IN_ERC20, address(mockMagic));
+        uint256 gasTokenUSDAmount =
+            payments.calculatePaymentAmountByPriceType(address(0), usdAmount, PriceType.PRICED_IN_USD, address(0));
+        uint256 gasTokenMagicAmount = payments.calculatePaymentAmountByPriceType(
+            address(0), magicAmount, PriceType.PRICED_IN_ERC20, address(mockMagic)
+        );
 
         assertEq(gasTokenUSDAmount, expectedGasTokenAmountFromUSD);
         assertEq(gasTokenMagicAmount, expectedGasTokenAmountFromMagic);
@@ -139,8 +165,12 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         uint256 expectedMagicAmountFromUSD = usdAmount * 10 ** 18 / uint256(usdToMagicPrice); // Convert to 18 decimals before converting
         uint256 expectedMagicAmountFromGasToken = gasTokenAmount * 10 ** 18 / uint256(ethToMagicPrice); // Increase decimals to allow for division back to 18 decimals
 
-        uint256 magicUSDAmount = payments.calculatePaymentAmountByPriceType(address(mockMagic), usdAmount, PriceType.PRICED_IN_USD, address(0));
-        uint256 magicGasTokenAmount = payments.calculatePaymentAmountByPriceType(address(mockMagic), gasTokenAmount, PriceType.PRICED_IN_GAS_TOKEN, address(0));
+        uint256 magicUSDAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), usdAmount, PriceType.PRICED_IN_USD, address(0)
+        );
+        uint256 magicGasTokenAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), gasTokenAmount, PriceType.PRICED_IN_GAS_TOKEN, address(0)
+        );
 
         assertEq(magicUSDAmount, expectedMagicAmountFromUSD);
         assertEq(magicGasTokenAmount, expectedMagicAmountFromGasToken);
@@ -171,25 +201,27 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
 
         assertEq(receiverAddress.balance, 0);
         assertEq(mockMagic.balanceOf(receiverAddress), 0);
-        
-        vm.expectCall(receiverAddress, abi.encodeWithSelector(
-            PaymentsReceiver.acceptGasToken.selector, 
-            deployer,
-            paymentAmount, 
-            paymentAmount, 
-            PriceType.STATIC, 
-            address(0)
-        ));
+
+        vm.expectCall(
+            receiverAddress,
+            abi.encodeWithSelector(
+                PaymentsReceiver.acceptGasToken.selector,
+                deployer,
+                paymentAmount,
+                paymentAmount,
+                PriceType.STATIC,
+                address(0)
+            )
+        );
         vm.expectEmit(true, true, false, false, address(payments));
         emit PaymentSent(LibMeta._msgSender(), address(0), paymentAmount, receiverAddress);
         vm.expectEmit(true, true, false, false, receiverAddress);
         emit PaymentReceived(deployer, address(0), paymentAmount, paymentAmount, PriceType.STATIC, address(0));
-        payments.makeStaticGasTokenPayment{value: paymentAmount}(receiverAddress, paymentAmount);
-        
+        payments.makeStaticGasTokenPayment{ value: paymentAmount }(receiverAddress, paymentAmount);
+
         payments.makeStaticERC20Payment(receiverAddress, address(mockMagic), paymentAmount);
 
         assertEq(receiverAddress.balance, paymentAmount);
         assertEq(mockMagic.balanceOf(receiverAddress), paymentAmount);
     }
-
 }

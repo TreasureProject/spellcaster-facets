@@ -34,7 +34,10 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
      * @dev Initialize the facet. Can be called externally or internally.
      * Ideally referenced in an initialization script facet
      */
-    function PaymentsFacet_init(address _gasTokenUSDPriceFeed, address _magicAddress) public facetInitializer(keccak256("PaymentsFacet")) {
+    function PaymentsFacet_init(
+        address _gasTokenUSDPriceFeed,
+        address _magicAddress
+    ) public facetInitializer(keccak256("PaymentsFacet")) {
         LibPayments.setGasTokenUSDPriceFeed(_gasTokenUSDPriceFeed);
         LibPayments.setMagicAddress(_magicAddress);
     }
@@ -344,11 +347,13 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     modifier onlyReceiver(address _recipient) {
-        if(!_recipient.isContract()) {
+        if (!_recipient.isContract()) {
             revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
         }
-        try IERC165Upgradeable(_recipient).supportsInterface(type(IPaymentsReceiver).interfaceId) returns (bool isSupported_) {
-            if(!isSupported_) {
+        try IERC165Upgradeable(_recipient).supportsInterface(type(IPaymentsReceiver).interfaceId) returns (
+            bool isSupported_
+        ) {
+            if (!isSupported_) {
                 revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
             }
         } catch (bytes memory) {

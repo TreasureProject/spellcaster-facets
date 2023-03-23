@@ -10,7 +10,7 @@ pragma solidity ^0.8.0;
  */
 library FacetInitializableStorage {
     error AlreadyInitialized(bytes32 facetId);
-    
+
     struct State {
         /*
          * @dev Indicates that the contract/facet has been initialized.

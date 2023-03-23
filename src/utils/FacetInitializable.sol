@@ -2,17 +2,16 @@
 
 pragma solidity ^0.8.0;
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
-import {InitializableStorage} from "@openzeppelin/contracts-diamond/proxy/utils/InitializableStorage.sol";
-import {FacetInitializableStorage} from "./FacetInitializableStorage.sol";
-import {LibUtilities} from "../libraries/LibUtilities.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { InitializableStorage } from "@openzeppelin/contracts-diamond/proxy/utils/InitializableStorage.sol";
+import { FacetInitializableStorage } from "./FacetInitializableStorage.sol";
+import { LibUtilities } from "../libraries/LibUtilities.sol";
 
 /**
  * @title Initializable using DiamondStorage pattern and supporting facet-specific initializers
  * @dev derived from https://github.com/OpenZeppelin/openzeppelin-contracts (MIT license)
  */
 abstract contract FacetInitializable {
-
     /**
      * @dev Modifier to protect an initializer function from being invoked twice.
      * Name changed to prevent collision with OZ contracts

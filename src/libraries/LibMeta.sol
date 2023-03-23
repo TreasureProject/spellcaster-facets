@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {MetaTxFacetStorage} from "src/metatx/MetaTxFacetStorage.sol";
+import { MetaTxFacetStorage } from "src/metatx/MetaTxFacetStorage.sol";
 
 /// @title Library for handling meta transactions with the EIP2771 standard
-/// @notice The logic for getting msgSender and msgData are were copied from OpenZeppelin's 
+/// @notice The logic for getting msgSender and msgData are were copied from OpenZeppelin's
 ///  ERC2771ContextUpgradeable contract
 library LibMeta {
-
     struct Layout {
         address trustedForwarder;
     }

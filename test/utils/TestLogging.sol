@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract TestLogging {
-
-    function debug(uint p0) internal view {
+    function debug(uint256 p0) internal view {
         console.log(p0);
     }
 
@@ -29,7 +28,7 @@ abstract contract TestLogging {
         console.log(label, p0);
     }
 
-    function debug(int p0) internal view {
+    function debug(int256 p0) internal view {
         console.logInt(p0);
     }
 

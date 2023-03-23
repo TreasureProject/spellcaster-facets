@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {TestBase} from "./utils/TestBase.sol";
-import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
-import {DiamondUtils} from "./utils/DiamondUtils.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
+import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import {OrganizationFacet} from "src/organizations/OrganizationFacet.sol";
-import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
+import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
+import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import {
-    IGuildManager,
-    GuildCreationRule,
-    MaxUsersPerGuildRule,
-    GuildUserStatus
+    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus
 } from "src/interfaces/IGuildManager.sol";
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
@@ -30,7 +28,9 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
         facetInfo[0] = FacetInfo(address(new OrganizationFacet()), "OrganizationFacet", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
-            initData: abi.encodeWithSelector(OrganizationFacet.OrganizationFacet_init.selector, address(new OrganizationFacet()))
+            initData: abi.encodeWithSelector(
+                OrganizationFacet.OrganizationFacet_init.selector, address(new OrganizationFacet())
+                )
         });
 
         init(facetInfo, initializations);
@@ -50,12 +50,8 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     function testAllowAdminCreateOrganization() public {
         assertEq("", _orgs.getOrganizationInfo(_org1).name);
         assertEq("", _orgs.getOrganizationInfo(_org1).description);
-        
-        _orgs.createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+
+        _orgs.createOrganization(_org1, "My org", "My descr");
 
         assertEq("My org", _orgs.getOrganizationInfo(_org1).name);
         assertEq("My descr", _orgs.getOrganizationInfo(_org1).description);
@@ -64,20 +60,12 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     function testRevertNonAdminCreateOrganization() public {
         _diamond.revokeRole("ADMIN", deployer);
         vm.expectRevert(errMissingRole("ADMIN", deployer));
-        _orgs.createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        _orgs.createOrganization(_org1, "My org", "My descr");
     }
 
     function testAllowAdminEditOrganizationNameAndDesc() public {
-        _orgs.createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
-        
+        _orgs.createOrganization(_org1, "My org", "My descr");
+
         assertEq("My org", _orgs.getOrganizationInfo(_org1).name);
         assertEq("My descr", _orgs.getOrganizationInfo(_org1).description);
 
@@ -92,11 +80,7 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     }
 
     function testAllowAdminToBeChanged() public {
-        _orgs.createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        _orgs.createOrganization(_org1, "My org", "My descr");
 
         assertEq(deployer, _orgs.getOrganizationInfo(_org1).admin);
 
@@ -106,15 +90,10 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     }
 
     function testRevertNonAdminChangeAdmin() public {
-        _orgs.createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        _orgs.createOrganization(_org1, "My org", "My descr");
 
         vm.prank(alice);
         vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, alice));
         _orgs.setOrganizationAdmin(_org1, leet);
     }
-
 }

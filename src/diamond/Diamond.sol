@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/******************************************************************************\
-* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
-* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
-*
-* Implementation of a diamond.
-/******************************************************************************/
+/**
+ * \
+ * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
+ * EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
+ *
+ * Implementation of a diamond.
+ * /*****************************************************************************
+ */
 
-import {LibDiamond} from "./LibDiamond.sol";
-import {IDiamondCut} from "./IDiamondCut.sol";
+import { LibDiamond } from "./LibDiamond.sol";
+import { IDiamondCut } from "./IDiamondCut.sol";
 
 contract Diamond {
     struct Initialization {
@@ -60,14 +62,10 @@ contract Diamond {
             returndatacopy(0, 0, returndatasize())
             // return any return value or error back to the caller
             switch result
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

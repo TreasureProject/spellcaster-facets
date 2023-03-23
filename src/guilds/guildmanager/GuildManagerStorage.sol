@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-import {BeaconProxy} from '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 import {
     IGuildManager,
@@ -14,17 +14,16 @@ import {
     GuildOrganizationUserInfo,
     MaxUsersPerGuildRule
 } from "src/interfaces/IGuildManager.sol";
-import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
+import { IGuildToken } from "src/interfaces/IGuildToken.sol";
+import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 
-import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
+import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 
 /**
  * @title GuildManagerStorage library
  * @notice This library contains the storage layout and events/errors for the GuildManagerFacet contract.
  */
 library GuildManagerStorage {
-
     struct Layout {
         /**
          * @dev The implementation of the guild token contract to create new contracts from

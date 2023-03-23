@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {LibDiamond} from "../diamond/LibDiamond.sol";
-import {IERC173Upgradeable} from "@openzeppelin/contracts-diamond/interfaces/IERC173Upgradeable.sol";
+import { LibDiamond } from "../diamond/LibDiamond.sol";
+import { IERC173Upgradeable } from "@openzeppelin/contracts-diamond/interfaces/IERC173Upgradeable.sol";
 
 contract OwnershipFacet is IERC173Upgradeable {
     function transferOwnership(address _newOwner) external override {

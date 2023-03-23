@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import {LibMeta} from "src/libraries/LibMeta.sol";
-import {PaymentsStorage, ERC20Info} from "src/payments/PaymentsStorage.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { PaymentsStorage, ERC20Info } from "src/payments/PaymentsStorage.sol";
 
 /// @title Library for handling storage interfacing for payments
 library LibPayments {
@@ -32,7 +32,7 @@ library LibPayments {
         priceFeed_ = PaymentsStorage.layout().erc20ToInfo[_erc20Addr].gasTokenPricedInERC20Aggregator;
     }
 
-    function getMagicAddress() internal view returns(address magicAddress_) {
+    function getMagicAddress() internal view returns (address magicAddress_) {
         magicAddress_ = PaymentsStorage.layout().magicAddress;
     }
 
@@ -48,7 +48,8 @@ library LibPayments {
      * @param _priceFeedAddr The address of the price feed to set
      */
     function setGasTokenERC20PriceFeed(address _erc20Addr, address _priceFeedAddr) internal {
-        PaymentsStorage.layout().erc20ToInfo[_erc20Addr].gasTokenPricedInERC20Aggregator = AggregatorV3Interface(_priceFeedAddr);
+        PaymentsStorage.layout().erc20ToInfo[_erc20Addr].gasTokenPricedInERC20Aggregator =
+            AggregatorV3Interface(_priceFeedAddr);
     }
 
     /**

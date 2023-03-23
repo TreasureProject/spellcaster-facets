@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {PaymentsReceiver} from "src/payments/PaymentsReceiver.sol";
+import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 
-/** 
+/**
  * @notice Workaround for the lack of vm.expectCall to internal function support in Foundry.
  *         Used to check emissions of the internal functions with correct argument values.
  */
@@ -13,15 +13,23 @@ contract MockPaymentsReceiver is PaymentsReceiver {
     event AcceptMagicPricedInGasToken(address _payor, uint256 _paymentAmount, uint256 _priceInGasToken);
     event AcceptMagicPricedInERC20(address _payor, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20);
     event AcceptGasTokenPricedInMagic(address _payor, uint256 _paymentAmount, uint256 _priceInMagic);
-    event AcceptERC20PricedInMagic(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInMagic);
+    event AcceptERC20PricedInMagic(
+        address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInMagic
+    );
 
     event AcceptStaticERC20(address _payor, address _paymentERC20, uint256 _paymentAmount);
-    event AcceptERC20PricedInERC20(address _payor, address _paymentERC20, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20);
+    event AcceptERC20PricedInERC20(
+        address _payor, address _paymentERC20, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20
+    );
     event AcceptERC20PricedInUSD(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInUSD);
-    event AcceptERC20PricedInGasToken(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInGasToken);
+    event AcceptERC20PricedInGasToken(
+        address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInGasToken
+    );
 
     event AcceptStaticGasToken(address _payor, uint256 _paymentAmount);
-    event AcceptGasTokenPricedInERC20(address _payor, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20);
+    event AcceptGasTokenPricedInERC20(
+        address _payor, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20
+    );
     event AcceptGasTokenPricedInUSD(address _payor, uint256 _paymentAmount, uint256 _priceInUSD);
 
     function initialize(address _spellcasterPayments) external {
