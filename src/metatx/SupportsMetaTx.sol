@@ -37,12 +37,12 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
   function verifyAndConsumeSessionId(bytes32 _organizationId) internal {
     MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
     bytes32 sessionId = l.sessionOrganizationId;
-    
+
     if(sessionId != "") {
       if(sessionId != _organizationId) {
         revert MetaTxFacetStorage.SessionOrganizationIdMismatch(sessionId, _organizationId);
       }
-      
+
       l.sessionOrganizationId = "";
     }
   }

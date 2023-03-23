@@ -63,7 +63,7 @@ struct GuildInfo {
 }
 
 /**
- * @dev Provides information regarding a user in a specific guild 
+ * @dev Provides information regarding a user in a specific guild
  * @param userStatus Indicates the status of this user (i.e member, admin, invited)
  * @param timeUserJoined The time this user joined this guild
  */
@@ -363,7 +363,7 @@ interface IGuildManager {
      */
     function isValidGuild(bytes32 _organizationId, uint32 _guildId) external view returns(bool);
 
-    /** 
+    /**
      * @dev Get a given guild's name
      * @param _organizationId The organization to find the given guild within
      * @param _guildId The guild to retrieve the name from

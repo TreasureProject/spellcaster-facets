@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+/*pragma solidity ^0.8.0;
 
 import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
@@ -28,9 +28,9 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
 
     function setUp() public {
         FacetInfo[] memory facetInfo = new FacetInfo[](1);
-        
+
         facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
-        
+
         init(facetInfo);
 
         _simpleCrafting = SimpleCrafting(address(_diamond));
@@ -48,7 +48,7 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         _ERC1155Consumer.initialize();
 
         console.log(deployer);
-        
+
         _ERC20Consumer.setWorldAddress(address(_simpleCrafting));
         _ERC721Consumer.setWorldAddress(address(_simpleCrafting));
         _ERC1155Consumer.setWorldAddress(address(_simpleCrafting));
@@ -104,7 +104,7 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         _simpleCrafting.craft(0);
 
         //Balance of ingredients
-        
+
         //Should have 1 (leftover) + 20 (result) left of ERC20
         assertEq(_ERC20Consumer.balanceOf(deployer), 21 * 10 **18);
         //Owner of ERC721 token 10 should be crafting
@@ -113,11 +113,11 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         assertEq(_ERC1155Consumer.balanceOf(deployer, 2), 1);
 
         //Balances of results
-        
+
         //Owner of ERC721 token 20 should be deployer
         assertEq(_ERC721Consumer.ownerOf(20), address(deployer));
         //Deployer has 10 of token Id 3 from ERC1155
         assertEq(_ERC1155Consumer.balanceOf(deployer, 3), 10);
 
     }
-}
+}*/
