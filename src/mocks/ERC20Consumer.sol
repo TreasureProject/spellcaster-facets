@@ -32,5 +32,4 @@ contract ERC20Consumer is ERC20Upgradeable, OwnableUpgradeable {
     function mintArbitrary(address _user, uint256 _quantity) public {
         _mint(_user, _quantity);
     }
-
 }

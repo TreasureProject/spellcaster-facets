@@ -31,17 +31,17 @@ contract ERC721Consumer is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     }
 
     function mintArbitrary(address _user, uint256 _quantity) public {
-        for(uint256 i = _counter;i <_quantity;i++){
-             _mint(_user, _counter + i);
+        for (uint256 i = _counter; i < _quantity; i++) {
+            _mint(_user, _counter + i);
         }
         _counter += _quantity;
     }
 
-    function walletOfOwner(address _user) public view returns(uint256[] memory) {
+    function walletOfOwner(address _user) public view returns (uint256[] memory) {
         uint256 _tokenCount = balanceOf(_user);
         uint256[] memory _tokens = new uint256[](_tokenCount);
 
-        for(uint256 i =0;i<_tokenCount;i++){
+        for (uint256 i = 0; i < _tokenCount; i++) {
             _tokens[i] = tokenOfOwnerByIndex(_user, i);
         }
 

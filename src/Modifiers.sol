@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {PausableStorage} from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
-import {LibUtilities} from "./libraries/LibUtilities.sol";
-import {LibMeta} from "./libraries/LibMeta.sol";
-import {LibAccessControlRoles} from "./libraries/LibAccessControlRoles.sol";
+import { PausableStorage } from "@openzeppelin/contracts-diamond/security/PausableStorage.sol";
+import { LibUtilities } from "./libraries/LibUtilities.sol";
+import { LibMeta } from "./libraries/LibMeta.sol";
+import { LibAccessControlRoles } from "./libraries/LibAccessControlRoles.sol";
 
 // abstract contract to include shared utility modifiers for ease of use
 // also includes modifiers imported from PausableUpgradeable
 /// @title Abstract contract to include shared utility across all facets.
 /// @dev Modifiers can't go in a library so this is where they should go, also includes meta-tx helpers
 abstract contract Modifiers {
-
     // =============================================================
     //                         Modifiers
     // =============================================================

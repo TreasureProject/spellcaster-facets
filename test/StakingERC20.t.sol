@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {TestBase} from "./utils/TestBase.sol";
-import {StakingERC20, WithdrawRequest, Signature} from "../src/StakingERC20.sol";
-import {ERC20Consumer} from "../src/mocks/ERC20Consumer.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { StakingERC20, WithdrawRequest, Signature } from "../src/StakingERC20.sol";
+import { ERC20Consumer } from "../src/mocks/ERC20Consumer.sol";
 
 contract StakingERC20Test is TestBase {
     StakingERC20 internal _staking;
@@ -20,8 +20,13 @@ contract StakingERC20Test is TestBase {
         _consumer.mintArbitrary(deployer, 2_000 ether);
     }
 
-    function toSigHash(uint256 nonce, address token, uint256 amount, address recipient) internal pure returns(bytes32) {
-        return keccak256(abi.encodePacked(nonce,token,amount,recipient));
+    function toSigHash(
+        uint256 nonce,
+        address token,
+        uint256 amount,
+        address recipient
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(nonce, token, amount, recipient));
     }
 
     function testDepositsAndWithdraws2000TokensFromWorld() public {
@@ -76,7 +81,5 @@ contract StakingERC20Test is TestBase {
         assertEq(5_000 ether, _consumer.balanceOf(deployer));
     }
 
-    function test() public {
-    }
-
+    function test() public { }
 }

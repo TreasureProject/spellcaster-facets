@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {TestBase} from "./utils/TestBase.sol";
-import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
-import {DiamondUtils} from "./utils/DiamondUtils.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
+import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import {GuildToken} from "src/guilds/guildtoken/GuildToken.sol";
-import {GuildManager} from "src/guilds/guildmanager/GuildManager.sol";
-import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.sol";
-import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
-import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
+import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
+import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
+import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
+import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
+import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import {
-    IGuildManager,
-    GuildCreationRule,
-    MaxUsersPerGuildRule,
-    GuildUserStatus
+    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus
 } from "src/interfaces/IGuildManager.sol";
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
@@ -33,7 +31,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         facetInfo[0] = FacetInfo(address(new GuildManager()), "GuildManager", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
-            initData: abi.encodeWithSelector(GuildManager.GuildManager_init.selector, address(new GuildToken()), address(0x1))
+            initData: abi.encodeWithSelector(
+                GuildManager.GuildManager_init.selector, address(new GuildToken()), address(0x1)
+                )
         });
 
         init(facetInfo, initializations);
@@ -47,7 +47,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             keccak256("1"),
             "My org",
             "My descr",
-            1, // Max users per guild 
+            1, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -71,15 +71,15 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testAllowAdminCreateGuildOrganization() public {
         _diamond.setPause(false);
-        
+
         assertEq(0, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
         assertEq(address(0), _manager.getOrganizationInfo(_org1).admin);
-        
+
         _manager.createForNewOrganization(
             keccak256("1"),
             "My org",
             "My descr",
-            1, // Max users per guild 
+            1, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -99,7 +99,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             keccak256("1"),
             "My org",
             "My descr",
-            1, // Max users per guild 
+            1, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -116,7 +116,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.setPause(false);
 
         assertEq(address(0), _manager.guildOwner(_org1, _guild1));
-        
+
         createDefaultOrgAndGuild();
 
         assertEq(deployer, _manager.guildOwner(_org1, _guild1));
@@ -126,12 +126,12 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.setPause(false);
 
         assertEq(address(0), _manager.guildOwner(_org1, _guild1));
-        
+
         _manager.createForNewOrganization(
             keccak256("1"),
             "My org",
             "My descr",
-            1, // Max users per guild 
+            1, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -147,7 +147,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testAllowOwnerEditGuild() public {
         _diamond.setPause(false);
-        
+
         createDefaultOrgAndGuild();
         assertEq("", _manager.guildName(_org1, _guild1));
         assertEq("", _manager.guildDescription(_org1, _guild1));
@@ -160,9 +160,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testRevertNonOwnerEditGuildInfo() public {
         _diamond.setPause(false);
-        
+
         createDefaultOrgAndGuild();
-        
+
         vm.prank(leet);
         vm.expectRevert(err(GuildManagerStorage.NotGuildOwner.selector, leet, "UPDATE_INFO"));
         _manager.updateGuildInfo(_org1, _guild1, "New name", "New descr");
@@ -187,17 +187,17 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         vm.prank(leet);
         _manager.acceptInvitation(_org1, _guild1);
         member = _manager.getGuildMemberStatus(_org1, _guild1, leet);
-        
+
         // Make leet an admin
         _manager.changeGuildAdmins(_org1, _guild1, inviteLeet, admins);
-        
+
         // Leet can now invite alice
         _manager.inviteUsers(_org1, _guild1, inviteAlice);
-        
-        assertEq(uint(before), uint(GuildUserStatus.NOT_ASSOCIATED));
-        assertEq(uint(invited), uint(GuildUserStatus.INVITED));
-        assertEq(uint(member), uint(GuildUserStatus.MEMBER));
-        assertEq(uint(_manager.getGuildMemberStatus(_org1, _guild1, alice)), uint(GuildUserStatus.INVITED));
+
+        assertEq(uint256(before), uint256(GuildUserStatus.NOT_ASSOCIATED));
+        assertEq(uint256(invited), uint256(GuildUserStatus.INVITED));
+        assertEq(uint256(member), uint256(GuildUserStatus.MEMBER));
+        assertEq(uint256(_manager.getGuildMemberStatus(_org1, _guild1, alice)), uint256(GuildUserStatus.INVITED));
     }
 
     function testRevertAddingNonMemberAsAdmin() public {
@@ -221,8 +221,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         inviteAndAcceptGuildInvite(_org1, _guild1, leet);
         changeGuildMemberAdminStatus(leet, true);
-        
-        if(_user == deployer || _user == leet) {
+
+        if (_user == deployer || _user == leet) {
             vm.expectRevert(err(GuildManagerStorage.UserAlreadyInGuild.selector, _org1, _guild1, _user));
         } else {
             vm.prank(_user);
@@ -235,43 +235,37 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
-        vm.assume(_user != address(0)
-            && _user != _manager.guildOwner(_org1, _guild1)
-            && !_user.isContract()
-        );
+        vm.assume(_user != address(0) && _user != _manager.guildOwner(_org1, _guild1) && !_user.isContract());
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
         vm.prank(_user);
         _manager.leaveGuild(_org1, _guild1);
         GuildUserStatus afterLeave = _manager.getGuildMemberStatus(_org1, _guild1, _user);
-        assertEq(uint(before), uint(GuildUserStatus.MEMBER));
-        assertEq(uint(afterLeave), uint(GuildUserStatus.NOT_ASSOCIATED));
+        assertEq(uint256(before), uint256(GuildUserStatus.MEMBER));
+        assertEq(uint256(afterLeave), uint256(GuildUserStatus.NOT_ASSOCIATED));
     }
 
     function testAllowGuildOwnerAndAdminKickMembers(address _user) public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
-        vm.assume(_user != address(0)
-            && _user != _manager.guildOwner(_org1, _guild1)
-            && !_user.isContract()
-        );
+        vm.assume(_user != address(0) && _user != _manager.guildOwner(_org1, _guild1) && !_user.isContract());
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
-        if(_user != leet) {
+        if (_user != leet) {
             inviteAndAcceptGuildInvite(_org1, _guild1, leet);
         }
-        if(_user != alice) {
+        if (_user != alice) {
             inviteAndAcceptGuildInvite(_org1, _guild1, alice);
         }
         changeGuildMemberAdminStatus(leet, true);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
-        if(_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.MEMBER) {
+        if (_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.MEMBER) {
             // Ensure member cannot kick other member
             vm.expectRevert(err(GuildManagerStorage.NotGuildOwnerOrAdmin.selector, alice, "KICK"));
             kickGuildMemberAsAdmin(_user, alice);
             // Kick members as admin or owner
             kickGuildMemberAsAdmin(_user, uint160(leet) % 2 == 1 ? leet : deployer);
-        } else if(_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.ADMIN) {
+        } else if (_manager.getGuildMemberStatus(_org1, _guild1, _user) == GuildUserStatus.ADMIN) {
             // Kick admins as owner
             kickGuildMemberAsAdmin(_user, deployer);
             // Ensure admin cannot kick admin
@@ -279,25 +273,22 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             kickGuildMemberAsAdmin(_user, leet);
         }
         GuildUserStatus afterKick = _manager.getGuildMemberStatus(_org1, _guild1, _user);
-        assertEq(uint(before), uint(GuildUserStatus.MEMBER));
-        assertEq(uint(afterKick), uint(GuildUserStatus.NOT_ASSOCIATED));
+        assertEq(uint256(before), uint256(GuildUserStatus.MEMBER));
+        assertEq(uint256(afterKick), uint256(GuildUserStatus.NOT_ASSOCIATED));
     }
 
     function testAllowAdminToBeDemoted(address _user) public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
-        vm.assume(_user != address(0)
-            && _user != _manager.guildOwner(_org1, _guild1)
-            && !_user.isContract()
-        );
+        vm.assume(_user != address(0) && _user != _manager.guildOwner(_org1, _guild1) && !_user.isContract());
         inviteAndAcceptGuildInvite(_org1, _guild1, _user);
         changeGuildMemberAdminStatus(_user, true);
         GuildUserStatus before = _manager.getGuildMemberStatus(_org1, _guild1, _user);
         changeGuildMemberAdminStatus(_user, false);
         GuildUserStatus afterDemote = _manager.getGuildMemberStatus(_org1, _guild1, _user);
-        assertEq(uint(before), uint(GuildUserStatus.ADMIN));
-        assertEq(uint(afterDemote), uint(GuildUserStatus.MEMBER));
+        assertEq(uint256(before), uint256(GuildUserStatus.ADMIN));
+        assertEq(uint256(afterDemote), uint256(GuildUserStatus.MEMBER));
     }
 
     function testCanCreateForExistingOrganization() public {
@@ -306,7 +297,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
             _org2,
-            69, // Max users per guild 
+            69, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -326,7 +317,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
             _org2,
-            69, // Max users per guild 
+            69, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -337,7 +328,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, _org2));
         _manager.createForExistingOrganization(
             _org2,
-            69, // Max users per guild 
+            69, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -351,7 +342,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         vm.expectRevert(err(OrganizationManagerStorage.NonexistantOrganization.selector, keccak256("2")));
         _manager.createForExistingOrganization(
             keccak256("2"),
-            69, // Max users per guild 
+            69, // Max users per guild
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
@@ -368,7 +359,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.setOrganizationAdmin(_org1, alice);
         vm.prank(alice);
         _manager.createGuild(_org1);
-        
+
         inviteAndAcceptGuildInvite(_org1, _guild1, leet);
 
         address[] memory invites = new address[](1);
@@ -387,13 +378,13 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         uint32 maxMembers = _manager.maxUsersForGuild(_org1, _guild1);
 
-        for (uint i = 1; i <= maxMembers; i++) {
+        for (uint256 i = 1; i <= maxMembers; i++) {
             address userCur = vm.addr(i);
             address[] memory invites = new address[](1);
             invites[0] = userCur;
             _manager.inviteUsers(_org1, _guild1, invites);
             vm.prank(userCur);
-            if(i >= maxMembers - 1) {
+            if (i >= maxMembers - 1) {
                 // Because the guild owner is a member, and we already invited and accepted leet,
                 // we can only invite maxMembers - 2 users
                 vm.expectRevert(err(GuildManagerStorage.GuildFull.selector, _org1, _guild1));
@@ -428,5 +419,4 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         vm.prank(_admin);
         _manager.kickOrRemoveInvitations(_org1, _guild1, kicks);
     }
-
 }

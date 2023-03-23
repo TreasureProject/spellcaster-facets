@@ -29,7 +29,6 @@ struct CraftingRecipe {
 }
 
 library SimpleCraftingStorage {
-
     struct SimpleCraftingState {
         mapping(address => mapping(uint256 => bool)) collectionToRecipeIdToAllowed;
         mapping(uint256 => CraftingRecipe) craftingRecipes;

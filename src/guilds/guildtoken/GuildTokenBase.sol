@@ -1,15 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ContextUpgradeable} from "@openzeppelin/contracts-diamond/utils/ContextUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-diamond/utils/ContextUpgradeable.sol";
 
-import {AccessControlFacet} from "src/access/AccessControlFacet.sol";
-import {ERC1155Facet} from "src/token/ERC1155Facet.sol";
-import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
-import {LibUtilities} from "src/libraries/LibUtilities.sol";
-import {MetaTxFacet, MetaTxFacetStorage} from "src/metatx/MetaTxFacet.sol";
-import {LibGuildToken} from "src/libraries/LibGuildToken.sol";
+import { AccessControlFacet } from "src/access/AccessControlFacet.sol";
+import { ERC1155Facet } from "src/token/ERC1155Facet.sol";
+import { IGuildToken } from "src/interfaces/IGuildToken.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { LibUtilities } from "src/libraries/LibUtilities.sol";
+import { MetaTxFacet, MetaTxFacetStorage } from "src/metatx/MetaTxFacet.sol";
+import { LibGuildToken } from "src/libraries/LibGuildToken.sol";
 
 /**
  * @title Guild Token Contract
@@ -18,12 +18,11 @@ import {LibGuildToken} from "src/libraries/LibGuildToken.sol";
  *  by the GuildManager contract.
  */
 abstract contract GuildTokenBase is IGuildToken, MetaTxFacet, AccessControlFacet, ERC1155Facet {
-
     function __GuildTokenBase_init() internal onlyFacetInitializing {
         __ERC1155Facet_init("");
         __AccessControlEnumerable_init();
     }
-    
+
     /**
      * @dev Overrides and passes through to ERC1155
      */

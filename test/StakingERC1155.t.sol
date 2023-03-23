@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
-import {TestBase} from "./utils/TestBase.sol";
-import {StakingERC1155, WithdrawRequest, Signature} from "../src/StakingERC1155.sol";
-import {ERC1155Consumer} from "../src/mocks/ERC1155Consumer.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { StakingERC1155, WithdrawRequest, Signature } from "../src/StakingERC1155.sol";
+import { ERC1155Consumer } from "../src/mocks/ERC1155Consumer.sol";
 
 contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
     StakingERC1155 internal _staking;
@@ -24,13 +25,19 @@ contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
         _consumer.mintArbitrary(deployer, 2, 2);
     }
 
-    function toSigHash(uint256 nonce, address token, uint256 tokenId, uint256 amount, address recipient) internal pure returns(bytes32) {
-        return keccak256(abi.encodePacked(nonce,token,tokenId,amount,recipient));
+    function toSigHash(
+        uint256 nonce,
+        address token,
+        uint256 tokenId,
+        uint256 amount,
+        address recipient
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(nonce, token, tokenId, amount, recipient));
     }
 
-    function getIds() internal pure returns(uint256[] memory) {
+    function getIds() internal pure returns (uint256[] memory) {
         uint256[] memory ids = new uint256[](20);
-        for (uint i = 0; i < 20; i++) {
+        for (uint256 i = 0; i < 20; i++) {
             ids[i] = i;
         }
         return ids;
@@ -81,7 +88,5 @@ contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
         assertEq(22, _consumer.balanceOf(deployer, _tokenId));
     }
 
-    function test() public {
-    }
-
+    function test() public { }
 }

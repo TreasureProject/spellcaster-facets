@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-diamond/access/AccessControlEnumerableUpgradeable.sol";
-import {SupportsMetaTx} from "src/metatx/SupportsMetaTx.sol";
-import {FacetInitializable} from "../utils/FacetInitializable.sol";
-import {LibUtilities} from "../libraries/LibUtilities.sol";
-import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "../libraries/LibAccessControlRoles.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-diamond/access/AccessControlEnumerableUpgradeable.sol";
+import { SupportsMetaTx } from "src/metatx/SupportsMetaTx.sol";
+import { FacetInitializable } from "../utils/FacetInitializable.sol";
+import { LibUtilities } from "../libraries/LibUtilities.sol";
+import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "../libraries/LibAccessControlRoles.sol";
 
 /**
  * @title AccessControl facet wrapper for OZ's pausable contract.
- * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared 
+ * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared
  */
 contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControlEnumerableUpgradeable {
-
     function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet")) {
         __AccessControlEnumerable_init();
 
@@ -36,21 +36,21 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
         uint256 roleLength = _roles.length;
         LibUtilities.requireArrayLengthMatch(roleLength, _accounts.length);
         for (uint256 i = 0; i < roleLength; i++) {
-            grantRole(_roles[i], _accounts[i]);   
+            grantRole(_roles[i], _accounts[i]);
         }
     }
 
     /**
      * @dev Helper for getting admin role from block explorers
      */
-    function adminRole() external pure returns(bytes32 role_) {
+    function adminRole() external pure returns (bytes32 role_) {
         return ADMIN_ROLE;
     }
 
     /**
      * @dev Overrides to use custom error vs string building
      */
-    function _checkRole(bytes32 role, address account) internal view override virtual {
+    function _checkRole(bytes32 role, address account) internal view virtual override {
         if (!hasRole(role, account)) {
             revert LibAccessControlRoles.MissingRole(account, role);
         }
@@ -60,13 +60,7 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
      * @dev Overrides AccessControlEnumerableUpgradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override
-        virtual
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {TestBase} from "./utils/TestBase.sol";
-import {StakingERC721, WithdrawRequest, Signature} from "../src/StakingERC721.sol";
-import {ERC721Consumer} from "../src/mocks/ERC721Consumer.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { StakingERC721, WithdrawRequest, Signature } from "../src/StakingERC721.sol";
+import { ERC721Consumer } from "../src/mocks/ERC721Consumer.sol";
 
 contract StakingERC721Test is TestBase {
     StakingERC721 internal _staking;
@@ -20,13 +20,18 @@ contract StakingERC721Test is TestBase {
         _consumer.mintArbitrary(deployer, 20);
     }
 
-    function toSigHash(uint256 nonce, address token, uint256 tokenId, address recipient) internal pure returns(bytes32) {
-        return keccak256(abi.encodePacked(nonce,token,tokenId,recipient));
+    function toSigHash(
+        uint256 nonce,
+        address token,
+        uint256 tokenId,
+        address recipient
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(nonce, token, tokenId, recipient));
     }
 
-    function getIds() internal pure returns(uint256[] memory) {
+    function getIds() internal pure returns (uint256[] memory) {
         uint256[] memory ids = new uint256[](20);
-        for (uint i = 0; i < 20; i++) {
+        for (uint256 i = 0; i < 20; i++) {
             ids[i] = i;
         }
         return ids;
@@ -41,7 +46,7 @@ contract StakingERC721Test is TestBase {
         assertEq(0, _consumer.balanceOf(deployer));
 
         WithdrawRequest[] memory req = new WithdrawRequest[](20);
-        for (uint i = 0; i < ids.length; i++) {
+        for (uint256 i = 0; i < ids.length; i++) {
             req[i] = WithdrawRequest({
                 tokenAddress: address(_consumer),
                 reciever: deployer,
@@ -60,11 +65,11 @@ contract StakingERC721Test is TestBase {
         (address addr, uint256 pk) = makeAddrAndKey("trustedSigner");
         _consumer.setAdmin(addr, true);
 
-
         WithdrawRequest[] memory req = new WithdrawRequest[](10);
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             uint256 tokenId = i + 20; // offset from initial 20 minted
-            (uint8 v1, bytes32 r1, bytes32 s1) = signHashEthVRS(pk, toSigHash(tokenId, address(_consumer), tokenId, deployer));
+            (uint8 v1, bytes32 r1, bytes32 s1) =
+                signHashEthVRS(pk, toSigHash(tokenId, address(_consumer), tokenId, deployer));
 
             req[i] = WithdrawRequest({
                 tokenAddress: address(_consumer),
@@ -80,7 +85,5 @@ contract StakingERC721Test is TestBase {
         assertEq(30, _consumer.balanceOf(deployer));
     }
 
-    function test() public {
-    }
-
+    function test() public { }
 }

@@ -5,10 +5,10 @@ pragma solidity ^0.8.0;
 /// @author Brecht Devos - <brecht@loopring.org>
 /// @notice Provides a function for encoding some bytes in BBase64
 library LibBBase64 {
-    string internal constant TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    string internal constant TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     function encode(bytes memory data) internal pure returns (string memory) {
-        if (data.length == 0) return '';
+        if (data.length == 0) return "";
 
         // load the table into memory
         string memory table = TABLE;
@@ -34,22 +34,21 @@ library LibBBase64 {
             let resultPtr := add(result, 32)
 
             // run over the input, 3 bytes at a time
-            for {} lt(dataPtr, endPtr) {}
-            {
-               dataPtr := add(dataPtr, 3)
+            for { } lt(dataPtr, endPtr) { } {
+                dataPtr := add(dataPtr, 3)
 
-               // read 3 bytes
-               let input := mload(dataPtr)
+                // read 3 bytes
+                let input := mload(dataPtr)
 
-               // write 4 characters
-               mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(18, input), 0x3F)))))
-               resultPtr := add(resultPtr, 1)
-               mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(12, input), 0x3F)))))
-               resultPtr := add(resultPtr, 1)
-               mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr( 6, input), 0x3F)))))
-               resultPtr := add(resultPtr, 1)
-               mstore(resultPtr, shl(248, mload(add(tablePtr, and(        input,  0x3F)))))
-               resultPtr := add(resultPtr, 1)
+                // write 4 characters
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(18, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(12, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(6, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(input, 0x3F)))))
+                resultPtr := add(resultPtr, 1)
             }
 
             // padding with '='

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165Upgradeable} from "@openzeppelin/contracts-diamond/utils/introspection/IERC165Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import { IERC165Upgradeable } from "@openzeppelin/contracts-diamond/utils/introspection/IERC165Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
 
-import {FacetInitializable} from "src/utils/FacetInitializable.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
+import { FacetInitializable } from "src/utils/FacetInitializable.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
 
-import {IPayments, PriceType} from "src/interfaces/IPayments.sol";
-import {IPaymentsReceiver} from "src/interfaces/IPaymentsReceiver.sol";
-import {PaymentsReceiverStorage} from "src/payments/PaymentsReceiverStorage.sol";
+import { IPayments, PriceType } from "src/interfaces/IPayments.sol";
+import { IPaymentsReceiver } from "src/interfaces/IPaymentsReceiver.sol";
+import { PaymentsReceiverStorage } from "src/payments/PaymentsReceiverStorage.sol";
 
 /**
  * @title Payments Receiver contract.
@@ -38,6 +38,10 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         PriceType _priceType,
         address _pricedERC20
     ) external override onlySpellcasterPayments {
+        emit PaymentReceived(
+            _payor, _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
+        );
+
         if (
             _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentERC20)
         ) {
@@ -86,6 +90,8 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         PriceType _priceType,
         address _pricedERC20
     ) external payable override onlySpellcasterPayments {
+        emit PaymentReceived(_payor, address(0), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+
         if (msg.value != _paymentAmount) {
             revert PaymentsReceiverStorage.IncorrectPaymentAmount(msg.value, _paymentAmountInPricedToken);
         }

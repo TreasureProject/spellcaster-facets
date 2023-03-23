@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {
-    OrganizationInfo
-} from "src/interfaces/IOrganizationManager.sol";
-import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {ICustomGuildManager} from "src/interfaces/ICustomGuildManager.sol";
+import { OrganizationInfo } from "src/interfaces/IOrganizationManager.sol";
+import { IGuildToken } from "src/interfaces/IGuildToken.sol";
+import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 
 /**
  * @title OrganizationManagerStorage library
  * @notice This library contains the storage layout and events/errors for the OrganizationFacet contract.
  */
 library OrganizationManagerStorage {
-
     struct Layout {
         mapping(bytes32 => OrganizationInfo) organizationIdToInfo;
     }
@@ -70,6 +67,4 @@ library OrganizationManagerStorage {
      * @param organizationId The ID of the existing organization
      */
     error OrganizationAlreadyExists(bytes32 organizationId);
-
-
 }

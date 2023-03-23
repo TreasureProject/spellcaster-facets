@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ADMIN_ROLE} from "src/libraries/LibAccessControlRoles.sol";
+import { ADMIN_ROLE } from "src/libraries/LibAccessControlRoles.sol";
 
-import {GuildCreationRule, MaxUsersPerGuildRule, GuildOrganizationInfo} from "src/interfaces/IGuildManager.sol";
-import {IGuildToken} from "src/interfaces/IGuildToken.sol";
-import {GuildManagerContracts, LibGuildManager, IGuildManager} from "./GuildManagerContracts.sol";
+import { GuildCreationRule, MaxUsersPerGuildRule, GuildOrganizationInfo } from "src/interfaces/IGuildManager.sol";
+import { IGuildToken } from "src/interfaces/IGuildToken.sol";
+import { GuildManagerContracts, LibGuildManager, IGuildManager } from "./GuildManagerContracts.sol";
 
 abstract contract GuildManagerSettings is GuildManagerContracts {
-
     function __GuildManagerSettings_init() internal onlyFacetInitializing {
         GuildManagerContracts.__GuildManagerContracts_init();
     }
@@ -25,13 +24,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress)
-    external
-    onlyRole(ADMIN_ROLE)
-    contractsAreSet
-    whenNotPaused
-    supportsMetaTx(_newOrganizationId)
-    {
+        address _customGuildManagerAddress
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_newOrganizationId) {
         LibGuildManager.createForNewOrganization(_newOrganizationId, _name, _description);
 
         LibGuildManager.setMaxGuildsPerUser(_newOrganizationId, _maxGuildsPerUser);
@@ -51,13 +45,14 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress)
-    external
-    onlyRole(ADMIN_ROLE)
-    contractsAreSet
-    whenNotPaused
-    onlyValidOrganization(_organizationId)
-    supportsMetaTx(_organizationId)
+        address _customGuildManagerAddress
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        contractsAreSet
+        whenNotPaused
+        onlyValidOrganization(_organizationId)
+        supportsMetaTx(_organizationId)
     {
         LibGuildManager.createForExistingOrganization(_organizationId);
 
@@ -73,13 +68,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      */
     function setMaxGuildsPerUser(
         bytes32 _organizationId,
-        uint8 _maxGuildsPerUser)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    supportsMetaTx(_organizationId)
-    {
+        uint8 _maxGuildsPerUser
+    ) external contractsAreSet whenNotPaused onlyOrganizationAdmin(_organizationId) supportsMetaTx(_organizationId) {
         LibGuildManager.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
     }
 
@@ -88,13 +78,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      */
     function setTimeoutAfterLeavingGuild(
         bytes32 _organizationId,
-        uint32 _timeoutAfterLeavingGuild)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    supportsMetaTx(_organizationId)
-    {
+        uint32 _timeoutAfterLeavingGuild
+    ) external contractsAreSet whenNotPaused onlyOrganizationAdmin(_organizationId) supportsMetaTx(_organizationId) {
         LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
 
@@ -103,13 +88,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      */
     function setGuildCreationRule(
         bytes32 _organizationId,
-        GuildCreationRule _guildCreationRule)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    supportsMetaTx(_organizationId)
-    {
+        GuildCreationRule _guildCreationRule
+    ) external contractsAreSet whenNotPaused onlyOrganizationAdmin(_organizationId) supportsMetaTx(_organizationId) {
         LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
     }
 
@@ -119,13 +99,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     function setMaxUsersPerGuild(
         bytes32 _organizationId,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
-        uint32 _maxUsersPerGuildConstant)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    supportsMetaTx(_organizationId)
-    {
+        uint32 _maxUsersPerGuildConstant
+    ) external contractsAreSet whenNotPaused onlyOrganizationAdmin(_organizationId) supportsMetaTx(_organizationId) {
         LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
     }
 
@@ -134,13 +109,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
      */
     function setCustomGuildManagerAddress(
         bytes32 _organizationId,
-        address _customGuildManagerAddress)
-    external
-    contractsAreSet
-    whenNotPaused
-    onlyOrganizationAdmin(_organizationId)
-    supportsMetaTx(_organizationId)
-    {
+        address _customGuildManagerAddress
+    ) external contractsAreSet whenNotPaused onlyOrganizationAdmin(_organizationId) supportsMetaTx(_organizationId) {
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
@@ -151,7 +121,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     /**
      * @inheritdoc IGuildManager
      */
-    function getGuildOrganizationInfo(bytes32 _organizationId) external view returns(GuildOrganizationInfo memory) {
+    function getGuildOrganizationInfo(bytes32 _organizationId) external view returns (GuildOrganizationInfo memory) {
         return LibGuildManager.getGuildOrganizationInfo(_organizationId);
     }
 }

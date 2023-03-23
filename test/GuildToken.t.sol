@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {TestBase} from "./utils/TestBase.sol";
-import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
-import {DiamondUtils} from "./utils/DiamondUtils.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
+import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import {GuildToken} from "../src/guilds/guildtoken/GuildToken.sol";
+import { GuildToken } from "../src/guilds/guildtoken/GuildToken.sol";
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
@@ -60,8 +61,5 @@ contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         _token.adminBurn(alice, 1, 1);
     }
 
-    function testMetaTransaction() public {
-        
-    }
-
+    function testMetaTransaction() public { }
 }

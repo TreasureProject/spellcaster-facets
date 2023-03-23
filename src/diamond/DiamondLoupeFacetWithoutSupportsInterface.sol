@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-/******************************************************************************\
-* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
-* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
-/******************************************************************************/
+/**
+ * \
+ * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
+ * EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
+ * /*****************************************************************************
+ */
 
-import {LibDiamond} from "./LibDiamond.sol";
-import {IDiamondLoupe} from "./IDiamondLoupe.sol";
+import { LibDiamond } from "./LibDiamond.sol";
+import { IDiamondLoupe } from "./IDiamondLoupe.sol";
 
 contract DiamondLoupeFacet is IDiamondLoupe {
     // Diamond Loupe Functions
