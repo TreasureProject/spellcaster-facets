@@ -27,14 +27,16 @@ import { PaymentsStorage } from "src/payments/PaymentsStorage.sol";
  */
 contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifiers, IPayments {
     using SafeERC20Upgradeable for IERC20Upgradeable;
+    using AddressUpgradeable for address;
     using AddressUpgradeable for address payable;
 
     /**
      * @dev Initialize the facet. Can be called externally or internally.
      * Ideally referenced in an initialization script facet
      */
-    function PaymentsFacet_init(address _gasTokenUSDPriceFeed) public facetInitializer(keccak256("PaymentsFacet")) {
+    function PaymentsFacet_init(address _gasTokenUSDPriceFeed, address _magicAddress) public facetInitializer(keccak256("PaymentsFacet")) {
         LibPayments.setGasTokenUSDPriceFeed(_gasTokenUSDPriceFeed);
+        LibPayments.setMagicAddress(_magicAddress);
     }
 
     /**
@@ -200,7 +202,7 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     ) external view override returns (bool supported_) {
         if (
             _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentToken)
-                || (_priceType == PriceType.PRICED_IN_GAS_TOKEN && _pricedERC20 == address(0))
+                || (_priceType == PriceType.PRICED_IN_GAS_TOKEN && _paymentToken == address(0))
         ) {
             return true;
         }
@@ -251,6 +253,7 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         IPaymentsReceiver(_recipient).acceptERC20(
             LibMeta._msgSender(), _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
         );
+        emit PaymentSent(LibMeta._msgSender(), _paymentERC20, _paymentAmount, _recipient);
     }
 
     /**
@@ -277,6 +280,7 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         if (_overpayment > 0) {
             payable(LibMeta._msgSender()).sendValue(_overpayment);
         }
+        emit PaymentSent(LibMeta._msgSender(), address(0), _paymentAmount, _recipient);
     }
 
     function _getPriceFeed(
@@ -340,9 +344,17 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     modifier onlyReceiver(address _recipient) {
-        if (!IERC165Upgradeable(_recipient).supportsInterface(type(IPaymentsReceiver).interfaceId)) {
+        if(!_recipient.isContract()) {
             revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
         }
+        try IERC165Upgradeable(_recipient).supportsInterface(type(IPaymentsReceiver).interfaceId) returns (bool isSupported_) {
+            if(!isSupported_) {
+                revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
+            }
+        } catch (bytes memory) {
+            revert PaymentsStorage.NonPaymentsReceiverRecipient(_recipient);
+        }
+
         _;
     }
 }

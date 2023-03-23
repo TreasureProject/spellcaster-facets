@@ -38,6 +38,8 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         PriceType _priceType,
         address _pricedERC20
     ) external override onlySpellcasterPayments {
+        emit PaymentReceived(_payor, _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+
         if (
             _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentERC20)
         ) {
@@ -86,6 +88,8 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         PriceType _priceType,
         address _pricedERC20
     ) external payable override onlySpellcasterPayments {
+        emit PaymentReceived(_payor, address(0), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+        
         if (msg.value != _paymentAmount) {
             revert PaymentsReceiverStorage.IncorrectPaymentAmount(msg.value, _paymentAmountInPricedToken);
         }

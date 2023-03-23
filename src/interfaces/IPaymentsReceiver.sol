@@ -5,6 +5,17 @@ import {PriceType} from "src/interfaces/IPayments.sol";
 
 interface IPaymentsReceiver {
     /**
+     * @dev Emitted when a payment is made
+     * @param _payor The address of the sender of the payment
+     * @param _paymentERC20 The address of the token that was paid. If address(0), then it was gas token
+     * @param _paymentAmount The amount of the token that was paid
+     * @param _paymentAmountInPricedToken The payment amount of the given priced token. Used to have dynamic payments based on the value relative to another token
+     * @param _priceType The type of payment that was made. This can be static payment or priced in another currency
+     * @param _pricedERC20 The address of the ERC20 token that was used to price the payment. Only used if `_priceType` is PRICED_IN_ERC20
+     */
+    event PaymentReceived(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _paymentAmountInPricedToken, PriceType _priceType, address _pricedERC20);
+
+    /**
      * @dev Accepts a payment in ERC20 tokens
      * @param _payor The address of the payor for this payment
      * @param _paymentERC20 The address of the ERC20 token that was paid

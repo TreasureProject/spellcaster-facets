@@ -49,12 +49,12 @@ enum PriceType {
 interface IPayments {
     /**
      * @dev Emitted when a payment is made
-     * @param _recipient The address of the recipient of the payment
+     * @param _payor The address of the sender of the payment
      * @param _token The address of the token that was paid. If address(0), then it was gas token
      * @param _amount The amount of the token that was paid
      * @param _paymentsReceiver The address of the contract that received the payment. Supports IPaymentsReceiver
      */
-    event PaymentAccepted(address _recipient, address _token, uint256 _amount, address _paymentsReceiver);
+    event PaymentSent(address _payor, address _token, uint256 _amount, address _paymentsReceiver);
 
     /**
      * @dev Make a payment in ERC20 to the recipient
@@ -152,10 +152,10 @@ interface IPayments {
     /**
      * @dev Calculates the price of the input token relative to the output token
      * @param _paymentToken The token to convert from. If address(0), then the input is in gas tokens
-     * @param _pricedERC20 The token to convert to. If address(0), then the output is in gas tokens or USD, depending on `_priceType`
-     * @param _priceType The type of conversion to perform
      * @param _paymentAmountInPricedToken The desired payment amount, priced in either the `_pricedERC20`, gas token, or USD depending on `_priceType`
      *      used to calculate the output amount
+     * @param _priceType The type of conversion to perform
+     * @param _pricedERC20 The token to convert to. If address(0), then the output is in gas tokens or USD, depending on `_priceType`
      */
     function calculatePaymentAmountByPriceType(
         address _paymentToken,

@@ -20,8 +20,6 @@ import {PaymentsReceiver} from "src/payments/PaymentsReceiver.sol";
 
 import "forge-std/console.sol";
 
-
-
 contract PaymentsReceiverTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
@@ -47,12 +45,12 @@ contract PaymentsReceiverTest is TestBase, DiamondManager, ERC1155HolderUpgradea
 
     ERC20MockDecimals internal mockUSDC = new ERC20MockDecimals(6);
     ERC20MockDecimals internal mockWETH = new ERC20MockDecimals(18);
-    ERC20MockDecimals internal mockMAGIC = new ERC20MockDecimals(18);
+    ERC20MockDecimals internal mockMagic = new ERC20MockDecimals(18);
 
     function setUp() public {
         _ethUsdPriceFeed = new MockV3Aggregator(8, usdToEthPrice);
         _payments = new PaymentsFacet();
-        _payments.PaymentsFacet_init(address(_ethUsdPriceFeed));
+        _payments.PaymentsFacet_init(address(_ethUsdPriceFeed), address(mockMagic));
     }
 
     function testAllowTakePaymentERC20() public {
