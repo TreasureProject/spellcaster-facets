@@ -37,7 +37,7 @@ interface Ownable {
  * @dev Simple contract allows for the creation of a recipe with arbitrary inputs and outputs
  *  by the GuildManager contract.
  */
-contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
+contract SimpleCrafting is ERC1155HolderUpgradeable {
     event CraftingRecipeCreated(uint256 _craftingRecipeId);
     event CraftingRecipeCrafted(uint256 _craftingRecipeId, address _user);
 
@@ -151,7 +151,7 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
         public
         view
         virtual
-        override(ERC1155ReceiverUpgradeable, AccessControlFacet)
+        override(ERC1155ReceiverUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

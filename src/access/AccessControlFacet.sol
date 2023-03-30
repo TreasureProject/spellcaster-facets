@@ -56,6 +56,14 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
         }
     }
 
+    function _grantRole(bytes32 _role, address _account) internal override {
+        LibAccessControlRoles._grantRole(_role, _account);
+    }
+
+    function _revokeRole(bytes32 _role, address _account) internal override {
+        LibAccessControlRoles._revokeRole(_role, _account);
+    }
+
     /**
      * @dev Overrides AccessControlEnumerableUpgradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ

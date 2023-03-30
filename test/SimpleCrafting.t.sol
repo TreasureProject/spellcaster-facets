@@ -9,19 +9,34 @@ import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
 import { TestBase } from "./utils/TestBase.sol";
 
-import { SimpleCrafting } from "../src/crafting/SimpleCrafting.sol";
-import { CraftingRecipe, Ingredient, Result, TOKENTYPE } from "../src/crafting/SimpleCraftingStorage.sol";
+import {SimpleCrafting} from "src/crafting/SimpleCrafting.sol";
+import {CraftingRecipe, Ingredient, Result, TOKENTYPE} from "src/crafting/SimpleCraftingStorage.sol";
 
-import { ERC20Consumer } from "../src/mocks/ERC20Consumer.sol";
-import { ERC721Consumer } from "../src/mocks/ERC721Consumer.sol";
-import { ERC1155Consumer } from "../src/mocks/ERC1155Consumer.sol";
+import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/libraries/LibAccessControlRoles.sol";
+
+import {AccessControlFacet} from "src/access/AccessControlFacet.sol";
+
+import {ERC20Consumer} from "src/mocks/ERC20Consumer.sol";
+import {ERC721Consumer} from "src/mocks/ERC721Consumer.sol";
+import {ERC1155Consumer} from "src/mocks/ERC1155Consumer.sol";
 
 import "forge-std/console.sol";
+
+contract SimpleCraftingInitHelper is AccessControlFacet {
+  function initialize(address deployer) external {
+      LibAccessControlRoles._grantRole(bytes32(0x0), deployer);
+  }
+}
+
+
+
 
 contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
 
     SimpleCrafting internal _simpleCrafting;
+
+    SimpleCraftingInitHelper internal _simpleCraftingInitHelper;
 
     ERC20Consumer internal _ERC20Consumer;
     ERC721Consumer internal _ERC721Consumer;
@@ -29,10 +44,18 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
 
     function setUp() public {
         FacetInfo[] memory facetInfo = new FacetInfo[](1);
+        Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
         facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
 
-        init(facetInfo);
+        _simpleCraftingInitHelper = new SimpleCraftingInitHelper();
+
+        initializations[0] = Diamond.Initialization({
+            initContract: address(_simpleCraftingInitHelper),
+            initData: abi.encodeWithSelector(SimpleCraftingInitHelper.initialize.selector, deployer)
+        });
+
+        init(facetInfo, initializations);
 
         _simpleCrafting = SimpleCrafting(address(_diamond));
 
@@ -41,8 +64,6 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         _ERC20Consumer = new ERC20Consumer();
         _ERC721Consumer = new ERC721Consumer();
         _ERC1155Consumer = new ERC1155Consumer();
-
-        _simpleCrafting = new SimpleCrafting();
 
         _ERC20Consumer.initialize();
         _ERC721Consumer.initialize();
@@ -97,15 +118,9 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
 
         _simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
 
-        _simpleCrafting.grantRole(
-            keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC20Consumer))), deployer
-        );
-        _simpleCrafting.grantRole(
-            keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC721Consumer))), deployer
-        );
-        _simpleCrafting.grantRole(
-            keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC1155Consumer))), deployer
-        );
+        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC20Consumer))), deployer);
+        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC721Consumer))), deployer);
+        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC1155Consumer))), deployer);
 
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC20Consumer), 0);
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC721Consumer), 0);
