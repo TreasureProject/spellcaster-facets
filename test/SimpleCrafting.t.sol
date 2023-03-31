@@ -9,50 +9,56 @@ import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
 import { TestBase } from "./utils/TestBase.sol";
 
-import {SimpleCrafting} from "src/crafting/SimpleCrafting.sol";
-import {CraftingRecipe, Ingredient, Result, TOKENTYPE} from "src/crafting/SimpleCraftingStorage.sol";
+import { SimpleCrafting } from "src/crafting/SimpleCrafting.sol";
+import { CraftingRecipe, Ingredient, Result, TOKENTYPE } from "src/crafting/SimpleCraftingStorage.sol";
 
-import {LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE} from "src/libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libraries/LibAccessControlRoles.sol";
 
-import {AccessControlFacet} from "src/access/AccessControlFacet.sol";
+import { AccessControlFacet } from "src/access/AccessControlFacet.sol";
 
-import {ERC20Consumer} from "src/mocks/ERC20Consumer.sol";
-import {ERC721Consumer} from "src/mocks/ERC721Consumer.sol";
-import {ERC1155Consumer} from "src/mocks/ERC1155Consumer.sol";
+import { ERC20Consumer } from "src/mocks/ERC20Consumer.sol";
+import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
+import { ERC1155Consumer } from "src/mocks/ERC1155Consumer.sol";
+
+import {
+    CollectionAccessControlFacet,
+    CollectionRoleGrantRequest,
+    COLLECTION_ROLE_GRANT_REQUEST_TYPEHASH
+} from "src/access/CollectionAccessControlFacet.sol";
+
+import { SpellcasterGM } from "src/spellcaster/SpellcasterGM.sol";
 
 import "forge-std/console.sol";
-
-contract SimpleCraftingInitHelper is AccessControlFacet {
-  function initialize(address deployer) external {
-      LibAccessControlRoles._grantRole(bytes32(0x0), deployer);
-  }
-}
-
-
-
 
 contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
 
     SimpleCrafting internal _simpleCrafting;
 
-    SimpleCraftingInitHelper internal _simpleCraftingInitHelper;
-
     ERC20Consumer internal _ERC20Consumer;
     ERC721Consumer internal _ERC721Consumer;
     ERC1155Consumer internal _ERC1155Consumer;
 
+    uint96 signerNonce;
+
+    address roleGranterAddress = address(11);
+    address erc20Admin = address(12);
+    address erc721Admin = address(13);
+    address erc1155Admin = address(14);
+
     function setUp() public {
-        FacetInfo[] memory facetInfo = new FacetInfo[](1);
+        FacetInfo[] memory facetInfo = new FacetInfo[](3);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
         facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
-
-        _simpleCraftingInitHelper = new SimpleCraftingInitHelper();
+        facetInfo[1] = FacetInfo(
+            address(new CollectionAccessControlFacet()), "CollectionAccessControlFacet", IDiamondCut.FacetCutAction.Add
+        );
+        facetInfo[2] = FacetInfo(address(new SpellcasterGM()), "SpellcasterGM", IDiamondCut.FacetCutAction.Add);
 
         initializations[0] = Diamond.Initialization({
-            initContract: address(_simpleCraftingInitHelper),
-            initData: abi.encodeWithSelector(SimpleCraftingInitHelper.initialize.selector, deployer)
+            initContract: facetInfo[1].addr,
+            initData: abi.encodeWithSelector(CollectionAccessControlFacet.CollectionAccessControlFacet_init.selector)
         });
 
         init(facetInfo, initializations);
@@ -69,8 +75,6 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         _ERC721Consumer.initialize();
         _ERC1155Consumer.initialize();
 
-        console.log(deployer);
-
         _ERC20Consumer.setWorldAddress(address(_simpleCrafting));
         _ERC721Consumer.setWorldAddress(address(_simpleCrafting));
         _ERC1155Consumer.setWorldAddress(address(_simpleCrafting));
@@ -82,6 +86,39 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         _ERC20Consumer.approve(address(_simpleCrafting), 100 * 10 ** 18);
         _ERC721Consumer.setApprovalForAll(address(_simpleCrafting), true);
         _ERC1155Consumer.setApprovalForAll(address(_simpleCrafting), true);
+    }
+
+    function collectionRoleGrantRequestToHash(CollectionRoleGrantRequest memory _collectionRoleGrantRequest)
+        internal
+        view
+        returns (bytes32)
+    {
+        return _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    COLLECTION_ROLE_GRANT_REQUEST_TYPEHASH,
+                    _collectionRoleGrantRequest.collection,
+                    _collectionRoleGrantRequest.nonce,
+                    _collectionRoleGrantRequest.receiver,
+                    _collectionRoleGrantRequest.role
+                )
+            ),
+            "Spellcaster",
+            "1.0.0",
+            address(_diamond)
+        );
+    }
+
+    function generateCollectionRoleGrantRequest(
+        address _reciever,
+        address _collection
+    ) internal returns (CollectionRoleGrantRequest memory) {
+        return CollectionRoleGrantRequest({
+            collection: address(_collection),
+            nonce: signerNonce++,
+            receiver: _reciever,
+            role: keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", address(_collection)))
+        });
     }
 
     function testSetCraftingRecipe() public {
@@ -118,12 +155,47 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
 
         _simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
 
-        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC20Consumer))), deployer);
-        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC721Consumer))), deployer);
-        _diamond.grantRole(string(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", address(_ERC1155Consumer))), deployer);
+        SpellcasterGM(address(_diamond)).addTrustedSigner(signingAuthority);
 
+        //Generate three requests for three contracts each with the same address as the granter
+        CollectionRoleGrantRequest memory erc20Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC20Consumer));
+        CollectionRoleGrantRequest memory erc721Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC721Consumer));
+        CollectionRoleGrantRequest memory erc1155Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC1155Consumer));
+
+        //Sign all three as a trusted signer
+        bytes memory erc20Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc20Request));
+        bytes memory erc721Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc721Request));
+        bytes memory erc1155Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc1155Request));
+
+        //Prank as random address
+        vm.startPrank(address(23548760));
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc20Request, erc20Sig);
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc721Request, erc721Sig);
+        vm.stopPrank();
+        //Execute this one as deployer.
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc1155Request, erc1155Sig);
+
+        //Prank as role granter.
+        vm.startPrank(roleGranterAddress);
+        //Grant admin to address 1
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc20Admin, address(_ERC20Consumer));
+        //Grant admin to address 2
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc721Admin, address(_ERC721Consumer));
+        //Grant admin to address 3
+        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc1155Admin, address(_ERC1155Consumer));
+        //Stop prenk
+        vm.stopPrank();
+
+        vm.prank(erc20Admin);
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC20Consumer), 0);
+
+        vm.prank(erc721Admin);
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC721Consumer), 0);
+
+        vm.prank(erc1155Admin);
         _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC1155Consumer), 0);
 
         _simpleCrafting.craft(0);

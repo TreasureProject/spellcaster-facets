@@ -126,7 +126,7 @@ library LibGuildManager {
         getGuildOrganizationInfo(_organizationId).maxUsersPerGuildConstant = _maxUsersPerGuildConstant;
         emit GuildManagerStorage.MaxUsersPerGuildUpdated(
             _organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant
-        );
+            );
     }
 
     function setCustomGuildManagerAddress(bytes32 _organizationId, address _customGuildManagerAddress) internal {

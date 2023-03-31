@@ -21,13 +21,6 @@ import { AccessControlFacet } from "../access/AccessControlFacet.sol";
 import { Modifiers } from "../Modifiers.sol";
 import { LibMeta } from "../libraries/LibMeta.sol";
 
-/*
-events
-Create new recipe
-Craft
-
-*/
-
 interface Ownable {
     function owner() external view returns (address);
 }

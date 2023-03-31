@@ -14,6 +14,7 @@ bytes32 constant ADMIN_GRANTER_ROLE = keccak256("ADMIN_GRANTER");
 bytes32 constant UPGRADER_ROLE = keccak256("UPGRADER");
 bytes32 constant ROLE_GRANTER_ROLE = keccak256("ROLE_GRANTER");
 
+
 library LibAccessControlRoles {
     using AccessControlEnumerableStorage for AccessControlEnumerableStorage.Layout;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -22,6 +23,8 @@ library LibAccessControlRoles {
     error MissingRoleAndNotOwner(address _account, bytes32 _role);
     error MissingRole(address _account, bytes32 _role);
     error IsNotContractOwner(address _account);
+    error IsNotCollectionAdmin(address _account, address _collection);
+    error IsNotCollectionRoleGranter(address _account, address _collection);
 
     
     /**
@@ -94,7 +97,27 @@ library LibAccessControlRoles {
         contractOwner_ = LibDiamond.contractOwner();
     }
 
-    function isCollectionAdmin(address _user, address _collection) internal view returns (bool) {
-        return hasRole(keccak256(abi.encodePacked("ADMIN_ROLE_SIMPLE_CRAFTING_V1_", _collection)), _user);
+    function isCollectionAdmin(address _account, address _collection) internal view returns (bool) {
+        return hasRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
+    }
+
+    function isCollectionRoleGranter(address _account, address _collection) internal view returns (bool) {
+        return hasRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
+    }
+
+    function requireCollectionAdmin(address _account, address _collection) internal view {
+        if(!isCollectionAdmin(_account, _collection)) revert IsNotCollectionAdmin(_account, _collection);
+    }
+
+    function requireCollectionRoleGranter(address _account, address _collection) internal view {
+        if(!isCollectionRoleGranter(_account, _collection)) revert IsNotCollectionRoleGranter(_account, _collection);
+    }
+
+    function grantCollectionRoleGranter(address _account, address _collection) internal {
+        _grantRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
+    }
+
+    function grantCollectionAdmin(address _account, address _collection) internal {
+        _grantRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
     }
 }
