@@ -19,11 +19,46 @@ library LibAccessControlRoles {
     using AccessControlEnumerableStorage for AccessControlEnumerableStorage.Layout;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    /**
+     * @dev Emitted when an account is missing a role from two options.
+     * @param _account The account address
+     * @param _roleOption1 The first role option
+     * @param _roleOption2 The second role option
+     */
     error MissingEitherRole(address _account, bytes32 _roleOption1, bytes32 _roleOption2);
+
+    /**
+     * @dev Emitted when an account does not have a given role and is not owner.
+     * @param _account The account address
+     * @param _role The role
+     */
     error MissingRoleAndNotOwner(address _account, bytes32 _role);
+
+    /**
+     * @dev Emitted when an account does not have a given role.
+     * @param _account The account address
+     * @param _role The role
+     */
     error MissingRole(address _account, bytes32 _role);
+
+    /**
+     * @dev Emitted when an account is not contract owner.
+     * @param _account The account address
+     */
     error IsNotContractOwner(address _account);
+
+    /**
+     * @dev Emitted when an account is not a collection admin.
+     * @param _account The account address
+     * @param _collection The collection address
+     */
     error IsNotCollectionAdmin(address _account, address _collection);
+
+    /**
+     * @dev Emitted when an account is not a collection role granter.
+     * @param _account The account address
+     * @param _collection The collection address
+     */
     error IsNotCollectionRoleGranter(address _account, address _collection);
 
     
@@ -81,42 +116,85 @@ library LibAccessControlRoles {
         AccessControlEnumerableStorage.layout()._roleMembers[role].remove(account);
     }
 
+    /**
+     * @dev Require an address has a specific role
+     * @param _role The role to check.
+     * @param _account The address to check.
+     */
     function requireRole(bytes32 _role, address _account) internal view {
         if (!hasRole(_role, _account)) {
             revert MissingRole(_account, _role);
         }
     }
 
+    /**
+     * @dev Requires the inputted address to be the contract owner.
+     * @param _account The address of the signer.
+     */
     function requireOwner(address _account) internal view {
         if (_account != contractOwner()) {
             revert IsNotContractOwner(_account);
         }
     }
 
+    /**
+     * @dev Returns the current diamond contract owner.
+     * @return contractOwner_ The address of the owner
+     */
     function contractOwner() internal view returns (address contractOwner_) {
         contractOwner_ = LibDiamond.contractOwner();
     }
 
+    /**
+     * @dev Returns whether the inputted address is the inputted collection admin.
+     * @param _account The address of the admin.
+     * @param _collection The address of the collection.
+     */
     function isCollectionAdmin(address _account, address _collection) internal view returns (bool) {
         return hasRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
     }
 
+    /**
+     * @dev Returns whether the inputted address is the inputted collection role granter.
+     * @param _account The address of the role granter.
+     * @param _collection The address of the collection.
+     */
     function isCollectionRoleGranter(address _account, address _collection) internal view returns (bool) {
         return hasRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
     }
 
+    /**
+     * @dev Requires the inputted address to be the inputted collection role granter.
+     * @param _account The address of the admin.
+     * @param _collection The address of the collection.
+     */
     function requireCollectionAdmin(address _account, address _collection) internal view {
         if(!isCollectionAdmin(_account, _collection)) revert IsNotCollectionAdmin(_account, _collection);
     }
 
+    /**
+     * @dev Requires the inputted address to be the inputted collection role granter.
+     * @param _account The address of the role granter.
+     * @param _collection The address of the collection.
+     */
     function requireCollectionRoleGranter(address _account, address _collection) internal view {
         if(!isCollectionRoleGranter(_account, _collection)) revert IsNotCollectionRoleGranter(_account, _collection);
     }
 
+    /**
+     * @dev Give the collection role granter role to this account.
+     * @param _account The address of the account to grant.
+     * @param _collection The address of the collection.
+     */
     function grantCollectionRoleGranter(address _account, address _collection) internal {
         _grantRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
     }
 
+    /**
+     * @dev Give the collection admin role to this account.
+     * @param _account The address of the account to grant.
+     * @param _collection The address of the collection.
+     */
     function grantCollectionAdmin(address _account, address _collection) internal {
         _grantRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
     }

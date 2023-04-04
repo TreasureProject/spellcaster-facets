@@ -8,30 +8,63 @@ import { SpellcasterGMStorage } from "../spellcaster/SpellcasterGMStorage.sol";
 import { LibMeta } from "./LibMeta.sol";
 
 library LibSpellcasterGM {
+    /**
+     * @dev Emitted when an account is not a trusted signer.
+     * @param _account The signer address
+     */
     error AccountIsNotTrustedSigner(address _account);
+
+    /**
+     * @dev Emitted when a nonce is already used.
+     * @param _account The signer address
+     * @param _nonce The nonce
+     */
     error NonceUsed(address _account, uint256 _nonce);
+
+    /**
+     * @dev Emitted when the msg sender was not the contact owner.
+     * @param _account The msg sender
+     */
     error MsgSenderIsNotContractOwner(address _account);
 
-    function setTrustedSigner(address _signer, bool _isTrusted) external {
+    /**
+     * @dev Sets a trusted signer to spellcaster
+     * @param _account The address of the signer.
+     * @param _isTrusted Whether they are trusted or not
+     */
+    function setTrustedSigner(address _account, bool _isTrusted) internal {
         if (LibMeta._msgSender() != LibAccessControlRoles.contractOwner()) {
-            revert MsgSenderIsNotContractOwner(_signer);
+            revert MsgSenderIsNotContractOwner(_account);
         }
 
-        SpellcasterGMStorage.setTrustedSigner(_signer, _isTrusted);
+        SpellcasterGMStorage.setTrustedSigner(_account, _isTrusted);
     }
 
+    /**
+     * @dev Returns whether a signer is trusted
+     * @param _account The address of the signer.
+     */
     function isTrustedSigner(address _account) public view returns (bool) {
         return SpellcasterGMStorage.isTrustedSigner(_account);
     }
 
-    function useNonce(address _signer, uint96 _nonce) internal {
-        if (SpellcasterGMStorage.isNonceUsed(_signer, _nonce)) {
-            revert NonceUsed(_signer, _nonce);
+    /**
+     * @dev Use a nonce, and revert if already used
+     * @param _account The address of the signer.
+     * @param _nonce The nonce.
+     */
+    function useNonce(address _account, uint96 _nonce) internal {
+        if (SpellcasterGMStorage.isNonceUsed(_account, _nonce)) {
+            revert NonceUsed(_account, _nonce);
         }
 
-        SpellcasterGMStorage.setNonceUsed(_signer, _nonce);
+        SpellcasterGMStorage.setNonceUsed(_account, _nonce);
     }
 
+    /**
+     * @dev Function that reverts if passed account is not a trusted signer
+     * @param _account The address of the signer.
+     */
     function requireTrustedSigner(address _account) external view {
         if (!isTrustedSigner(_account)) revert AccountIsNotTrustedSigner(_account);
     }

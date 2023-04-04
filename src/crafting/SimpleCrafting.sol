@@ -31,29 +31,51 @@ interface Ownable {
  *  by the GuildManager contract.
  */
 contract SimpleCrafting is ERC1155HolderUpgradeable {
+    /**
+     * @dev Emitted when a crafting recipe is created
+     * @param _craftingRecipeId The crafting recipe Id.
+     */
     event CraftingRecipeCreated(uint256 _craftingRecipeId);
+
+    /**
+     * @dev Emitted when a crafting recipe is crafting
+     * @param _craftingRecipeId The crafting recipe Id.
+     * @param _user The crafter.
+     */
     event CraftingRecipeCrafted(uint256 _craftingRecipeId, address _user);
 
-    error UserNotPermitted();
-    error RecipeNotAllowed();
+    /**
+     * @dev Emitted when a user is not permitted to set a recipe as allowed.
+     * @param _account The user.
+     */
+    error UserNotPermitted(address _account);
+
+    /**
+     * @dev Emitted when a recipe is not yet fully allowed
+     * @param _recipeId The recipeId.
+     */
+    error RecipeNotAllowed(uint256 _recipeId);
 
     function SimpleCrafting_init() external { }
 
     /**
      * @dev As an allowed admin, set a recipe as allowed for your scope
+     * @param _collection The collection you are signing on behalf of.
+     * @param _recipeId The recipeId to set.
      */
     function setRecipeToAllowedAsAdmin(address _collection, uint256 _recipeId) public {
         //Ensure they are an admin of this collection.
         if (
             LibMeta._msgSender() != Ownable(_collection).owner()
                 && !LibAccessControlRoles.isCollectionAdmin(LibMeta._msgSender(), _collection)
-        ) revert UserNotPermitted();
+        ) revert UserNotPermitted(LibMeta._msgSender());
 
         LibSimpleCraftingStorage.setCollectionToRecipeIdToAllowed(_collection, _recipeId, true);
     }
 
     /**
      * @dev Create a new recipe, anyone can call this.
+     * @param _craftingRecipeInput The creation data for a crafting recipe.
      */
     function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipeInput) public {
         //Pull the current recipe Id
@@ -82,6 +104,7 @@ contract SimpleCrafting is ERC1155HolderUpgradeable {
 
     /**
      * @dev Helper function to return a crafting recipe
+     * @param _recipeId The recipeId to return.
      */
     function getCraftingRecipe(uint256 _recipeId) public view returns (CraftingRecipe memory) {
         return SimpleCraftingStorage.getState().craftingRecipes[_recipeId];
@@ -89,6 +112,7 @@ contract SimpleCrafting is ERC1155HolderUpgradeable {
 
     /**
      * @dev Craft a given recipeId, recipe must be fully allowed.
+     * @param _recipeId The recipeId to craft.
      */
     function craft(uint256 _recipeId) public {
         //Create a pointer to this recipe in storage.
@@ -126,7 +150,7 @@ contract SimpleCrafting is ERC1155HolderUpgradeable {
 
             //Ensure this recipe result has been condoned by its' admin.
             if (!LibSimpleCraftingStorage.getCollectionToRecipeIdToAllowed(_result.target, _recipeId)) {
-                revert RecipeNotAllowed();
+                revert RecipeNotAllowed(_recipeId);
             }
 
             AddressUpgradeable.functionCall(
@@ -139,6 +163,7 @@ contract SimpleCrafting is ERC1155HolderUpgradeable {
 
     /**
      * @dev Honestly I do not know what this does, but forge was aggresively telling me to add it.
+     * @param interfaceId The interface id.
      */
     function supportsInterface(bytes4 interfaceId)
         public
