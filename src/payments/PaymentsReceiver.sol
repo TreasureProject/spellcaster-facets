@@ -40,7 +40,7 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
     ) external override onlySpellcasterPayments {
         emit PaymentReceived(
             _payor, _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
-            );
+        );
 
         if (
             _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentERC20)

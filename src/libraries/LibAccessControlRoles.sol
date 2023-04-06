@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 // Assumes we are going to use the AccessControlFacet at src/access/AccessControlStorage.sol
 import { AccessControlStorage } from "@openzeppelin/contracts-diamond/access/AccessControlStorage.sol";
 import { LibDiamond } from "../diamond/LibDiamond.sol";
-import {AccessControlEnumerableStorage} from "@openzeppelin/contracts-diamond/access/AccessControlEnumerableStorage.sol";
-import {LibMeta} from './LibMeta.sol';
+import { AccessControlEnumerableStorage } from
+    "@openzeppelin/contracts-diamond/access/AccessControlEnumerableStorage.sol";
+import { LibMeta } from "./LibMeta.sol";
 
-import {EnumerableSetUpgradeable} from "@openzeppelin/contracts-diamond/utils/structs/EnumerableSetUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-diamond/utils/structs/EnumerableSetUpgradeable.sol";
 
 bytes32 constant ADMIN_ROLE = keccak256("ADMIN");
 bytes32 constant ADMIN_GRANTER_ROLE = keccak256("ADMIN_GRANTER");
 bytes32 constant UPGRADER_ROLE = keccak256("UPGRADER");
 bytes32 constant ROLE_GRANTER_ROLE = keccak256("ROLE_GRANTER");
-
 
 library LibAccessControlRoles {
     using AccessControlEnumerableStorage for AccessControlEnumerableStorage.Layout;
@@ -61,7 +61,6 @@ library LibAccessControlRoles {
      */
     error IsNotCollectionRoleGranter(address _account, address _collection);
 
-    
     /**
      * @dev Emitted when `account` is granted `role`.
      *
@@ -112,7 +111,7 @@ library LibAccessControlRoles {
             AccessControlStorage.layout()._roles[role].members[account] = false;
             emit RoleRevoked(role, account, LibMeta._msgSender());
         }
-  
+
         AccessControlEnumerableStorage.layout()._roleMembers[role].remove(account);
     }
 
@@ -169,7 +168,7 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function requireCollectionAdmin(address _account, address _collection) internal view {
-        if(!isCollectionAdmin(_account, _collection)) revert IsNotCollectionAdmin(_account, _collection);
+        if (!isCollectionAdmin(_account, _collection)) revert IsNotCollectionAdmin(_account, _collection);
     }
 
     /**
@@ -178,7 +177,7 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function requireCollectionRoleGranter(address _account, address _collection) internal view {
-        if(!isCollectionRoleGranter(_account, _collection)) revert IsNotCollectionRoleGranter(_account, _collection);
+        if (!isCollectionRoleGranter(_account, _collection)) revert IsNotCollectionRoleGranter(_account, _collection);
     }
 
     /**

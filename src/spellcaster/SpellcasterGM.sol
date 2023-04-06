@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { LibSpellcasterGM } from "../libraries/LibSpellcasterGM.sol";
 import { ISpellcasterGM } from "../interfaces/ISpellcasterGM.sol";
 
-contract SpellcasterGM is ISpellcasterGM{
+contract SpellcasterGM is ISpellcasterGM {
     /**
      * @inheritdoc ISpellcasterGM
      */

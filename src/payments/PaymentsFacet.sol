@@ -276,7 +276,7 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         if (msg.value > _paymentAmount) {
             _overpayment = msg.value - _paymentAmount;
         }
-        IPaymentsReceiver(_recipient).acceptGasToken{value: _paymentAmount}(
+        IPaymentsReceiver(_recipient).acceptGasToken{ value: _paymentAmount }(
             LibMeta._msgSender(), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
         );
         // Send back overpayments
