@@ -10,7 +10,7 @@ import { DiamondUtils } from "./utils/DiamondUtils.sol";
 import { TestBase } from "./utils/TestBase.sol";
 
 import { SimpleCrafting } from "src/crafting/SimpleCrafting.sol";
-import { CraftingRecipe, Ingredient, Result, TOKENTYPE } from "src/crafting/SimpleCraftingStorage.sol";
+import { CraftingRecipe, Ingredient, Result, TokenType } from "src/interfaces/ISimpleCrafting.sol";
 
 import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libraries/LibAccessControlRoles.sol";
 
@@ -116,8 +116,8 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         return CollectionRoleGrantRequest({
             collection: address(_collection),
             nonce: signerNonce++,
-            receiver: _reciever,
-            role: keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", address(_collection)))
+            receiver: _reciever, 
+            role: LibAccessControlRoles.getCollectionRoleGranterRole(address(_collection))
         });
     }
 
@@ -133,9 +133,9 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         //10 of ID 3 of ERC1155
 
         Ingredient[] memory ingredients = new Ingredient[](3);
-        ingredients[0] = Ingredient(address(_ERC20Consumer), TOKENTYPE.ERC20, 0, 100 * 10 ** 18);
-        ingredients[1] = Ingredient(address(_ERC721Consumer), TOKENTYPE.ERC721, 10, 0);
-        ingredients[2] = Ingredient(address(_ERC1155Consumer), TOKENTYPE.ERC1155, 2, 3);
+        ingredients[0] = Ingredient(address(_ERC20Consumer), TokenType.ERC20, 0, 100 * 10 ** 18);
+        ingredients[1] = Ingredient(address(_ERC721Consumer), TokenType.ERC721, 10, 0);
+        ingredients[2] = Ingredient(address(_ERC1155Consumer), TokenType.ERC1155, 2, 3);
 
         Result[] memory results = new Result[](3);
         results[0] = Result(

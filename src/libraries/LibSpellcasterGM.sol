@@ -37,7 +37,7 @@ library LibSpellcasterGM {
             revert MsgSenderIsNotContractOwner(_account);
         }
 
-        SpellcasterGMStorage.setTrustedSigner(_account, _isTrusted);
+        SpellcasterGMStorage.layout().trustedSigners[_account] = _isTrusted;
     }
 
     /**
@@ -45,7 +45,7 @@ library LibSpellcasterGM {
      * @param _account The address of the signer.
      */
     function isTrustedSigner(address _account) public view returns (bool) {
-        return SpellcasterGMStorage.isTrustedSigner(_account);
+        return SpellcasterGMStorage.layout().trustedSigners[_account];
     }
 
     /**
@@ -54,11 +54,11 @@ library LibSpellcasterGM {
      * @param _nonce The nonce.
      */
     function useNonce(address _account, uint96 _nonce) internal {
-        if (SpellcasterGMStorage.isNonceUsed(_account, _nonce)) {
+        if (SpellcasterGMStorage.layout().trustedSignersToNonceToUsed[_account][_nonce]) {
             revert NonceUsed(_account, _nonce);
         }
 
-        SpellcasterGMStorage.setNonceUsed(_account, _nonce);
+        SpellcasterGMStorage.layout().trustedSignersToNonceToUsed[_account][_nonce] = true;
     }
 
     /**

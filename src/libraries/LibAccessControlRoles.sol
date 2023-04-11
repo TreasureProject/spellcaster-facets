@@ -150,7 +150,7 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function isCollectionAdmin(address _account, address _collection) internal view returns (bool) {
-        return hasRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
+        return hasRole(getCollectionAdminRole(_collection), _account);
     }
 
     /**
@@ -159,7 +159,7 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function isCollectionRoleGranter(address _account, address _collection) internal view returns (bool) {
-        return hasRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
+        return hasRole(getCollectionRoleGranterRole(_collection), _account);
     }
 
     /**
@@ -186,7 +186,7 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function grantCollectionRoleGranter(address _account, address _collection) internal {
-        _grantRole(keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection)), _account);
+        _grantRole(getCollectionRoleGranterRole(_collection), _account);
     }
 
     /**
@@ -195,6 +195,14 @@ library LibAccessControlRoles {
      * @param _collection The address of the collection.
      */
     function grantCollectionAdmin(address _account, address _collection) internal {
-        _grantRole(keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection)), _account);
+        _grantRole(getCollectionAdminRole(_collection), _account);
+    }
+
+    function getCollectionRoleGranterRole(address _collection) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection));
+    }
+
+    function getCollectionAdminRole(address _collection) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection));
     }
 }
