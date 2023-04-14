@@ -19,12 +19,12 @@ contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
 
     function setUp() public {
         _token = new GuildToken();
-        _token.initialize(_org2, address(0x1));
+        _token.initialize(_org2);
     }
 
     function testIsSetUp() public {
         vm.expectRevert(errAlreadyInitialized("GuildToken"));
-        _token.initialize(_org2, address(0x1));
+        _token.initialize(_org2);
 
         // This address called initialize so it is the manager
         assertEq(_token.guildManager(), deployer);

@@ -200,7 +200,7 @@ library LibGuildManager {
 
         // Create new 1155 token to represent this organization.
         bytes memory _guildTokenData =
-            abi.encodeCall(IGuildToken.initialize, (_newOrganizationId, LibMeta.getMetaDelegateAddress()));
+            abi.encodeCall(IGuildToken.initialize, (_newOrganizationId));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
         l.guildOrganizationInfo[_newOrganizationId].tokenAddress = _guildTokenAddress;
 
@@ -223,7 +223,7 @@ library LibGuildManager {
 
         // Create new 1155 token to represent this organization.
         bytes memory _guildTokenData =
-            abi.encodeCall(IGuildToken.initialize, (_organizationId, LibMeta.getMetaDelegateAddress()));
+            abi.encodeCall(IGuildToken.initialize, (_organizationId));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
         l.guildOrganizationInfo[_organizationId].tokenAddress = _guildTokenAddress;
 

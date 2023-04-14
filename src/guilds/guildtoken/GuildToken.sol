@@ -11,8 +11,7 @@ contract GuildToken is GuildTokenContracts {
      * @inheritdoc IGuildToken
      */
     function initialize(
-        bytes32 _organizationId,
-        address _systemDelegateApprover
+        bytes32 _organizationId
     ) external facetInitializer(keccak256("GuildToken")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
@@ -24,8 +23,6 @@ contract GuildToken is GuildTokenContracts {
 
         // Give admin to the owner. May be revoked to prevent permanent administrative rights as owner
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
-
-        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
@@ -35,7 +32,7 @@ contract GuildToken is GuildTokenContracts {
         address _to,
         uint256 _id,
         uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
+    ) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _mint(_to, _id, _amount, "");
     }
 
@@ -46,7 +43,7 @@ contract GuildToken is GuildTokenContracts {
         address _account,
         uint256 _id,
         uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
+    ) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _burn(_account, _id, _amount);
     }
 

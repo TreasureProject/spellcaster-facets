@@ -28,7 +28,8 @@ contract MetaTxImpl is MetaTxFacet, AccessControlFacet, ERC1155Facet {
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
         _grantRole(ADMIN_GRANTER_ROLE, LibMeta._msgSender());
-        __MetaTxFacet_init(_systemDelegateApprover);
+        __MetaTxFacet_init();
+        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**

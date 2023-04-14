@@ -25,12 +25,10 @@ contract MetaTxFacet is SupportsMetaTx {
 
     /**
      * @dev Sets all necessary state and permissions for the contract
-     * @param _organizationDelegateApprover The delegate approver address that tracks which wallet can run txs on
      *  behalf of the real sending account
+     *  Assumes that the _systemDelegateApprover is already set
      */
-    function __MetaTxFacet_init(address _organizationDelegateApprover) internal onlyFacetInitializing {
-        __SupportsMetaTx_init(_organizationDelegateApprover);
-    }
+    function __MetaTxFacet_init() internal onlyFacetInitializing { }
 
     function verify(
         ForwardRequest calldata req,

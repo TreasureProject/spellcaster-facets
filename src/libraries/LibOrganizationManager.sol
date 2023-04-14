@@ -75,6 +75,12 @@ library LibOrganizationManager {
         }
     }
 
+    function requireOrganizationValid(bytes32 _organizationId) internal view {
+        if (LibOrganizationManager.getOrganizationInfo(_organizationId).admin == address(0)) {
+            revert OrganizationManagerStorage.NonexistantOrganization(_organizationId);
+        }
+    }
+
     // =============================================================
     //                         Modifiers
     // =============================================================
