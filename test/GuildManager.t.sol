@@ -12,6 +12,7 @@ import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
 import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
 import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
+import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
 import {
     IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus
 } from "src/interfaces/IGuildManager.sol";
@@ -25,10 +26,11 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     GuildManager internal _manager;
 
     function setUp() public {
-        FacetInfo[] memory facetInfo = new FacetInfo[](1);
+        FacetInfo[] memory facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
         facetInfo[0] = FacetInfo(address(new GuildManager()), "GuildManager", IDiamondCut.FacetCutAction.Add);
+        facetInfo[1] = FacetInfo(address(new OrganizationFacet()), "OrganizationFacet", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
             initData: abi.encodeWithSelector(
@@ -73,7 +75,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _diamond.setPause(false);
 
         assertEq(0, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
-        assertEq(address(0), _manager.getOrganizationInfo(_org1).admin);
+        assertEq(address(0), OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin);
 
         _manager.createForNewOrganization(
             keccak256("1"),
@@ -88,7 +90,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         );
 
         assertEq(1, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
-        assertEq(deployer, _manager.getOrganizationInfo(_org1).admin);
+        assertEq(deployer, OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin);
     }
 
     function testRevertNonAdminCreateGuildOrganization() public {
@@ -294,7 +296,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testCanCreateForExistingOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-        _manager.createOrganization(_org2, "Organization2", "Org description2");
+        OrganizationFacet(address(_diamond)).createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
             _org2,
             69, // Max users per guild
@@ -305,8 +307,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             address(0) // optional contract for customizable guild rules
         );
 
-        assertEq("Organization2", _manager.getOrganizationInfo(_org2).name);
-        assertEq("Org description2", _manager.getOrganizationInfo(_org2).description);
+        assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
+        assertEq("Org description2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).description);
         assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
         assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }
@@ -314,7 +316,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testCannotCreateForAlreadyInitializedOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-        _manager.createOrganization(_org2, "Organization2", "Org description2");
+        OrganizationFacet(address(_diamond)).createOrganization(_org2, "Organization2", "Org description2");
         _manager.createForExistingOrganization(
             _org2,
             69, // Max users per guild
@@ -356,7 +358,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         createDefaultOrgAndGuild();
         // Have alice create another guild because deployer already made the first guild,
         // and you can only be in one guild per organization
-        _manager.setOrganizationAdmin(_org1, alice);
+        OrganizationFacet(address(_diamond)).setOrganizationAdmin(_org1, alice);
         vm.prank(alice);
         _manager.createGuild(_org1);
 

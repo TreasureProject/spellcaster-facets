@@ -83,6 +83,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
         if (LibOrganizationManager.getOrganizationInfo(_organizationId).admin == address(0)) {
             revert OrganizationManagerStorage.NonexistantOrganization(_organizationId);
         }
+        LibOrganizationManager.requireOrganizationValid(_organizationId);
         _;
     }
 }

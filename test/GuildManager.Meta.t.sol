@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { ERC1155HolderUpgradeable } from
     "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import { TestBase } from "./utils/TestBase.sol";
+import { SupportMetaTxImpl } from "./utils/TestMeta.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
@@ -35,15 +36,22 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     uint96 _nonce = 1;
 
     function setUp() public {
-        FacetInfo[] memory facetInfo = new FacetInfo[](1);
-        Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
+        FacetInfo[] memory facetInfo = new FacetInfo[](2);
+        Diamond.Initialization[] memory initializations = new Diamond.Initialization[](2);
 
         facetInfo[0] = FacetInfo(address(new GuildManager()), "GuildManager", IDiamondCut.FacetCutAction.Add);
+        facetInfo[1] = FacetInfo(address(new OrganizationFacet()), "OrganizationFacet", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
             initData: abi.encodeWithSelector(
-                IGuildManager.GuildManager_init.selector, address(new GuildToken()), address(_delegateApprover)
-                )
+                IGuildManager.GuildManager_init.selector, address(new GuildToken())
+            )
+        });
+        initializations[1] = Diamond.Initialization({
+            initContract: address(_supportMetaTx),
+            initData: abi.encodeWithSelector(
+                SupportMetaTxImpl.init.selector, address(_delegateApprover)
+            )
         });
 
         init(facetInfo, initializations);
@@ -99,7 +107,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         );
 
         assertEq(_manager.getGuildOrganizationInfo(_org1).guildIdCur, 1, "Guild organization is not 1");
-        assertEq(_manager.getOrganizationInfo(_org1).admin, signingAuthority, "Is not organization admin");
+        assertEq(OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin, signingAuthority, "Is not organization admin");
 
         _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
 
@@ -314,8 +322,8 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
             address(_manager)
         );
 
-        assertEq("Organization2", _manager.getOrganizationInfo(_org2).name);
-        assertEq("Org description2", _manager.getOrganizationInfo(_org2).description);
+        assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
+        assertEq("Org description2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).description);
         assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
         assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }

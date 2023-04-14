@@ -5,6 +5,7 @@ import { Script } from "forge-std/Script.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { TestUtilities } from "test/utils/TestUtilities.sol";
+import { SupportsMetaTx } from "src/metatx/MetaTxFacet.sol";
 import { MetaTxFacet } from "src/metatx/MetaTxFacet.sol";
 import {
     MetaTxFacetStorage,
@@ -12,6 +13,12 @@ import {
     ForwardRequest,
     FORWARD_REQ_TYPEHASH
 } from "src/metatx/MetaTxFacetStorage.sol";
+
+contract SupportMetaTxImpl is SupportsMetaTx {
+    function init(address _systemDelegateApprover) external facetInitializer(keccak256("SupportMetaTxImpl")) {
+        __SupportsMetaTx_init(_systemDelegateApprover);
+    }
+}
 
 contract DelegateApprover is ISystem_Delegate_Approver {
     mapping(address => mapping(bytes32 => mapping(address => bool))) public delegateApprovals;
@@ -44,8 +51,11 @@ abstract contract TestMeta is Test, TestUtilities {
 
     DelegateApprover internal _delegateApprover;
 
+    SupportMetaTxImpl internal _supportMetaTx;
+
     constructor() {
         _delegateApprover = new DelegateApprover();
+        _supportMetaTx = new SupportMetaTxImpl();
     }
 
     function signAndExecuteMetaTx(ForwardRequest memory req, address executingContract) internal {

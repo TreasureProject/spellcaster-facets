@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { GuildManagerSettings, LibGuildManager, IGuildManager } from "./GuildManagerSettings.sol";
+import { GuildManagerSettings, LibGuildManager, IGuildManager, LibOrganizationManager } from "./GuildManagerSettings.sol";
 import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 import { IGuildToken } from "src/interfaces/IGuildToken.sol";
 import { GuildInfo, GuildUserStatus } from "src/interfaces/IGuildManager.sol";
@@ -127,7 +127,8 @@ contract GuildManager is GuildManagerSettings {
     function userCanCreateGuild(
         bytes32 _organizationId,
         address _user
-    ) public view onlyValidOrganization(_organizationId) returns (bool) {
+    ) public view returns (bool) {
+        LibOrganizationManager.requireOrganizationValid(_organizationId);
         return LibGuildManager.userCanCreateGuild(_organizationId, _user);
     }
 
