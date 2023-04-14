@@ -97,7 +97,7 @@ interface IGuildManager {
      * @dev Sets all necessary state and permissions for the contract
      * @param _guildTokenImplementationAddress The token implementation address for guild token contracts to proxy to
      */
-    function GuildManager_init(address _guildTokenImplementationAddress, address _systemDelegateApprover) external;
+    function GuildManager_init(address _guildTokenImplementationAddress) external;
 
     /**
      * @dev Creates a new guild within the given organization. Must pass the guild creation requirements.

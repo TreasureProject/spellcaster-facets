@@ -12,13 +12,10 @@ contract GuildManager is GuildManagerSettings {
      * @inheritdoc IGuildManager
      */
     function GuildManager_init(
-        address _guildTokenImplementationAddress,
-        address _systemDelegateApprover
+        address _guildTokenImplementationAddress
     ) external facetInitializer(keccak256("GuildManager")) {
         __GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
-
-        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**

@@ -20,7 +20,7 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
     using ECDSAUpgradeable for bytes32;
 
     /**
-     * @dev Sets all necessary state and permissions for the contract
+     * @dev Sets all necessary state and permissions for the contract. Assumed to be called from an initializing script instead of a facet
      * @param _organizationDelegateApprover The delegate approver address that tracks which wallet can run txs on
      *  behalf of the real sending account
      */
