@@ -13,7 +13,7 @@ import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "../librar
  * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared
  */
 contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControlEnumerableUpgradeable {
-    function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet")) {
+    function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet_init")) {
         __AccessControlEnumerable_init();
 
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);

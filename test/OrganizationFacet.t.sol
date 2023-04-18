@@ -39,7 +39,7 @@ contract OrganizationFacetTest is TestBase, DiamondManager, ERC1155HolderUpgrade
     }
 
     function testIsSetUp() public {
-        vm.expectRevert(errAlreadyInitialized("OrganizationFacet"));
+        vm.expectRevert(errAlreadyInitialized("OrganizationFacet_init"));
         _orgs.OrganizationFacet_init();
     }
 

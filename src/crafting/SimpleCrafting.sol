@@ -23,6 +23,7 @@ import { IERC20Consumer } from "src/interfaces/IERC20Consumer.sol";
 import { AccessControlFacet } from "src/access/AccessControlFacet.sol";
 import { Modifiers } from "src/Modifiers.sol";
 import { LibMeta } from "src/libraries/LibMeta.sol";
+import { FacetInitializable } from "../utils/FacetInitializable.sol";
 
 import { IERC173Upgradeable } from "@openzeppelin/contracts-diamond/interfaces/IERC173Upgradeable.sol";
 import { SupportsMetaTx } from "src/metatx/SupportsMetaTx.sol";
@@ -32,10 +33,10 @@ import { SupportsMetaTx } from "src/metatx/SupportsMetaTx.sol";
  * @dev Simple contract allows for the creation of a recipe with arbitrary inputs and outputs
  *  by the GuildManager contract.
  */
-contract SimpleCrafting is ERC1155HolderUpgradeable, ISimpleCrafting, SupportsMetaTx {
+contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimpleCrafting, SupportsMetaTx {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    function SimpleCrafting_init() external { }
+    function SimpleCrafting_init() external facetInitializer(keccak256("SimpleCrafting_init")) { }
 
     /**
      * @dev As an allowed admin, set a recipe as allowed for your scope

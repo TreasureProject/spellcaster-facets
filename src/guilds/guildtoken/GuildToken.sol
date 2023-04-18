@@ -12,7 +12,7 @@ contract GuildToken is GuildTokenContracts {
      */
     function initialize(
         bytes32 _organizationId
-    ) external facetInitializer(keccak256("GuildToken")) {
+    ) external facetInitializer(keccak256("initialize")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
