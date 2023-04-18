@@ -61,7 +61,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testIsSetUp() public {
-        vm.expectRevert(errAlreadyInitialized("GuildManager"));
+        vm.expectRevert(errAlreadyInitialized("GuildManager_init"));
         _manager.GuildManager_init(address(0));
 
         assertEq(true, _diamond.paused());

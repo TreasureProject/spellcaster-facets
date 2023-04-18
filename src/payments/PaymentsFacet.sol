@@ -37,7 +37,7 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     function PaymentsFacet_init(
         address _gasTokenUSDPriceFeed,
         address _magicAddress
-    ) public facetInitializer(keccak256("PaymentsFacet")) {
+    ) public facetInitializer(keccak256("PaymentsFacet_init")) {
         LibPayments.setGasTokenUSDPriceFeed(_gasTokenUSDPriceFeed);
         LibPayments.setMagicAddress(_magicAddress);
     }

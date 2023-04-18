@@ -13,7 +13,7 @@ contract GuildManager is GuildManagerSettings {
      */
     function GuildManager_init(
         address _guildTokenImplementationAddress
-    ) external facetInitializer(keccak256("GuildManager")) {
+    ) external facetInitializer(keccak256("GuildManager_init")) {
         __GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }

@@ -17,7 +17,7 @@ bytes32 constant COLLECTION_ROLE_GRANT_REQUEST_TYPEHASH =
     keccak256("CollectionRoleGrantRequest(address collection,uint96 nonce,address receiver,bytes32 role)");
 
 contract CollectionAccessControlFacet is FacetInitializable, EIP712Upgradeable {
-    function CollectionAccessControlFacet_init() external facetInitializer(keccak256("CollectionAccessControlFacet")) {
+    function CollectionAccessControlFacet_init() external facetInitializer(keccak256("CollectionAccessControlFacet_init")) {
         __EIP712_init("Spellcaster", "1.0.0");
     }
 

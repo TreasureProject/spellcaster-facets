@@ -21,7 +21,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
      * @dev Initialize the facet. Can be called externally or internally.
      * Ideally referenced in an initialization script facet
      */
-    function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet")) { }
+    function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet_init")) { }
 
     // =============================================================
     //                        Public functions

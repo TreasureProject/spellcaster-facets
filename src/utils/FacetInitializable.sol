@@ -40,6 +40,18 @@ abstract contract FacetInitializable {
     }
 
     /**
+     * @dev Modifier to trick internal functions that use onlyInitializing / onlyFacetInitializing into thinking
+     *  that the contract is being initialized.
+     *  This should only be called via a diamond initialization script and makes a lot of assumptions.
+     *  Handle with care.
+     */
+    modifier facetReinitializable() {
+        InitializableStorage.layout()._initializing = true;
+        _;
+        InitializableStorage.layout()._initializing = false;
+    }
+
+    /**
      * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
      * {initializer} modifier, directly or indirectly.
      */
