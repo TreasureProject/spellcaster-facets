@@ -27,9 +27,12 @@ abstract contract FacetInitializable {
             revert FacetInitializableStorage.AlreadyInitialized(_facetId);
         }
         bool isTopLevelCall = !InitializableStorage.layout()._initializing;
+        // Always set facet initialized regardless of if top level call or not.
+        // This is so that we can run through facetReinitializable() if needed, and lower level functions can protect themselves
+        FacetInitializableStorage.getState()._initialized[_facetId] = true;
+        
         if (isTopLevelCall) {
             InitializableStorage.layout()._initializing = true;
-            FacetInitializableStorage.getState()._initialized[_facetId] = true;
         }
 
         _;
