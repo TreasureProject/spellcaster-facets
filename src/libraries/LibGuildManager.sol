@@ -190,32 +190,12 @@ library LibGuildManager {
     //                        Create Functions
     // =============================================================
 
-    function createForNewOrganization(
-        bytes32 _newOrganizationId,
-        string calldata _name,
-        string calldata _description
-    ) internal {
-        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
-        LibOrganizationManager.createOrganization(_newOrganizationId, _name, _description);
-
-        // Create new 1155 token to represent this organization.
-        bytes memory _guildTokenData =
-            abi.encodeCall(IGuildToken.initialize, (_newOrganizationId));
-        address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
-        l.guildOrganizationInfo[_newOrganizationId].tokenAddress = _guildTokenAddress;
-
-        // The first guild created will be ID 1.
-        l.guildOrganizationInfo[_newOrganizationId].guildIdCur = 1;
-
-        emit GuildManagerStorage.GuildOrganizationInitialized(_newOrganizationId, _guildTokenAddress);
-    }
-
     /**
      * @dev Assumes that the organization already exists. This is used when creating a guild for an organization that
      *  already exists, but has not initialized the guild feature yet.
      * @param _organizationId The id of the organization to create a guild for
      */
-    function createForExistingOrganization(bytes32 _organizationId) internal {
+    function initializeForOrganization(bytes32 _organizationId) internal {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
         if (l.guildOrganizationInfo[_organizationId].tokenAddress != address(0)) {
             revert GuildManagerStorage.GuildOrganizationAlreadyInitialized(_organizationId);
