@@ -12,7 +12,8 @@ import {
     GuildUserStatus,
     GuildOrganizationInfo,
     GuildOrganizationUserInfo,
-    MaxUsersPerGuildRule
+    MaxUsersPerGuildRule,
+    GuildStatus
 } from "src/interfaces/IGuildManager.sol";
 import { IGuildToken } from "src/interfaces/IGuildToken.sol";
 import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
@@ -30,7 +31,7 @@ library LibGuildManager {
     //                    State Getters/Setters
     // =============================================================
 
-    function setGuildTokenBeacon(address _beaconImplAddress) internal {
+    function setGuildTokenBeacon(address _beaconImplAddress) internal  {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
         if (address(l.guildTokenBeacon) == address(0)) {
@@ -146,7 +147,7 @@ library LibGuildManager {
         uint32 _guildId,
         string calldata _name,
         string calldata _description
-    ) internal {
+    ) internal onlyActiveGuild(_organizationId, _guildId){
         GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
 
         _guildInfo.name = _name;
@@ -163,7 +164,7 @@ library LibGuildManager {
         uint32 _guildId,
         string calldata _symbolImageData,
         bool _isSymbolOnChain
-    ) internal {
+    ) internal onlyActiveGuild(_organizationId, _guildId){
         GuildInfo storage _guildInfo = getGuildInfo(_organizationId, _guildId);
 
         _guildInfo.symbolImageData = _symbolImageData;
@@ -199,8 +200,7 @@ library LibGuildManager {
         LibOrganizationManager.createOrganization(_newOrganizationId, _name, _description);
 
         // Create new 1155 token to represent this organization.
-        bytes memory _guildTokenData =
-            abi.encodeCall(IGuildToken.initialize, (_newOrganizationId));
+        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (_newOrganizationId));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
         l.guildOrganizationInfo[_newOrganizationId].tokenAddress = _guildTokenAddress;
 
@@ -222,8 +222,7 @@ library LibGuildManager {
         }
 
         // Create new 1155 token to represent this organization.
-        bytes memory _guildTokenData =
-            abi.encodeCall(IGuildToken.initialize, (_organizationId));
+        bytes memory _guildTokenData = abi.encodeCall(IGuildToken.initialize, (_organizationId));
         address _guildTokenAddress = address(new BeaconProxy(address(l.guildTokenBeacon), _guildTokenData));
         l.guildOrganizationInfo[_organizationId].tokenAddress = _guildTokenAddress;
 
@@ -243,6 +242,9 @@ library LibGuildManager {
 
         uint32 _newGuildId = l.guildOrganizationInfo[_organizationId].guildIdCur;
         l.guildOrganizationInfo[_organizationId].guildIdCur++;
+
+        //set guild status to active
+        l.organizationIdToGuildIdToInfo[_organizationId][_newGuildId].guildStatus = GuildStatus.ACTIVE;
 
         emit GuildManagerStorage.GuildCreated(_organizationId, _newGuildId);
 
@@ -266,7 +268,7 @@ library LibGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         address[] calldata _users
-    ) internal onlyGuildOwnerOrAdmin(_organizationId, _guildId, "INVITE") {
+    ) internal onlyGuildOwnerOrAdmin(_organizationId, _guildId, "INVITE") onlyActiveGuild(_organizationId, _guildId) {
         require(_users.length > 0);
 
         for (uint256 i = 0; i < _users.length; i++) {
@@ -284,7 +286,7 @@ library LibGuildManager {
         }
     }
 
-    function acceptInvitation(bytes32 _organizationId, uint32 _guildId) internal {
+    function acceptInvitation(bytes32 _organizationId, uint32 _guildId) internal onlyActiveGuild(_organizationId, _guildId)  {
         GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus == GuildUserStatus.INVITED, "Not invited");
 
@@ -292,7 +294,7 @@ library LibGuildManager {
         _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.MEMBER);
     }
 
-    function leaveGuild(bytes32 _organizationId, uint32 _guildId) internal {
+    function leaveGuild(bytes32 _organizationId, uint32 _guildId) internal onlyActiveGuild(_organizationId, _guildId) {
         GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus != GuildUserStatus.OWNER, "Owner cannot leave guild");
         require(_userStatus == GuildUserStatus.MEMBER || _userStatus == GuildUserStatus.ADMIN, "Not member of guild");
@@ -300,7 +302,7 @@ library LibGuildManager {
         _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.NOT_ASSOCIATED);
     }
 
-    function kickOrRemoveInvitations(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) internal {
+    function kickOrRemoveInvitations(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) internal onlyActiveGuild(_organizationId, _guildId)  {
         require(_users.length > 0);
 
         for (uint256 i = 0; i < _users.length; i++) {
@@ -329,7 +331,7 @@ library LibGuildManager {
         uint32 _guildId,
         address[] calldata _users,
         bool[] calldata _isAdmins
-    ) internal onlyGuildOwner(_organizationId, _guildId, "CHANGE_ADMINS") {
+    ) internal onlyGuildOwner(_organizationId, _guildId, "CHANGE_ADMINS")  onlyActiveGuild(_organizationId, _guildId){
         require(_users.length > 0);
         require(_users.length == _isAdmins.length);
 
@@ -355,7 +357,7 @@ library LibGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         address _newOwner
-    ) internal onlyGuildOwner(_organizationId, _guildId, "TRANSFER_OWNER") {
+    ) internal onlyGuildOwner(_organizationId, _guildId, "TRANSFER_OWNER") onlyActiveGuild(_organizationId, _guildId) {
         GuildUserStatus _newOwnerOldStatus = getGuildUserInfo(_organizationId, _guildId, _newOwner).userStatus;
         require(
             _newOwnerOldStatus == GuildUserStatus.MEMBER || _newOwnerOldStatus == GuildUserStatus.ADMIN,
@@ -364,6 +366,18 @@ library LibGuildManager {
 
         _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.MEMBER);
         _changeUserStatus(_organizationId, _guildId, _newOwner, GuildUserStatus.OWNER);
+    }
+
+    function terminateGuild(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        string calldata _reason
+    ) internal onlyGuildOwner(_organizationId, _guildId, "TERMINATE_GUILD") onlyActiveGuild(_organizationId, _guildId) {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+
+        l.organizationIdToGuildIdToInfo[_organizationId][_guildId].guildStatus = GuildStatus.TERMINATED;
+
+        emit GuildManagerStorage.GuildTerminated(_organizationId, _guildId, _reason);
     }
 
     // =============================================================
@@ -401,6 +415,15 @@ library LibGuildManager {
         return _userStatus == GuildUserStatus.OWNER || _userStatus == GuildUserStatus.ADMIN;
     }
 
+    function getGuildStatus(
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) internal view returns (GuildStatus) {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+
+       return l.organizationIdToGuildIdToInfo[_organizationId][_guildId].guildStatus;
+    }
+
     // =============================================================
     //                         Assertions
     // =============================================================
@@ -414,6 +437,14 @@ library LibGuildManager {
     function requireGuildOwnerOrAdmin(bytes32 _organizationId, uint32 _guildId, string memory _action) internal view {
         if (!isGuildAdminOrOwner(_organizationId, _guildId, LibMeta._msgSender())) {
             revert GuildManagerStorage.NotGuildOwnerOrAdmin(LibMeta._msgSender(), _action);
+        }
+    }
+
+    function requireActiveGuild(bytes32 _organizationId, uint32 _guildId) internal view {
+        GuildStatus _guildStatus = getGuildStatus(_organizationId, _guildId);
+
+        if(_guildStatus != GuildStatus.ACTIVE) {
+            revert GuildManagerStorage.GuildIsNotActive(_organizationId, _guildId);
         }
     }
 
@@ -517,6 +548,11 @@ library LibGuildManager {
 
     modifier onlyGuildOwnerOrAdmin(bytes32 _organizationId, uint32 _guildId, string memory _action) {
         requireGuildOwnerOrAdmin(_organizationId, _guildId, _action);
+        _;
+    }
+
+    modifier onlyActiveGuild(bytes32 _organizationId, uint32 _guildId) {
+        requireActiveGuild(_organizationId, _guildId);
         _;
     }
 }

@@ -107,6 +107,14 @@ library GuildManagerStorage {
     event GuildCreated(bytes32 organizationId, uint32 guildId);
 
     /**
+     * @dev Emitted when a guild is terminated.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The ID of the terminated guild
+     * @param _reason The reason for the termination
+     */
+    event GuildTerminated(bytes32 organizationId, uint32 guildId, string _reason);
+
+    /**
      * @dev Emitted when a guild's information is updated.
      * @param organizationId The ID of the guild's organization
      * @param guildId The ID of the guild being updated
@@ -197,4 +205,11 @@ library GuildManagerStorage {
      * @param user The address that is invalid
      */
     error InvalidAddress(address user);
+
+    /**
+     * @dev Error when trying to interact with a terminated or inactive guild.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The ID of the guild
+     */
+    error GuildIsNotActive(bytes32 organizationId, uint32 guildId);
 }

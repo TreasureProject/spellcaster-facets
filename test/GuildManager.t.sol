@@ -14,7 +14,7 @@ import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
 import {
-    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus
+    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus, GuildStatus
 } from "src/interfaces/IGuildManager.sol";
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
@@ -393,6 +393,42 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             }
             _manager.acceptInvitation(_org1, _guild1);
         }
+    }
+
+    function testGuildTermination() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+
+        //---
+        //ALL CALLS BELOW SHOULD NOT REVERT
+        //Updating guild info
+        _manager.updateGuildInfo(_org1, _guild1, "New name", "New descr");
+
+        //Inviting users
+        address[] memory invites = new address[](1);
+        invites[0] = leet;
+        _manager.inviteUsers(_org1, _guild1, invites);
+        //---
+
+
+        assertEq(uint(_manager.getGuildStatus(_org1, _guild1)), uint(GuildStatus.ACTIVE));
+
+        _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
+
+        //---
+        //ALL CALLS BELOW SHOULD REVERT
+        //Updating guild info
+        vm.expectRevert(err(GuildManagerStorage.GuildIsNotActive.selector, _org1, _guild1));
+        _manager.updateGuildInfo(_org1, _guild1, "New name", "New descr");
+
+        //Inviting users
+        address[] memory invites2 = new address[](1);
+        invites2[0] = leet;
+        vm.expectRevert(err(GuildManagerStorage.GuildIsNotActive.selector, _org1, _guild1));
+        _manager.inviteUsers(_org1, _guild1, invites2);
+        //---
+
+        assertEq(uint(_manager.getGuildStatus(_org1, _guild1)), uint(GuildStatus.TERMINATED));
     }
 
     function test() public {

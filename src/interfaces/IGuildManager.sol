@@ -46,6 +46,7 @@ struct GuildOrganizationUserInfo {
  * @param isSymbolOnChain Indicates if symbolImageData is on chain or is a URL
  * @param currentOwner The current owner of this guild
  * @param usersInGuild Keeps track of the number of users in the guild. This includes MEMBER, ADMIN, and OWNER
+ * @param guildStatus Current guild status (active or terminated)
  */
 struct GuildInfo {
     // Slot 1
@@ -60,6 +61,8 @@ struct GuildInfo {
     uint32 usersInGuild;
     // Slot 5
     mapping(address => GuildUserInfo) addressToGuildUserInfo;
+    // Slot 6 (just 8 bits)
+    GuildStatus guildStatus;
 }
 
 /**
@@ -90,6 +93,11 @@ enum GuildCreationRule {
 enum MaxUsersPerGuildRule {
     CONSTANT,
     CUSTOM_RULE
+}
+
+enum GuildStatus {
+    ACTIVE,
+    TERMINATED
 }
 
 interface IGuildManager {
@@ -184,6 +192,13 @@ interface IGuildManager {
      * @param _users The users to kick
      */
     function kickOrRemoveInvitations(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) external;
+
+    /**
+     * @dev Returns the current status of a guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to get the status of
+     */
+    function getGuildStatus(bytes32 _organizationId, uint32 _guildId) external view returns (GuildStatus);
 
     /**
      * @dev Returns whether or not the given user can create a guild within the given organization.

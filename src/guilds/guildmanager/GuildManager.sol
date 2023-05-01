@@ -1,19 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { GuildManagerSettings, LibGuildManager, IGuildManager, LibOrganizationManager } from "./GuildManagerSettings.sol";
+import {
+    GuildManagerSettings, LibGuildManager, IGuildManager, LibOrganizationManager
+} from "./GuildManagerSettings.sol";
 import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 import { IGuildToken } from "src/interfaces/IGuildToken.sol";
-import { GuildInfo, GuildUserStatus } from "src/interfaces/IGuildManager.sol";
+import { GuildInfo, GuildUserStatus, GuildStatus } from "src/interfaces/IGuildManager.sol";
 import { LibUtilities } from "src/libraries/LibUtilities.sol";
 
 contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function GuildManager_init(
-        address _guildTokenImplementationAddress
-    ) external facetInitializer(keccak256("GuildManager_init")) {
+    function GuildManager_init(address _guildTokenImplementationAddress)
+        external
+        facetInitializer(keccak256("GuildManager_init"))
+    {
         __GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
     }
@@ -28,6 +31,14 @@ contract GuildManager is GuildManagerSettings {
         supportsMetaTx(_organizationId)
     {
         LibGuildManager.createGuild(_organizationId);
+    }
+
+    function terminateGuild(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        string calldata _reason
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.terminateGuild(_organizationId, _guildId, _reason);
     }
 
     /**
@@ -124,10 +135,14 @@ contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function userCanCreateGuild(
-        bytes32 _organizationId,
-        address _user
-    ) public view returns (bool) {
+    function getGuildStatus(bytes32 _organizationId, uint32 _guildId) public view returns (GuildStatus) {
+        return LibGuildManager.getGuildStatus(_organizationId, _guildId);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function userCanCreateGuild(bytes32 _organizationId, address _user) public view returns (bool) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         return LibGuildManager.userCanCreateGuild(_organizationId, _user);
     }
