@@ -301,7 +301,7 @@ library LibGuildManager {
         _changeUserStatus(_organizationId, _guildId, LibMeta._msgSender(), GuildUserStatus.MEMBER);
     }
 
-    function leaveGuild(bytes32 _organizationId, uint32 _guildId) internal onlyActiveGuild(_organizationId, _guildId) {
+    function leaveGuild(bytes32 _organizationId, uint32 _guildId) internal {
         GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus != GuildUserStatus.OWNER, "Owner cannot leave guild");
         require(_userStatus == GuildUserStatus.MEMBER || _userStatus == GuildUserStatus.ADMIN, "Not member of guild");
