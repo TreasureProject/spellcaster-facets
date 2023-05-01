@@ -377,7 +377,7 @@ library LibGuildManager {
 
         l.organizationIdToGuildIdToInfo[_organizationId][_guildId].guildStatus = GuildStatus.TERMINATED;
 
-        emit GuildManagerStorage.GuildTerminated(_organizationId, _guildId, _reason);
+        emit GuildManagerStorage.GuildTerminated(_organizationId, _guildId, LibMeta._msgSender(), _reason);
     }
 
     // =============================================================

@@ -110,9 +110,10 @@ library GuildManagerStorage {
      * @dev Emitted when a guild is terminated.
      * @param organizationId The ID of the guild's organization
      * @param guildId The ID of the terminated guild
-     * @param _reason The reason for the termination
+     * @param terminator The address of the initiator of the termination
+     * @param reason The reason for the termination
      */
-    event GuildTerminated(bytes32 organizationId, uint32 guildId, string _reason);
+    event GuildTerminated(bytes32 organizationId, uint32 guildId, address terminator, string reason);
 
     /**
      * @dev Emitted when a guild's information is updated.
