@@ -43,15 +43,11 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         facetInfo[1] = FacetInfo(address(new OrganizationFacet()), "OrganizationFacet", IDiamondCut.FacetCutAction.Add);
         initializations[0] = Diamond.Initialization({
             initContract: facetInfo[0].addr,
-            initData: abi.encodeWithSelector(
-                IGuildManager.GuildManager_init.selector, address(new GuildToken())
-            )
+            initData: abi.encodeWithSelector(IGuildManager.GuildManager_init.selector, address(new GuildToken()))
         });
         initializations[1] = Diamond.Initialization({
             initContract: address(_supportMetaTx),
-            initData: abi.encodeWithSelector(
-                SupportMetaTxImpl.init.selector, address(_delegateApprover)
-            )
+            initData: abi.encodeWithSelector(SupportMetaTxImpl.init.selector, address(_delegateApprover))
         });
 
         init(facetInfo, initializations);
@@ -107,7 +103,11 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         );
 
         assertEq(_manager.getGuildOrganizationInfo(_org1).guildIdCur, 1, "Guild organization is not 1");
-        assertEq(OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin, signingAuthority, "Is not organization admin");
+        assertEq(
+            OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin,
+            signingAuthority,
+            "Is not organization admin"
+        );
 
         _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
 

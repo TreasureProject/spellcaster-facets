@@ -10,9 +10,7 @@ contract GuildToken is GuildTokenContracts {
     /**
      * @inheritdoc IGuildToken
      */
-    function initialize(
-        bytes32 _organizationId
-    ) external facetInitializer(keccak256("initialize")) {
+    function initialize(bytes32 _organizationId) external facetInitializer(keccak256("initialize")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
@@ -28,22 +26,14 @@ contract GuildToken is GuildTokenContracts {
     /**
      * @inheritdoc IGuildToken
      */
-    function adminMint(
-        address _to,
-        uint256 _id,
-        uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused {
+    function adminMint(address _to, uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _mint(_to, _id, _amount, "");
     }
 
     /**
      * @inheritdoc IGuildToken
      */
-    function adminBurn(
-        address _account,
-        uint256 _id,
-        uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused {
+    function adminBurn(address _account, uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _burn(_account, _id, _amount);
     }
 

@@ -47,13 +47,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
         address _customGuildManagerAddress
-    )
-        external
-        onlyRole(ADMIN_ROLE)
-        contractsAreSet
-        whenNotPaused
-        supportsMetaTx(_organizationId)
-    {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.createForExistingOrganization(_organizationId);
 

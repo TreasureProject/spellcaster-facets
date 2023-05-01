@@ -14,7 +14,11 @@ import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
 import {
-    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus, GuildStatus
+    IGuildManager,
+    GuildCreationRule,
+    MaxUsersPerGuildRule,
+    GuildUserStatus,
+    GuildStatus
 } from "src/interfaces/IGuildManager.sol";
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
@@ -410,8 +414,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.inviteUsers(_org1, _guild1, invites);
         //---
 
-
-        assertEq(uint(_manager.getGuildStatus(_org1, _guild1)), uint(GuildStatus.ACTIVE));
+        assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.ACTIVE));
 
         _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
 
@@ -428,7 +431,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.inviteUsers(_org1, _guild1, invites2);
         //---
 
-        assertEq(uint(_manager.getGuildStatus(_org1, _guild1)), uint(GuildStatus.TERMINATED));
+        assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.TERMINATED));
     }
 
     function test() public {
