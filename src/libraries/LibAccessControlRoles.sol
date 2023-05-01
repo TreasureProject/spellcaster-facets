@@ -62,6 +62,14 @@ library LibAccessControlRoles {
     error IsNotCollectionRoleGranter(address _account, address _collection);
 
     /**
+     * @dev Error when trying to terminate a guild but you are not a guild terminator
+     * @param _account The address of the sender
+     * @param _organizationId The ID of the guild's organization
+     * @param _guildId The ID of the guild
+     */
+    error IsNotGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId);
+
+    /**
      * @dev Emitted when `account` is granted `role`.
      *
      * `sender` is the account that originated the contract call, an admin role
@@ -198,6 +206,7 @@ library LibAccessControlRoles {
         _grantRole(getCollectionAdminRole(_collection), _account);
     }
 
+
     function getCollectionRoleGranterRole(address _collection) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("COLLECTION_ROLE_GRANTER_ROLE_", _collection));
     }
@@ -205,4 +214,33 @@ library LibAccessControlRoles {
     function getCollectionAdminRole(address _collection) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("COLLECTION_ADMIN_ROLE_", _collection));
     }
+
+    /**
+     * @dev Give the guild terminator role to this account.
+     * @param _account The address of the account to grant.
+     * @param _organizationId The organization Id of this guild
+     * @param _guildId The guild Id
+     */
+    function grantGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) internal {
+        _grantRole(getGuildTerminatorRole(_organizationId, _guildId), _account);
+    }
+
+    function getGuildTerminatorRole(bytes32 _organizationId, uint32 _guildId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("TERMINATOR_ROLE_", keccak256(abi.encodePacked(_organizationId)), keccak256(abi.encodePacked(_guildId))));
+    }
+
+    /**
+     * @dev Returns whether the inputted address is a guild terminator
+     * @param _account The address of the account.
+     * @param _organizationId The organization Id of this guild
+     * @param _guildId The guild Id
+     */
+    function isGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) internal view returns (bool) {
+        return hasRole(getGuildTerminatorRole(_organizationId, _guildId), _account);
+    }
+
+    function requireGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) internal view {
+        if (!isGuildTerminator(_account, _organizationId, _guildId)) revert IsNotGuildTerminator(_account, _organizationId, _guildId);
+    }
+
 }

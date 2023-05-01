@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
+import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+
 import {
     IGuildManager,
     GuildInfo,
@@ -246,6 +248,8 @@ library LibGuildManager {
         //set guild status to active
         l.organizationIdToGuildIdToInfo[_organizationId][_newGuildId].guildStatus = GuildStatus.ACTIVE;
 
+        LibAccessControlRoles.grantGuildTerminator(LibMeta._msgSender(), _organizationId, _newGuildId);
+
         emit GuildManagerStorage.GuildCreated(_organizationId, _newGuildId);
 
         // Set the created user as the OWNER.
@@ -381,9 +385,10 @@ library LibGuildManager {
         string calldata _reason
     )
         internal
-        onlyGuildOwner(_organizationId, _guildId, "TERMINATE_GUILD")
         onlyActiveGuild(_organizationId, _guildId)
     {
+        LibAccessControlRoles.requireGuildTerminator(LibMeta._msgSender(), _organizationId, _guildId);
+
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
         l.organizationIdToGuildIdToInfo[_organizationId][_guildId].guildStatus = GuildStatus.TERMINATED;

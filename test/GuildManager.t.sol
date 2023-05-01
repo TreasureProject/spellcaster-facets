@@ -7,6 +7,8 @@ import { TestBase } from "./utils/TestBase.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
+import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
 import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
 import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
@@ -416,6 +418,16 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.ACTIVE));
 
+        vm.prank(leet);
+        vm.expectRevert(err(LibAccessControlRoles.IsNotGuildTerminator.selector, leet, _org1, _guild1));
+        //Leet does not have terminator role, do not allow to terminate.
+        _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
+
+        //Give leet guild terminator role
+        _manager.grantGuildTerminator(leet, _org1, _guild1);
+
+        //Prank as leet and terminate guild
+        vm.prank(leet);
         _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
 
         //---
