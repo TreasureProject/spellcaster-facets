@@ -63,12 +63,15 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function createDefaultOrgAndGuild() internal {
-        _manager.createForNewOrganization(
+        OrganizationFacet(address(_manager)).createOrganization(
             _org1,
             "My org",
-            "My descr",
-            1, // Max guilds per user
-            604800, // Timeout to join another
+            "My descr"
+        );
+        _manager.initializeForOrganization(
+            _org1,
+            1, // Max users per guild
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -85,6 +88,18 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     function testCanCreateGuildOrganization() public {
         _diamond.setPause(false);
 
+        vm.prank(signingAuthority);
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org1,
+            "My org",
+            "My descr"
+        );
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org2,
+            "My org",
+            "My descr"
+        );
+
         // Signer is sender
         signAndExecuteMetaTx(
             ForwardRequest({
@@ -92,10 +107,8 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                 nonce: 1,
                 organizationId: _org1,
                 data: abi.encodeWithSelector(
-                    IGuildManager.createForNewOrganization.selector,
+                    IGuildManager.initializeForOrganization.selector,
                     _org1,
-                    "My org",
-                    "My descr",
                     1, // Max users per guild
                     604800, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
@@ -123,10 +136,8 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                 nonce: 1,
                 organizationId: _org2,
                 data: abi.encodeWithSelector(
-                    IGuildManager.createForNewOrganization.selector,
+                    IGuildManager.initializeForOrganization.selector,
                     _org2,
-                    "My org",
-                    "My descr",
                     1, // Max users per guild
                     604800, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
@@ -289,7 +300,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         assertEq(uint256(afterDemote), uint256(GuildUserStatus.MEMBER));
     }
 
-    function testCanCreateForExistingOrganization() public {
+    function testCaninitializeForOrganization() public {
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
         _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
 
@@ -314,7 +325,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                 nonce: _nonce++,
                 organizationId: _org2,
                 data: abi.encodeWithSelector(
-                    IGuildManager.createForExistingOrganization.selector,
+                    IGuildManager.initializeForOrganization.selector,
                     _org2,
                     69, // Max users per guild
                     604800, // Timeout to join another

@@ -247,33 +247,7 @@ interface IGuildManager {
 
 
     /**
-     * @dev Creates a new organization and initializes the Guild feature for it.
-     *  This can only be done by admins on the GuildManager contract.
-     * @param _newOrganizationId The id of the organization being created
-     * @param _name The name of the new organization
-     * @param _description The description of the new organization
-     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
-     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
-     * @param _guildCreationRule The rule for creating new guilds
-     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
-     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
-     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
-     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
-     */
-    function createForNewOrganization(
-        bytes32 _newOrganizationId,
-        string calldata _name,
-        string calldata _description,
-        uint8 _maxGuildsPerUser,
-        uint32 _timeoutAfterLeavingGuild,
-        GuildCreationRule _guildCreationRule,
-        MaxUsersPerGuildRule _maxUsersPerGuildRule,
-        uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress
-    ) external;
-
-    /**
-     * @dev Creates a new organization and initializes the Guild feature for it.
+     * @dev Initializes the Guild feature for the given organization.
      *  This can only be done by admins on the GuildManager contract.
      * @param _organizationId The id of the organization to initialize
      * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
@@ -284,7 +258,7 @@ interface IGuildManager {
      * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
      */
-    function createForExistingOrganization(
+    function initializeForOrganization(
         bytes32 _organizationId,
         uint8 _maxGuildsPerUser,
         uint32 _timeoutAfterLeavingGuild,
