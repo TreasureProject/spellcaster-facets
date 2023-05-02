@@ -36,6 +36,11 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     uint96 _nonce = 1;
 
     function setUp() public {
+        //Timeouts will fail if you do not skip in the setup
+        //This is because the leave time for each user defaults to 0
+        //And if the current time is under 604800, they would have theoretically not met the cooldown time.
+        skip(604800);
+
         FacetInfo[] memory facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](2);
 
@@ -63,7 +68,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
             "My org",
             "My descr",
             1, // Max guilds per user
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -92,7 +97,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     "My org",
                     "My descr",
                     1, // Max users per guild
-                    0, // Timeout to join another
+                    604800, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     20, // Max users in a guild
@@ -123,7 +128,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     "My org",
                     "My descr",
                     1, // Max users per guild
-                    0, // Timeout to join another
+                    604800, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     20, // Max users in a guild
@@ -312,7 +317,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     IGuildManager.createForExistingOrganization.selector,
                     _org2,
                     69, // Max users per guild
-                    0, // Timeout to join another
+                    604800, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     100, // Max users in a guild

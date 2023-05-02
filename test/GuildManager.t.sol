@@ -32,6 +32,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     GuildManager internal _manager;
 
     function setUp() public {
+        //Timeouts will fail if you do not skip in the setup
+        //This is because the leave time for each user defaults to 0
+        //And if the current time is under 604800, they would have theoretically not met the cooldown time.
+        skip(604800);
         FacetInfo[] memory facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
@@ -56,7 +60,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -88,7 +92,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -108,7 +112,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -140,12 +144,13 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
+        skip(604801);
 
         // deployer is the Organization's admin
         vm.prank(leet);
@@ -306,7 +311,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createForExistingOrganization(
             _org2,
             69, // Max guilds per user
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             100, // Max users in a guild
@@ -326,7 +331,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createForExistingOrganization(
             _org2,
             69, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             100, // Max users in a guild
@@ -337,7 +342,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createForExistingOrganization(
             _org2,
             69, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             100, // Max users in a guild
@@ -355,7 +360,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             101, // Max users in a guild
@@ -367,7 +372,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             "My org",
             "My descr",
             1, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             100, // Max users in a guild
@@ -386,7 +391,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.createForExistingOrganization(
             keccak256("2"),
             69, // Max users per guild
-            0, // Timeout to join another
+            604800, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             100, // Max users in a guild

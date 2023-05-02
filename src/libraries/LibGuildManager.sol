@@ -111,6 +111,7 @@ library LibGuildManager {
     }
 
     function setTimeoutAfterLeavingGuild(bytes32 _organizationId, uint32 _timeoutAfterLeavingGuild) internal {
+        require(_timeoutAfterLeavingGuild >= 604800, "Timeout must be greater than or equal to a week.");
         getGuildOrganizationInfo(_organizationId).timeoutAfterLeavingGuild = _timeoutAfterLeavingGuild;
         emit GuildManagerStorage.TimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
@@ -523,7 +524,7 @@ library LibGuildManager {
         IGuildToken(orgInfo.tokenAddress).adminMint(_user, _guildId, 1);
 
         // Check to make sure the user is not in guild joining timeout
-        require(block.timestamp >= _orgUserInfo.timeUserLeftGuild + orgInfo.timeoutAfterLeavingGuild);
+        require(block.timestamp >= _orgUserInfo.timeUserLeftGuild + orgInfo.timeoutAfterLeavingGuild, "Cooldown not over.");
     }
 
     function _onUserLeftGuild(bytes32 _organizationId, uint32 _guildId, address _user) private {
