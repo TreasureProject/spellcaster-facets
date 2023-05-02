@@ -61,7 +61,7 @@ struct GuildInfo {
     uint32 usersInGuild;
     // Slot 5
     mapping(address => GuildUserInfo) addressToGuildUserInfo;
-    // Slot 6 (just 8 bits)
+    // Slot 6 (8/256)
     GuildStatus guildStatus;
 }
 

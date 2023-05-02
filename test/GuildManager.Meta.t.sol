@@ -315,7 +315,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     0, // Timeout to join another
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
-                    420, // Max users in a guild
+                    100, // Max users in a guild
                     address(0) // optional contract for customizable guild rules
                 )
             }),
@@ -325,7 +325,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
         assertEq("Org description2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).description);
         assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
-        assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
+        assertEq(100, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }
 
     function inviteAndAcceptGuildInvite(bytes32 _orgId, uint32 _guildId, address _user) public {

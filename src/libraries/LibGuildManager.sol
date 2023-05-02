@@ -125,7 +125,7 @@ library LibGuildManager {
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant
     ) internal {
-        require(_maxUsersPerGuildConstant < 101, "Max users must be less than 101.");
+        require(_maxUsersPerGuildConstant <= 100, "Max users must be less than 101.");
         getGuildOrganizationInfo(_organizationId).maxUsersPerGuildRule = _maxUsersPerGuildRule;
         getGuildOrganizationInfo(_organizationId).maxUsersPerGuildConstant = _maxUsersPerGuildConstant;
         emit GuildManagerStorage.MaxUsersPerGuildUpdated(
