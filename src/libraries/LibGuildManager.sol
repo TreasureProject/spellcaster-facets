@@ -366,6 +366,24 @@ library LibGuildManager {
         }
     }
 
+    function adjustMemberLevel(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        address _user,
+        uint8 _memberLevel
+    ) internal onlyActiveGuild(_organizationId, _guildId) {
+        require(_memberLevel > 0 && _memberLevel < 6, "Not a valid member level.");
+
+        //Make this require the specific role.
+        LibAccessControlRoles.requireGuildTerminator(LibMeta._msgSender(), _organizationId, _guildId);
+
+        GuildUserInfo storage _userInfo = getGuildUserInfo(_organizationId, _guildId, _user);
+
+        _userInfo.memberLevel = _memberLevel;
+
+        emit GuildManagerStorage.MemberLevelUpdated(_organizationId, _guildId, _user, _memberLevel); 
+    }
+
     function changeGuildOwner(
         bytes32 _organizationId,
         uint32 _guildId,
@@ -513,6 +531,8 @@ library LibGuildManager {
             revert GuildManagerStorage.UserInTooManyGuilds(_organizationId, _user);
         }
 
+        _guildUserInfo.memberLevel = 1;
+
         guildInfo.usersInGuild++;
 
         uint32 _maxUsersForGuild = getMaxUsersForGuild(_organizationId, _guildId);
@@ -542,6 +562,7 @@ library LibGuildManager {
         }
 
         delete _guildUserInfo.timeUserJoined;
+        delete _guildUserInfo.memberLevel;
 
         getGuildInfo(_organizationId, _guildId).usersInGuild--;
 

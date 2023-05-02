@@ -486,6 +486,31 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.TERMINATED));
     }
 
+    function testMemberLevelAdjustment() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+    
+        address[] memory invites = new address[](1);
+        invites[0] = leet;
+        _manager.inviteUsers(_org1, _guild1, invites);
+
+        vm.prank(leet);
+        _manager.acceptInvitation(_org1, _guild1);
+
+        assertEq(1, _manager.getGuildMemberInfo(_org1, _guild1, leet).memberLevel);
+
+        _manager.adjustMemberLevel(_org1, _guild1, leet, 3);
+
+        assertEq(3, _manager.getGuildMemberInfo(_org1, _guild1, leet).memberLevel);
+
+        vm.expectRevert("Not a valid member level.");
+        _manager.adjustMemberLevel(_org1, _guild1, leet, 6);
+
+        vm.expectRevert("Not a valid member level.");
+        _manager.adjustMemberLevel(_org1, _guild1, leet, 0);
+    }
+
+
     function test() public {
         // TODO: add emit event assertions to tests
     }

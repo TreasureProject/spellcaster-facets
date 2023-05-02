@@ -69,11 +69,13 @@ struct GuildInfo {
  * @dev Provides information regarding a user in a specific guild
  * @param userStatus Indicates the status of this user (i.e member, admin, invited)
  * @param timeUserJoined The time this user joined this guild
+ * @param memberLevel The member level of this user
  */
 struct GuildUserInfo {
-    // Slot 1 (72/256)
+    // Slot 1 (8+64+8/256)
     GuildUserStatus userStatus;
     uint64 timeUserJoined;
+    uint8 memberLevel;
 }
 
 enum GuildUserStatus {
@@ -140,6 +142,15 @@ interface IGuildManager {
         string calldata _symbolImageData,
         bool _isSymbolOnChain
     ) external;
+
+    /**
+     * @dev Adjusts a given users member level
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild the user is in
+     * @param _user The user to adjust
+     * @param _memberLevel The memberLevel to adjust to
+     */
+    function adjustMemberLevel(bytes32 _organizationId, uint32 _guildId, address _user, uint8 _memberLevel) external;
 
     /**
      * @dev Invites users to the given guild. Can only be done by admins or the guild owner.
@@ -220,6 +231,20 @@ interface IGuildManager {
         uint32 _guildId,
         address _user
     ) external view returns (GuildUserStatus);
+
+    /**
+     * @dev Returns the guild user info struct of the given user within the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to get the info struct of the user within
+     * @param _user The user to get the info struct of
+     * @return The info struct of the user within the guild
+     */
+    function getGuildMemberInfo(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        address _user
+    ) external view returns (GuildUserInfo memory);
+
 
     /**
      * @dev Creates a new organization and initializes the Guild feature for it.

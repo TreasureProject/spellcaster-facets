@@ -97,6 +97,16 @@ library GuildManagerStorage {
      */
     event CustomGuildManagerAddressUpdated(bytes32 organizationId, address customGuildManagerAddress);
 
+    
+    /**
+     * @dev Emitted when a members level has been updated.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The guild ID
+     * @param user The user
+     * @param memberLevel The new member level
+     */
+    event MemberLevelUpdated(bytes32 organizationId, uint32 guildId, address user, uint8 memberLevel);
+
     // Guild Events
 
     /**
