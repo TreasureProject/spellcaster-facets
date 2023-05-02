@@ -111,7 +111,6 @@ library LibGuildManager {
     }
 
     function setTimeoutAfterLeavingGuild(bytes32 _organizationId, uint32 _timeoutAfterLeavingGuild) internal {
-        require(_timeoutAfterLeavingGuild >= 604800, "Timeout must be greater than or equal to a week.");
         getGuildOrganizationInfo(_organizationId).timeoutAfterLeavingGuild = _timeoutAfterLeavingGuild;
         emit GuildManagerStorage.TimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
@@ -126,7 +125,6 @@ library LibGuildManager {
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant
     ) internal {
-        require(_maxUsersPerGuildConstant <= 100, "Max users must be less than 101.");
         getGuildOrganizationInfo(_organizationId).maxUsersPerGuildRule = _maxUsersPerGuildRule;
         getGuildOrganizationInfo(_organizationId).maxUsersPerGuildConstant = _maxUsersPerGuildConstant;
         emit GuildManagerStorage.MaxUsersPerGuildUpdated(
