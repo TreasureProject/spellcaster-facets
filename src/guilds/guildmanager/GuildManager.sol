@@ -6,9 +6,9 @@ import {
 } from "./GuildManagerSettings.sol";
 import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 import { IGuildToken } from "src/interfaces/IGuildToken.sol";
-import { GuildInfo,GuildUserInfo,  GuildUserStatus, GuildStatus } from "src/interfaces/IGuildManager.sol";
+import { GuildInfo, GuildUserInfo, GuildUserStatus, GuildStatus } from "src/interfaces/IGuildManager.sol";
 import { LibUtilities } from "src/libraries/LibUtilities.sol";
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
 contract GuildManager is GuildManagerSettings {
     /**
@@ -42,7 +42,11 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.terminateGuild(_organizationId, _guildId, _reason);
     }
 
-    function grantGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    function grantGuildTerminator(
+        address _account,
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_TERMINATOR_ROLE");
         LibAccessControlRoles.grantGuildTerminator(_account, _organizationId, _guildId);
     }
@@ -186,7 +190,6 @@ contract GuildManager is GuildManagerSettings {
     ) public view returns (GuildUserInfo memory) {
         return LibGuildManager.getGuildUserInfo(_organizationId, _guildId, _user);
     }
-
 
     /**
      * @inheritdoc IGuildManager
