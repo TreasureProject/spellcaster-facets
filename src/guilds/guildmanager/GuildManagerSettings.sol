@@ -64,7 +64,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     function setMaxGuildsPerUser(
         bytes32 _organizationId,
         uint8 _maxGuildsPerUser
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.setMaxGuildsPerUser(_organizationId, _maxGuildsPerUser);
     }
@@ -75,7 +75,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     function setTimeoutAfterLeavingGuild(
         bytes32 _organizationId,
         uint32 _timeoutAfterLeavingGuild
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
@@ -86,7 +86,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     function setGuildCreationRule(
         bytes32 _organizationId,
         GuildCreationRule _guildCreationRule
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
     }
@@ -98,7 +98,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         bytes32 _organizationId,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
     }
@@ -109,7 +109,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     function setCustomGuildManagerAddress(
         bytes32 _organizationId,
         address _customGuildManagerAddress
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
