@@ -345,6 +345,41 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         );
     }
 
+    function testCannotCreateForExistingOrganizationWithGreaterThan100Members() public {
+        _diamond.setPause(false);
+
+        vm.expectRevert("Max users must be less than 101.");
+
+        _manager.createForNewOrganization(
+            keccak256("1"),
+            "My org",
+            "My descr",
+            1, // Max users per guild
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            101, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+        
+        _manager.createForNewOrganization(
+            keccak256("1"),
+            "My org",
+            "My descr",
+            1, // Max users per guild
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            100, // Max users in a guild
+            address(0) // optional contract for customizable guild rules
+        );
+
+        _manager.createGuild(keccak256("1"));
+
+        vm.expectRevert("Max users must be less than 101.");
+        _manager.setMaxUsersPerGuild(keccak256("1"), MaxUsersPerGuildRule.CONSTANT, 101);
+    }
+
     function testCannotCreateForNonExistingOrganization() public {
         _diamond.setPause(false);
         vm.expectRevert(err(OrganizationManagerStorage.NonexistantOrganization.selector, keccak256("2")));
