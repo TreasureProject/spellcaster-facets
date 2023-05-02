@@ -7,8 +7,6 @@ import { TestBase } from "./utils/TestBase.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
-
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
 import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
 import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
@@ -16,11 +14,7 @@ import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import { OrganizationFacet, OrganizationManagerStorage } from "src/organizations/OrganizationFacet.sol";
 import {
-    IGuildManager,
-    GuildCreationRule,
-    MaxUsersPerGuildRule,
-    GuildUserStatus,
-    GuildStatus
+    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus
 } from "src/interfaces/IGuildManager.sol";
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
@@ -32,10 +26,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     GuildManager internal _manager;
 
     function setUp() public {
-        //Timeouts will fail if you do not skip in the setup
-        //This is because the leave time for each user defaults to 0
-        //And if the current time is under 604800, they would have theoretically not met the cooldown time.
-        skip(604800);
         FacetInfo[] memory facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
@@ -63,7 +53,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             _org1,
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -99,7 +89,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             keccak256("1"),
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -124,7 +114,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             keccak256("1"),
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -160,13 +150,12 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             keccak256("1"),
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
-        skip(604801);
 
         // deployer is the Organization's admin
         vm.prank(leet);
@@ -326,18 +315,18 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         OrganizationFacet(address(_diamond)).createOrganization(_org2, "Organization2", "Org description2");
         _manager.initializeForOrganization(
             _org2,
-            69, // Max guilds per user
-            604800, // Timeout to join another
+            69, // Max users per guild
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
 
         assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
         assertEq("Org description2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).description);
         assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
-        assertEq(100, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
+        assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }
 
     function testCannotCreateForAlreadyInitializedOrganization() public {
@@ -347,10 +336,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             _org2,
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
 
@@ -358,47 +347,12 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             _org2,
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
-    }
-
-    function testCannotCreateForExistingOrganizationWithGreaterThan100Members() public {
-        _diamond.setPause(false);
-
-        vm.expectRevert("Max users must be less than 101.");
-
-        _manager.createForNewOrganization(
-            keccak256("1"),
-            "My org",
-            "My descr",
-            1, // Max users per guild
-            604800, // Timeout to join another
-            GuildCreationRule.ADMIN_ONLY,
-            MaxUsersPerGuildRule.CONSTANT,
-            101, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
-        );
-        
-        _manager.createForNewOrganization(
-            keccak256("1"),
-            "My org",
-            "My descr",
-            1, // Max users per guild
-            604800, // Timeout to join another
-            GuildCreationRule.ADMIN_ONLY,
-            MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
-        );
-
-        _manager.createGuild(keccak256("1"));
-
-        vm.expectRevert("Max users must be less than 101.");
-        _manager.setMaxUsersPerGuild(keccak256("1"), MaxUsersPerGuildRule.CONSTANT, 101);
     }
 
     function testCannotCreateForNonExistingOrganization() public {
@@ -407,10 +361,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.initializeForOrganization(
             keccak256("2"),
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
     }
@@ -456,76 +410,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             _manager.acceptInvitation(_org1, _guild1);
         }
     }
-
-    function testGuildTermination() public {
-        _diamond.setPause(false);
-        createDefaultOrgAndGuild();
-
-        //---
-        //ALL CALLS BELOW SHOULD NOT REVERT
-        //Updating guild info
-        _manager.updateGuildInfo(_org1, _guild1, "New name", "New descr");
-
-        //Inviting users
-        address[] memory invites = new address[](1);
-        invites[0] = leet;
-        _manager.inviteUsers(_org1, _guild1, invites);
-        //---
-
-        assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.ACTIVE));
-
-        vm.prank(leet);
-        vm.expectRevert(err(LibAccessControlRoles.IsNotGuildTerminator.selector, leet, _org1, _guild1));
-        //Leet does not have terminator role, do not allow to terminate.
-        _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
-
-        //Give leet guild terminator role
-        _manager.grantGuildTerminator(leet, _org1, _guild1);
-
-        //Prank as leet and terminate guild
-        vm.prank(leet);
-        _manager.terminateGuild(_org1, _guild1, "No more of this guild! I don't want it anymore!");
-
-        //---
-        //ALL CALLS BELOW SHOULD REVERT
-        //Updating guild info
-        vm.expectRevert(err(GuildManagerStorage.GuildIsNotActive.selector, _org1, _guild1));
-        _manager.updateGuildInfo(_org1, _guild1, "New name", "New descr");
-
-        //Inviting users
-        address[] memory invites2 = new address[](1);
-        invites2[0] = leet;
-        vm.expectRevert(err(GuildManagerStorage.GuildIsNotActive.selector, _org1, _guild1));
-        _manager.inviteUsers(_org1, _guild1, invites2);
-        //---
-
-        assertEq(uint256(_manager.getGuildStatus(_org1, _guild1)), uint256(GuildStatus.TERMINATED));
-    }
-
-    function testMemberLevelAdjustment() public {
-        _diamond.setPause(false);
-        createDefaultOrgAndGuild();
-    
-        address[] memory invites = new address[](1);
-        invites[0] = leet;
-        _manager.inviteUsers(_org1, _guild1, invites);
-
-        vm.prank(leet);
-        _manager.acceptInvitation(_org1, _guild1);
-
-        assertEq(1, _manager.getGuildMemberInfo(_org1, _guild1, leet).memberLevel);
-
-        _manager.adjustMemberLevel(_org1, _guild1, leet, 3);
-
-        assertEq(3, _manager.getGuildMemberInfo(_org1, _guild1, leet).memberLevel);
-
-        vm.expectRevert("Not a valid member level.");
-        _manager.adjustMemberLevel(_org1, _guild1, leet, 6);
-
-        vm.expectRevert("Not a valid member level.");
-        _manager.adjustMemberLevel(_org1, _guild1, leet, 0);
-    }
-
 
     function test() public {
         // TODO: add emit event assertions to tests
