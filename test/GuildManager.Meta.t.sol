@@ -62,7 +62,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
             _org1,
             "My org",
             "My descr",
-            1, // Max users per guild
+            1, // Max guilds per user
             0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
