@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { IERC721Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
@@ -32,6 +33,12 @@ library LibGuildManager {
     // =============================================================
     //                    State Getters/Setters
     // =============================================================
+
+    function setTreasureTagNFTAddress(address _treasureTagNFTAddress) internal {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+
+        l.treasureTagNFTAddress = _treasureTagNFTAddress;
+    }
 
     function setGuildTokenBeacon(address _beaconImplAddress) internal {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
@@ -275,7 +282,7 @@ library LibGuildManager {
     function acceptInvitation(
         bytes32 _organizationId,
         uint32 _guildId
-    ) internal onlyActiveGuild(_organizationId, _guildId) {
+    ) internal onlyActiveGuild(_organizationId, _guildId) onlyTreasureTagHolder(LibMeta._msgSender()){
         GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus == GuildUserStatus.INVITED, "Not invited");
 
@@ -461,6 +468,12 @@ library LibGuildManager {
         }
     }
 
+    function requireTreasureTagHolder(address _user) internal view {
+        GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
+
+        if(IERC721Upgradeable(l.treasureTagNFTAddress).balanceOf(_user) == 0) revert GuildManagerStorage.UserDoesNotOwnTreasureTag(_user);
+    }
+
     // =============================================================
     //                          Private
     // =============================================================
@@ -569,6 +582,11 @@ library LibGuildManager {
 
     modifier onlyActiveGuild(bytes32 _organizationId, uint32 _guildId) {
         requireActiveGuild(_organizationId, _guildId);
+        _;
+    }
+
+    modifier onlyTreasureTagHolder(address _user) {
+        requireTreasureTagHolder(_user);
         _;
     }
 }

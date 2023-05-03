@@ -8,6 +8,8 @@ import { SupportMetaTxImpl } from "./utils/TestMeta.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
+import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
+
 import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
 import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
@@ -31,6 +33,7 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
+    ERC721Consumer internal _erc721Consumer;
     GuildManager internal _manager;
 
     uint96 _nonce = 1;
@@ -60,6 +63,20 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         _manager = GuildManager(address(_diamond));
         _diamond.grantRole("ADMIN", deployer);
         _diamond.grantRole("ADMIN", signingAuthority);
+
+        _erc721Consumer = new ERC721Consumer();
+        _erc721Consumer.initialize();
+
+        _manager.setTreasureTagNFTAddress(address(_erc721Consumer));
+
+        _erc721Consumer.mintArbitrary(leet, 1);
+        _erc721Consumer.mintArbitrary(alice, 1);
+        _erc721Consumer.mintArbitrary(deployer, 1);
+        _erc721Consumer.mintArbitrary(0x0000000000000000000000000000000000000001, 1);
+
+         for (uint256 i = 1; i <= 420; i++) {
+            _erc721Consumer.mintArbitrary(vm.addr(i), 1);
+         }
     }
 
     function createDefaultOrgAndGuild() internal {
@@ -219,6 +236,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanLeaveGuild(address _user) public {
+        //Mint them a treasure tag
+        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
+
         vm.prank(_user);
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
 
@@ -245,6 +265,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanKickMembers(address _user) public {
+        //Mint them a treasure tag
+        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
+
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
         vm.prank(_user);
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
@@ -285,6 +308,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanDemoteAdmin(address _user) public {
+        //Mint them a treasure tag
+        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
+
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
 
         _diamond.setPause(false);

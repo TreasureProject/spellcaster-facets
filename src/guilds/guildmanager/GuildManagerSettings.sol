@@ -109,6 +109,12 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
+    function setTreasureTagNFTAddress(
+        address _treasureTagNFTAddress
+    ) external onlyRole(ADMIN_ROLE){
+        LibGuildManager.setTreasureTagNFTAddress(_treasureTagNFTAddress);
+    }
+
     // =============================================================
     //                        VIEW FUNCTIONS
     // =============================================================

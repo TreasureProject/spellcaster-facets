@@ -31,7 +31,7 @@ contract ERC721Consumer is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     }
 
     function mintArbitrary(address _user, uint256 _quantity) public {
-        for (uint256 i = _counter; i < _quantity; i++) {
+        for (uint256 i = _counter; i < _counter + _quantity; i++) {
             _mint(_user, _counter + i);
         }
         _counter += _quantity;

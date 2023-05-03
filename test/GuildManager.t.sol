@@ -7,6 +7,7 @@ import { TestBase } from "./utils/TestBase.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
+import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
 
 import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
 
@@ -26,6 +27,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
+    ERC721Consumer internal _erc721Consumer;
     GuildManager internal _manager;
 
     function setUp() public {
@@ -45,6 +47,15 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         _manager = GuildManager(address(_diamond));
         _diamond.grantRole("ADMIN", deployer);
+        
+        _erc721Consumer = new ERC721Consumer();
+        _erc721Consumer.initialize();
+
+        _manager.setTreasureTagNFTAddress(address(_erc721Consumer));
+
+        _erc721Consumer.mintArbitrary(leet, 1);
+        _erc721Consumer.mintArbitrary(alice, 1);
+        _erc721Consumer.mintArbitrary(deployer, 1);
     }
 
     function createDefaultOrgAndGuild() internal {
@@ -235,6 +246,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testRevertNonGuildOwnerOrAdminInvite(address _user) public {
+        //Mint them a treasure tag
+        _erc721Consumer.mintArbitrary(_user, 1);
+
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         address[] memory invites = new address[](1);
@@ -253,6 +267,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowNonOwnerUsersToLeaveGuild(address _user) public {
+        //Mint them a treasure tag
+        _erc721Consumer.mintArbitrary(_user, 1);
+
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -267,6 +284,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowGuildOwnerAndAdminKickMembers(address _user) public {
+        //Mint them a treasure tag
+        _erc721Consumer.mintArbitrary(_user, 1);
+        
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -299,6 +319,9 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowAdminToBeDemoted(address _user) public {
+        //Mint them a treasure tag
+        _erc721Consumer.mintArbitrary(_user, 1);
+
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -401,6 +424,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         for (uint256 i = 1; i <= maxMembers; i++) {
             address userCur = vm.addr(i);
+
+            //Mint them a mock treasure tag
+            _erc721Consumer.mintArbitrary(userCur, 1);
+
             address[] memory invites = new address[](1);
             invites[0] = userCur;
             _manager.inviteUsers(_org1, _guild1, invites);

@@ -41,6 +41,10 @@ library GuildManagerStorage {
          * @dev The organizationId is the key for the first mapping, the user is the key for the second mapping
          */
         mapping(bytes32 => mapping(address => GuildOrganizationUserInfo)) organizationIdToAddressToInfo;
+        /**
+         * @dev The address of the treasureTag NFT contract (for ensuring user has a treasureTag when joining guilds)
+         */
+        address treasureTagNFTAddress;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildmanager");
@@ -152,6 +156,12 @@ library GuildManagerStorage {
     event GuildUserStatusChanged(bytes32 organizationId, uint32 guildId, address user, GuildUserStatus status);
 
     // Errors
+
+    /**
+     * @dev Emitted when a user attempts to interact with a function gated to treasure tag holders.
+     * @param _user The address of the sender
+     */
+    error UserDoesNotOwnTreasureTag(address _user);
 
     /**
      * @dev Emitted when a guild organization has already been initialized.
