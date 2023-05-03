@@ -70,6 +70,14 @@ library LibAccessControlRoles {
     error IsNotGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId);
 
     /**
+     * @dev Error when trying to interact with an admin function of a guild but you are not a guild admin
+     * @param _account The address of the sender
+     * @param _organizationId The ID of the guild's organization
+     * @param _guildId The ID of the guild
+     */
+    error IsNotGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId);
+
+    /**
      * @dev Emitted when `account` is granted `role`.
      *
      * `sender` is the account that originated the contract call, an admin role
@@ -241,6 +249,35 @@ library LibAccessControlRoles {
 
     function requireGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) internal view {
         if (!isGuildTerminator(_account, _organizationId, _guildId)) revert IsNotGuildTerminator(_account, _organizationId, _guildId);
+    }
+
+    
+    /**
+     * @dev Give the guild admin role to this account.
+     * @param _account The address of the account to grant.
+     * @param _organizationId The organization Id of this guild
+     * @param _guildId The guild Id
+     */
+    function grantGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) internal {
+        _grantRole(getGuildAdminRole(_organizationId, _guildId), _account);
+    }
+
+    function getGuildAdminRole(bytes32 _organizationId, uint32 _guildId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("ADMIN_ROLE_", keccak256(abi.encodePacked(_organizationId)), keccak256(abi.encodePacked(_guildId))));
+    }
+
+    /**
+     * @dev Returns whether the inputted address is a guild admin
+     * @param _account The address of the account.
+     * @param _organizationId The organization Id of this guild
+     * @param _guildId The guild Id
+     */
+    function isGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) internal view returns (bool) {
+        return hasRole(getGuildAdminRole(_organizationId, _guildId), _account);
+    }
+
+    function requireGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) internal view {
+        if (!isGuildAdmin(_account, _organizationId, _guildId)) revert IsNotGuildAdmin(_account, _organizationId, _guildId);
     }
 
 }

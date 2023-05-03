@@ -34,6 +34,7 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.createGuild(_organizationId);
     }
 
+    //TODO: ADD NATSPEC 
     function terminateGuild(
         bytes32 _organizationId,
         uint32 _guildId,
@@ -50,6 +51,16 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_TERMINATOR_ROLE");
         LibAccessControlRoles.grantGuildTerminator(_account, _organizationId, _guildId);
     }
+    
+    function grantGuildAdmin(
+        address _account,
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_ADMIN_ROLE");
+        LibAccessControlRoles.grantGuildAdmin(_account, _organizationId, _guildId);
+    }
+
 
     /**
      * @inheritdoc IGuildManager
