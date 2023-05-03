@@ -9,7 +9,7 @@ import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
 import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
 
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
 import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
@@ -18,7 +18,11 @@ import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
 import { OrganizationFacet, OrganizationManagerStorage } from "src/organizations/OrganizationFacet.sol";
 import {
-    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus, GuildStatus
+    IGuildManager,
+    GuildCreationRule,
+    MaxUsersPerGuildRule,
+    GuildUserStatus,
+    GuildStatus
 } from "src/interfaces/IGuildManager.sol";
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
@@ -47,7 +51,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         _manager = GuildManager(address(_diamond));
         _diamond.grantRole("ADMIN", deployer);
-        
+
         _erc721Consumer = new ERC721Consumer();
         _erc721Consumer.initialize();
 
@@ -59,11 +63,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function createDefaultOrgAndGuild() internal {
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
         _manager.initializeForOrganization(
             _org1,
             1, // Max users per guild
@@ -94,11 +94,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(0, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
         assertEq(address(0), OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin);
 
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
 
         _manager.initializeForOrganization(
             keccak256("1"),
@@ -117,11 +113,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testRevertNonAdminCreateGuildOrganization() public {
         _diamond.setPause(false);
 
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
 
         vm.prank(leet);
         vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, leet));
@@ -153,11 +145,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testRevertNonAdminCreateGuild() public {
         _diamond.setPause(false);
 
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
 
         assertEq(address(0), _manager.guildOwner(_org1, _guild1));
 
@@ -286,7 +274,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testAllowGuildOwnerAndAdminKickMembers(address _user) public {
         //Mint them a treasure tag
         _erc721Consumer.mintArbitrary(_user, 1);
-        
+
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -415,6 +403,27 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _manager.acceptInvitation(_org1, 2);
     }
 
+    function testEnsureTreasureTagRequirement() public {
+        _diamond.setPause(false);
+        createDefaultOrgAndGuild();
+
+        address[] memory invites = new address[](1);
+        invites[0] = vm.addr(578236);
+        _manager.inviteUsers(_org1, _guild1, invites);
+
+        //Joining the guild should fail, as they do not have a treasure tag
+        vm.expectRevert(err(GuildManagerStorage.UserDoesNotOwnTreasureTag.selector, invites[0]));
+
+        vm.prank(invites[0]);
+        _manager.acceptInvitation(_org1, _guild1);
+
+        //Mint them a treasure tag
+        _erc721Consumer.mintArbitrary(invites[0], 1);
+
+        vm.prank(invites[0]);
+        _manager.acceptInvitation(_org1, _guild1);
+    }
+
     function testCannotAddMoreMembersThanMax() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
@@ -489,7 +498,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testMemberLevelAdjustment() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
-    
+
         address[] memory invites = new address[](1);
         invites[0] = leet;
         _manager.inviteUsers(_org1, _guild1, invites);
@@ -516,7 +525,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         vm.expectRevert("Not a valid member level.");
         _manager.adjustMemberLevel(_org1, _guild1, leet, 0);
     }
-
 
     function test() public {
         // TODO: add emit event assertions to tests
