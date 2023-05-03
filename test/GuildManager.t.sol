@@ -7,6 +7,7 @@ import { TestBase } from "./utils/TestBase.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
+
 import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
 
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
@@ -14,13 +15,9 @@ import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
 import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
 import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
 import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
-import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
+import { OrganizationFacet, OrganizationManagerStorage } from "src/organizations/OrganizationFacet.sol";
 import {
-    IGuildManager,
-    GuildCreationRule,
-    MaxUsersPerGuildRule,
-    GuildUserStatus,
-    GuildStatus
+    IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus, GuildStatus
 } from "src/interfaces/IGuildManager.sol";
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
@@ -32,10 +29,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     GuildManager internal _manager;
 
     function setUp() public {
-        //Timeouts will fail if you do not skip in the setup
-        //This is because the leave time for each user defaults to 0
-        //And if the current time is under 604800, they would have theoretically not met the cooldown time.
-        skip(604800);
         FacetInfo[] memory facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
 
@@ -55,12 +48,15 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function createDefaultOrgAndGuild() internal {
-        _manager.createForNewOrganization(
-            keccak256("1"),
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org1,
             "My org",
-            "My descr",
+            "My descr"
+        );
+        _manager.initializeForOrganization(
+            _org1,
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -87,12 +83,16 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(0, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
         assertEq(address(0), OrganizationFacet(address(_diamond)).getOrganizationInfo(_org1).admin);
 
-        _manager.createForNewOrganization(
-            keccak256("1"),
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org1,
             "My org",
-            "My descr",
+            "My descr"
+        );
+
+        _manager.initializeForOrganization(
+            keccak256("1"),
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -105,14 +105,19 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testRevertNonAdminCreateGuildOrganization() public {
         _diamond.setPause(false);
-        _diamond.revokeRole("ADMIN", deployer);
-        vm.expectRevert(errMissingRole("ADMIN", deployer));
-        _manager.createForNewOrganization(
-            keccak256("1"),
+
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org1,
             "My org",
-            "My descr",
+            "My descr"
+        );
+
+        vm.prank(leet);
+        vm.expectRevert(err(OrganizationManagerStorage.NotOrganizationAdmin.selector, leet));
+        _manager.initializeForOrganization(
+            keccak256("1"),
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
@@ -137,20 +142,23 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     function testRevertNonAdminCreateGuild() public {
         _diamond.setPause(false);
 
+        OrganizationFacet(address(_manager)).createOrganization(
+            _org1,
+            "My org",
+            "My descr"
+        );
+
         assertEq(address(0), _manager.guildOwner(_org1, _guild1));
 
-        _manager.createForNewOrganization(
+        _manager.initializeForOrganization(
             keccak256("1"),
-            "My org",
-            "My descr",
             1, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
-        skip(604801);
 
         // deployer is the Organization's admin
         vm.prank(leet);
@@ -304,97 +312,62 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(uint256(afterDemote), uint256(GuildUserStatus.MEMBER));
     }
 
-    function testCanCreateForExistingOrganization() public {
+    function testCaninitializeForOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         OrganizationFacet(address(_diamond)).createOrganization(_org2, "Organization2", "Org description2");
-        _manager.createForExistingOrganization(
+        _manager.initializeForOrganization(
             _org2,
-            69, // Max guilds per user
-            604800, // Timeout to join another
+            69, // Max users per guild
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
 
         assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
         assertEq("Org description2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).description);
         assertEq(69, _manager.getGuildOrganizationInfo(_org2).maxGuildsPerUser);
-        assertEq(100, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
+        assertEq(420, _manager.getGuildOrganizationInfo(_org2).maxUsersPerGuildConstant);
     }
 
     function testCannotCreateForAlreadyInitializedOrganization() public {
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         OrganizationFacet(address(_diamond)).createOrganization(_org2, "Organization2", "Org description2");
-        _manager.createForExistingOrganization(
+        _manager.initializeForOrganization(
             _org2,
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
 
         vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, _org2));
-        _manager.createForExistingOrganization(
+        _manager.initializeForOrganization(
             _org2,
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
-    }
-
-    function testCannotCreateForExistingOrganizationWithGreaterThan100Members() public {
-        _diamond.setPause(false);
-
-        vm.expectRevert("Max users must be less than 101.");
-
-        _manager.createForNewOrganization(
-            keccak256("1"),
-            "My org",
-            "My descr",
-            1, // Max users per guild
-            604800, // Timeout to join another
-            GuildCreationRule.ADMIN_ONLY,
-            MaxUsersPerGuildRule.CONSTANT,
-            101, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
-        );
-        
-        _manager.createForNewOrganization(
-            keccak256("1"),
-            "My org",
-            "My descr",
-            1, // Max users per guild
-            604800, // Timeout to join another
-            GuildCreationRule.ADMIN_ONLY,
-            MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
-        );
-
-        _manager.createGuild(keccak256("1"));
-
-        vm.expectRevert("Max users must be less than 101.");
-        _manager.setMaxUsersPerGuild(keccak256("1"), MaxUsersPerGuildRule.CONSTANT, 101);
     }
 
     function testCannotCreateForNonExistingOrganization() public {
         _diamond.setPause(false);
         vm.expectRevert(err(OrganizationManagerStorage.NonexistantOrganization.selector, keccak256("2")));
-        _manager.createForExistingOrganization(
+        _manager.initializeForOrganization(
             keccak256("2"),
             69, // Max users per guild
-            604800, // Timeout to join another
+            0, // Timeout to join another
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
-            100, // Max users in a guild
+            420, // Max users in a guild
             address(0) // optional contract for customizable guild rules
         );
     }
