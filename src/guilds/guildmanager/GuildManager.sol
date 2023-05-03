@@ -34,7 +34,9 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.createGuild(_organizationId);
     }
 
-    //TODO: ADD NATSPEC 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function terminateGuild(
         bytes32 _organizationId,
         uint32 _guildId,
@@ -43,6 +45,9 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.terminateGuild(_organizationId, _guildId, _reason);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function grantGuildTerminator(
         address _account,
         bytes32 _organizationId,
@@ -51,7 +56,10 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_TERMINATOR_ROLE");
         LibAccessControlRoles.grantGuildTerminator(_account, _organizationId, _guildId);
     }
-    
+
+    /**
+     * @inheritdoc IGuildManager
+     */
     function grantGuildAdmin(
         address _account,
         bytes32 _organizationId,
@@ -60,7 +68,6 @@ contract GuildManager is GuildManagerSettings {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_ADMIN_ROLE");
         LibAccessControlRoles.grantGuildAdmin(_account, _organizationId, _guildId);
     }
-
 
     /**
      * @inheritdoc IGuildManager

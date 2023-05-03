@@ -116,6 +116,30 @@ interface IGuildManager {
     function createGuild(bytes32 _organizationId) external;
 
     /**
+     * @dev Terminates a provided guild
+     * @param _organizationId The organization of the guild
+     * @param _guildId The guild to terminate
+     * @param _reason The reason of termination for the guild
+     */
+    function terminateGuild(bytes32 _organizationId, uint32 _guildId, string calldata _reason) external;
+
+    /**
+     * @dev Grants a given user guild terminator priviliges under a certain guild
+     * @param _account The user to give terminator
+     * @param _organizationId The org they belong to
+     * @param _guildId The guild they belong to
+     */
+    function grantGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) external;
+
+    /**
+     * @dev Grants a given user guild admin priviliges under a certain guild
+     * @param _account The user to give admin
+     * @param _organizationId The org they belong to
+     * @param _guildId The guild they belong to
+     */
+    function grantGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) external;
+
+    /**
      * @dev Updates the guild info for the given guild.
      * @param _organizationId The organization the guild is within
      * @param _guildId The guild to update
@@ -244,7 +268,6 @@ interface IGuildManager {
         uint32 _guildId,
         address _user
     ) external view returns (GuildUserInfo memory);
-
 
     /**
      * @dev Initializes the Guild feature for the given organization.

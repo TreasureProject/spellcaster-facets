@@ -25,12 +25,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
         address _customGuildManagerAddress
-    )
-        external
-        contractsAreSet
-        whenNotPaused
-        supportsMetaTx(_organizationId)
-    {
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibOrganizationManager.requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
 
@@ -65,7 +60,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibOrganizationManager.requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
-        
+
         LibGuildManager.setTimeoutAfterLeavingGuild(_organizationId, _timeoutAfterLeavingGuild);
     }
 
@@ -105,13 +100,11 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibOrganizationManager.requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
-        
+
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
-    function setTreasureTagNFTAddress(
-        address _treasureTagNFTAddress
-    ) external onlyRole(ADMIN_ROLE){
+    function setTreasureTagNFTAddress(address _treasureTagNFTAddress) external onlyRole(ADMIN_ROLE) {
         LibGuildManager.setTreasureTagNFTAddress(_treasureTagNFTAddress);
     }
 
