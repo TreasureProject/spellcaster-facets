@@ -222,7 +222,7 @@ library LibGuildManager {
         emit GuildManagerStorage.GuildOrganizationInitialized(_organizationId, _guildTokenAddress);
     }
 
-    function createGuild(bytes32 _organizationId) internal {
+    function createGuild(bytes32 _organizationId) internal onlyTreasureTagHolder(LibMeta._msgSender()){
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
         // Check to make sure the user can create a guild
