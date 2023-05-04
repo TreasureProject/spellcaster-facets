@@ -18,13 +18,13 @@ struct GuildOrganizationInfo {
     GuildCreationRule creationRule;
     uint8 maxGuildsPerUser;
     uint32 timeoutAfterLeavingGuild;
-    // Slot 4 (200/256)
+    // Slot 4 (202/256)
     address tokenAddress;
     MaxUsersPerGuildRule maxUsersPerGuildRule;
     uint32 maxUsersPerGuildConstant;
-    // Slot 5 (160 + 2/256) - customGuildManagerAddress
-    address customGuildManagerAddress;
     bool requireTreasureTagForGuilds;
+    // Slot 5 (160/256) - customGuildManagerAddress
+    address customGuildManagerAddress;
 }
 
 /**
