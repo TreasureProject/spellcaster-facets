@@ -5,7 +5,7 @@ import { IERC721Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC721
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
 import {
     IGuildManager,
@@ -144,6 +144,12 @@ library LibGuildManager {
         emit GuildManagerStorage.CustomGuildManagerAddressUpdated(_organizationId, _customGuildManagerAddress);
     }
 
+    function setRequireTreasureTagForGuilds(bytes32 _organizationId, bool _requireTreasureTagForGuilds) internal {
+        getGuildOrganizationInfo(_organizationId).requireTreasureTagForGuilds = _requireTreasureTagForGuilds;
+
+        emit GuildManagerStorage.RequireTreasureTagForGuildsUpdated(_organizationId, _requireTreasureTagForGuilds);
+    }
+
     // =============================================================
     //                  Guild Settings
     // =============================================================
@@ -222,7 +228,11 @@ library LibGuildManager {
         emit GuildManagerStorage.GuildOrganizationInitialized(_organizationId, _guildTokenAddress);
     }
 
-    function createGuild(bytes32 _organizationId) internal onlyTreasureTagHolder(LibMeta._msgSender()){
+    function createGuild(bytes32 _organizationId) internal {
+        if (getGuildOrganizationInfo(_organizationId).requireTreasureTagForGuilds) {
+            requireTreasureTagHolder(LibMeta._msgSender());
+        }
+
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
         // Check to make sure the user can create a guild
@@ -282,7 +292,11 @@ library LibGuildManager {
     function acceptInvitation(
         bytes32 _organizationId,
         uint32 _guildId
-    ) internal onlyActiveGuild(_organizationId, _guildId) onlyTreasureTagHolder(LibMeta._msgSender()){
+    ) internal onlyActiveGuild(_organizationId, _guildId) {
+        if (getGuildOrganizationInfo(_organizationId).requireTreasureTagForGuilds) {
+            requireTreasureTagHolder(LibMeta._msgSender());
+        }
+
         GuildUserStatus _userStatus = getGuildUserInfo(_organizationId, _guildId, LibMeta._msgSender()).userStatus;
         require(_userStatus == GuildUserStatus.INVITED, "Not invited");
 
@@ -368,7 +382,7 @@ library LibGuildManager {
 
         _userInfo.memberLevel = _memberLevel;
 
-        emit GuildManagerStorage.MemberLevelUpdated(_organizationId, _guildId, _user, _memberLevel); 
+        emit GuildManagerStorage.MemberLevelUpdated(_organizationId, _guildId, _user, _memberLevel);
     }
 
     function changeGuildOwner(
@@ -390,10 +404,7 @@ library LibGuildManager {
         bytes32 _organizationId,
         uint32 _guildId,
         string calldata _reason
-    )
-        internal
-        onlyActiveGuild(_organizationId, _guildId)
-    {
+    ) internal onlyActiveGuild(_organizationId, _guildId) {
         LibAccessControlRoles.requireGuildTerminator(LibMeta._msgSender(), _organizationId, _guildId);
 
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
@@ -471,7 +482,9 @@ library LibGuildManager {
     function requireTreasureTagHolder(address _user) internal view {
         GuildManagerStorage.Layout storage l = GuildManagerStorage.layout();
 
-        if(IERC721Upgradeable(l.treasureTagNFTAddress).balanceOf(_user) == 0) revert GuildManagerStorage.UserDoesNotOwnTreasureTag(_user);
+        if (IERC721Upgradeable(l.treasureTagNFTAddress).balanceOf(_user) == 0) {
+            revert GuildManagerStorage.UserDoesNotOwnTreasureTag(_user);
+        }
     }
 
     // =============================================================
@@ -537,7 +550,9 @@ library LibGuildManager {
         IGuildToken(orgInfo.tokenAddress).adminMint(_user, _guildId, 1);
 
         // Check to make sure the user is not in guild joining timeout
-        require(block.timestamp >= _orgUserInfo.timeUserLeftGuild + orgInfo.timeoutAfterLeavingGuild, "Cooldown not over.");
+        require(
+            block.timestamp >= _orgUserInfo.timeUserLeftGuild + orgInfo.timeoutAfterLeavingGuild, "Cooldown not over."
+        );
     }
 
     function _onUserLeftGuild(bytes32 _organizationId, uint32 _guildId, address _user) private {
@@ -582,11 +597,6 @@ library LibGuildManager {
 
     modifier onlyActiveGuild(bytes32 _organizationId, uint32 _guildId) {
         requireActiveGuild(_organizationId, _guildId);
-        _;
-    }
-
-    modifier onlyTreasureTagHolder(address _user) {
-        requireTreasureTagHolder(_user);
         _;
     }
 }

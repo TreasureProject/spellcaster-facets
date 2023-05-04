@@ -56,10 +56,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _erc721Consumer.initialize();
 
         _manager.setTreasureTagNFTAddress(address(_erc721Consumer));
-
-        _erc721Consumer.mintArbitrary(leet, 1);
-        _erc721Consumer.mintArbitrary(alice, 1);
-        _erc721Consumer.mintArbitrary(deployer, 1);
     }
 
     function createDefaultOrgAndGuild() internal {
@@ -71,7 +67,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         _manager.createGuild(_org1);
@@ -103,7 +100,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         assertEq(1, _manager.getGuildOrganizationInfo(_org1).guildIdCur);
@@ -124,7 +122,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
     }
 
@@ -156,7 +155,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         // deployer is the Organization's admin
@@ -234,9 +234,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testRevertNonGuildOwnerOrAdminInvite(address _user) public {
-        //Mint them a treasure tag
-        _erc721Consumer.mintArbitrary(_user, 1);
-
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         address[] memory invites = new address[](1);
@@ -255,9 +252,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowNonOwnerUsersToLeaveGuild(address _user) public {
-        //Mint them a treasure tag
-        _erc721Consumer.mintArbitrary(_user, 1);
-
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -272,9 +266,6 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowGuildOwnerAndAdminKickMembers(address _user) public {
-        //Mint them a treasure tag
-        _erc721Consumer.mintArbitrary(_user, 1);
-
         _diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
@@ -334,7 +325,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             420, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         assertEq("Organization2", OrganizationFacet(address(_diamond)).getOrganizationInfo(_org2).name);
@@ -354,7 +346,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             420, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         vm.expectRevert(err(GuildManagerStorage.GuildOrganizationAlreadyInitialized.selector, _org2));
@@ -365,7 +358,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             420, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
     }
 
@@ -379,7 +373,8 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             420, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
     }
 
@@ -405,7 +400,26 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
     function testEnsureTreasureTagRequirement() public {
         _diamond.setPause(false);
-        createDefaultOrgAndGuild();
+
+        //creating guild
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
+        _manager.initializeForOrganization(
+            _org1,
+            1, // Max users per guild
+            0, // Timeout to join another
+            GuildCreationRule.ADMIN_ONLY,
+            MaxUsersPerGuildRule.CONSTANT,
+            20, // Max users in a guild
+            address(0), // optional contract for customizable guild rules
+            true //Require treasure tag
+        );
+
+        vm.expectRevert(err(GuildManagerStorage.UserDoesNotOwnTreasureTag.selector, deployer));
+        _manager.createGuild(_org1);
+
+        _erc721Consumer.mintArbitrary(deployer, 1);
+
+        _manager.createGuild(_org1);
 
         address[] memory invites = new address[](1);
         invites[0] = vm.addr(578236);
@@ -421,6 +435,7 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         _erc721Consumer.mintArbitrary(invites[0], 1);
 
         vm.prank(invites[0]);
+        //Will succeed
         _manager.acceptInvitation(_org1, _guild1);
     }
 

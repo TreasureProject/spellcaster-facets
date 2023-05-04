@@ -102,6 +102,13 @@ library GuildManagerStorage {
     event CustomGuildManagerAddressUpdated(bytes32 organizationId, address customGuildManagerAddress);
 
     /**
+     * @dev Emitted when the requirement for a treasure tag is updated.
+     * @param organizationId The ID of the guild's organization
+     * @param requireTreasureTagForGuildsUpdated Whether this org requires treasure tags
+     */
+    event RequireTreasureTagForGuildsUpdated(bytes32 organizationId, bool requireTreasureTagForGuildsUpdated);
+
+    /**
      * @dev Emitted when a members level has been updated.
      * @param organizationId The ID of the guild's organization
      * @param guildId The guild ID

@@ -8,8 +8,6 @@ import { SupportMetaTxImpl } from "./utils/TestMeta.sol";
 import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
 import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
-
 import { OrganizationFacet } from "src/organizations/OrganizationFacet.sol";
 import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
 import { GuildManager } from "src/guilds/guildmanager/GuildManager.sol";
@@ -33,7 +31,6 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
-    ERC721Consumer internal _erc721Consumer;
     GuildManager internal _manager;
 
     uint96 _nonce = 1;
@@ -63,28 +60,10 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         _manager = GuildManager(address(_diamond));
         _diamond.grantRole("ADMIN", deployer);
         _diamond.grantRole("ADMIN", signingAuthority);
-
-        _erc721Consumer = new ERC721Consumer();
-        _erc721Consumer.initialize();
-
-        _manager.setTreasureTagNFTAddress(address(_erc721Consumer));
-
-        _erc721Consumer.mintArbitrary(leet, 1);
-        _erc721Consumer.mintArbitrary(alice, 1);
-        _erc721Consumer.mintArbitrary(deployer, 1);
-        _erc721Consumer.mintArbitrary(0x0000000000000000000000000000000000000001, 1);
-
-         for (uint256 i = 1; i <= 420; i++) {
-            _erc721Consumer.mintArbitrary(vm.addr(i), 1);
-         }
     }
 
     function createDefaultOrgAndGuild() internal {
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
         _manager.initializeForOrganization(
             _org1,
             1, // Max users per guild
@@ -92,7 +71,8 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
             GuildCreationRule.ADMIN_ONLY,
             MaxUsersPerGuildRule.CONSTANT,
             20, // Max users in a guild
-            address(0) // optional contract for customizable guild rules
+            address(0), // optional contract for customizable guild rules
+            false
         );
 
         _manager.createGuild(_org1);
@@ -106,16 +86,8 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
         _diamond.setPause(false);
 
         vm.prank(signingAuthority);
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org1,
-            "My org",
-            "My descr"
-        );
-        OrganizationFacet(address(_manager)).createOrganization(
-            _org2,
-            "My org",
-            "My descr"
-        );
+        OrganizationFacet(address(_manager)).createOrganization(_org1, "My org", "My descr");
+        OrganizationFacet(address(_manager)).createOrganization(_org2, "My org", "My descr");
 
         // Signer is sender
         signAndExecuteMetaTx(
@@ -131,8 +103,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     20, // Max users in a guild
-                    address(0) // optional contract for customizable guild rules)
-                )
+                    address(0), // optional contract for customizable guild rules)
+                    false
+                    )
             }),
             address(_manager)
         );
@@ -160,8 +133,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     20, // Max users in a guild
-                    address(0) // optional contract for customizable guild rules)
-                )
+                    address(0), // optional contract for customizable guild rules)
+                    false
+                    )
             }),
             address(_manager)
         );
@@ -236,9 +210,6 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanLeaveGuild(address _user) public {
-        //Mint them a treasure tag
-        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
-
         vm.prank(_user);
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
 
@@ -265,9 +236,6 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanKickMembers(address _user) public {
-        //Mint them a treasure tag
-        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
-
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
         vm.prank(_user);
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
@@ -308,9 +276,6 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
     }
 
     function testCanDemoteAdmin(address _user) public {
-        //Mint them a treasure tag
-        if(address(0) != _user) _erc721Consumer.mintArbitrary(_user, 1);
-
         _delegateApprover.setDelegateApprovalForSystem(_org1, signingAuthority, true);
 
         _diamond.setPause(false);
@@ -358,8 +323,9 @@ contract GuildManagerMetaTest is TestBase, DiamondManager, ERC1155HolderUpgradea
                     GuildCreationRule.ADMIN_ONLY,
                     MaxUsersPerGuildRule.CONSTANT,
                     100, // Max users in a guild
-                    address(0) // optional contract for customizable guild rules
-                )
+                    address(0), // optional contract for customizable guild rules
+                    false
+                    )
             }),
             address(_manager)
         );
