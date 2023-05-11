@@ -28,64 +28,62 @@ import {
 
 import { SpellcasterGM } from "src/spellcaster/SpellcasterGM.sol";
 
-import "forge-std/console.sol";
-
 contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
 
-    SimpleCrafting internal _simpleCrafting;
+    SimpleCrafting internal simpleCrafting;
 
-    ERC20Consumer internal _ERC20Consumer;
-    ERC721Consumer internal _ERC721Consumer;
-    ERC1155Consumer internal _ERC1155Consumer;
+    ERC20Consumer internal erc20Consumer;
+    ERC721Consumer internal erc721Consumer;
+    ERC1155Consumer internal erc1155Consumer;
 
-    uint96 signerNonce;
+    uint96 public signerNonce;
 
-    address roleGranterAddress = address(11);
-    address erc20Admin = address(12);
-    address erc721Admin = address(13);
-    address erc1155Admin = address(14);
+    address public roleGranterAddress = address(11);
+    address public erc20Admin = address(12);
+    address public erc721Admin = address(13);
+    address public erc1155Admin = address(14);
 
     function setUp() public {
-        FacetInfo[] memory facetInfo = new FacetInfo[](3);
-        Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
+        FacetInfo[] memory _facetInfo = new FacetInfo[](3);
+        Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](1);
 
-        facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
-        facetInfo[1] = FacetInfo(
+        _facetInfo[0] = FacetInfo(address(new SimpleCrafting()), "SimpleCrafting", IDiamondCut.FacetCutAction.Add);
+        _facetInfo[1] = FacetInfo(
             address(new CollectionAccessControlFacet()), "CollectionAccessControlFacet", IDiamondCut.FacetCutAction.Add
         );
-        facetInfo[2] = FacetInfo(address(new SpellcasterGM()), "SpellcasterGM", IDiamondCut.FacetCutAction.Add);
+        _facetInfo[2] = FacetInfo(address(new SpellcasterGM()), "SpellcasterGM", IDiamondCut.FacetCutAction.Add);
 
-        initializations[0] = Diamond.Initialization({
-            initContract: facetInfo[1].addr,
+        _initializations[0] = Diamond.Initialization({
+            initContract: _facetInfo[1].addr,
             initData: abi.encodeWithSelector(CollectionAccessControlFacet.CollectionAccessControlFacet_init.selector)
         });
 
-        init(facetInfo, initializations);
+        init(_facetInfo, _initializations);
 
-        _simpleCrafting = SimpleCrafting(address(_diamond));
+        simpleCrafting = SimpleCrafting(address(diamond));
 
-        _diamond.grantRole("ADMIN", deployer);
+        diamond.grantRole("ADMIN", deployer);
 
-        _ERC20Consumer = new ERC20Consumer();
-        _ERC721Consumer = new ERC721Consumer();
-        _ERC1155Consumer = new ERC1155Consumer();
+        erc20Consumer = new ERC20Consumer();
+        erc721Consumer = new ERC721Consumer();
+        erc1155Consumer = new ERC1155Consumer();
 
-        _ERC20Consumer.initialize();
-        _ERC721Consumer.initialize();
-        _ERC1155Consumer.initialize();
+        erc20Consumer.initialize();
+        erc721Consumer.initialize();
+        erc1155Consumer.initialize();
 
-        _ERC20Consumer.setWorldAddress(address(_simpleCrafting));
-        _ERC721Consumer.setWorldAddress(address(_simpleCrafting));
-        _ERC1155Consumer.setWorldAddress(address(_simpleCrafting));
+        erc20Consumer.setWorldAddress(address(simpleCrafting));
+        erc721Consumer.setWorldAddress(address(simpleCrafting));
+        erc1155Consumer.setWorldAddress(address(simpleCrafting));
 
-        _ERC20Consumer.mintArbitrary(deployer, 101 * 10 ** 18);
-        _ERC721Consumer.mintArbitrary(deployer, 11);
-        _ERC1155Consumer.mintArbitrary(deployer, 2, 4);
+        erc20Consumer.mintArbitrary(deployer, 101 * 10 ** 18);
+        erc721Consumer.mintArbitrary(deployer, 11);
+        erc1155Consumer.mintArbitrary(deployer, 2, 4);
 
-        _ERC20Consumer.approve(address(_simpleCrafting), 100 * 10 ** 18);
-        _ERC721Consumer.setApprovalForAll(address(_simpleCrafting), true);
-        _ERC1155Consumer.setApprovalForAll(address(_simpleCrafting), true);
+        erc20Consumer.approve(address(simpleCrafting), 100 * 10 ** 18);
+        erc721Consumer.setApprovalForAll(address(simpleCrafting), true);
+        erc1155Consumer.setApprovalForAll(address(simpleCrafting), true);
     }
 
     function collectionRoleGrantRequestToHash(CollectionRoleGrantRequest memory _collectionRoleGrantRequest)
@@ -105,7 +103,7 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
             ),
             "Spellcaster",
             "1.0.0",
-            address(_diamond)
+            address(diamond)
         );
     }
 
@@ -116,7 +114,7 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         return CollectionRoleGrantRequest({
             collection: address(_collection),
             nonce: signerNonce++,
-            receiver: _reciever, 
+            receiver: _reciever,
             role: LibAccessControlRoles.getCollectionRoleGranterRole(address(_collection))
         });
     }
@@ -132,88 +130,88 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         //Id 20 of ERC721
         //10 of ID 3 of ERC1155
 
-        Ingredient[] memory ingredients = new Ingredient[](3);
-        ingredients[0] = Ingredient(address(_ERC20Consumer), TokenType.ERC20, 0, 100 * 10 ** 18);
-        ingredients[1] = Ingredient(address(_ERC721Consumer), TokenType.ERC721, 10, 0);
-        ingredients[2] = Ingredient(address(_ERC1155Consumer), TokenType.ERC1155, 2, 3);
+        Ingredient[] memory _ingredients = new Ingredient[](3);
+        _ingredients[0] = Ingredient(address(erc20Consumer), TokenType.ERC20, 0, 100 * 10 ** 18);
+        _ingredients[1] = Ingredient(address(erc721Consumer), TokenType.ERC721, 10, 0);
+        _ingredients[2] = Ingredient(address(erc1155Consumer), TokenType.ERC1155, 2, 3);
 
-        Result[] memory results = new Result[](3);
-        results[0] = Result(
-            address(_ERC20Consumer),
+        Result[] memory _results = new Result[](3);
+        _results[0] = Result(
+            address(erc20Consumer),
             bytes4(keccak256(bytes("mintFromWorld(address,uint256)"))),
             abi.encode(20 * 10 ** 18)
         );
-        results[1] =
-            Result(address(_ERC721Consumer), bytes4(keccak256(bytes("mintFromWorld(address,uint256)"))), abi.encode(20));
-        results[2] = Result(
-            address(_ERC1155Consumer),
+        _results[1] =
+            Result(address(erc721Consumer), bytes4(keccak256(bytes("mintFromWorld(address,uint256)"))), abi.encode(20));
+        _results[2] = Result(
+            address(erc1155Consumer),
             bytes4(keccak256(bytes("mintFromWorld(address,uint256,uint256)"))),
             abi.encode(3, 10)
         );
 
-        CraftingRecipe memory _craftingRecipe = CraftingRecipe(ingredients, results);
+        CraftingRecipe memory _craftingRecipe = CraftingRecipe(_ingredients, _results);
 
-        _simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
+        simpleCrafting.createNewCraftingRecipe(_craftingRecipe);
 
-        SpellcasterGM(address(_diamond)).addTrustedSigner(signingAuthority);
+        SpellcasterGM(address(diamond)).addTrustedSigner(signingAuthority);
 
         //Generate three requests for three contracts each with the same address as the granter
-        CollectionRoleGrantRequest memory erc20Request =
-            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC20Consumer));
-        CollectionRoleGrantRequest memory erc721Request =
-            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC721Consumer));
-        CollectionRoleGrantRequest memory erc1155Request =
-            generateCollectionRoleGrantRequest(roleGranterAddress, address(_ERC1155Consumer));
+        CollectionRoleGrantRequest memory _erc20Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(erc20Consumer));
+        CollectionRoleGrantRequest memory _erc721Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(erc721Consumer));
+        CollectionRoleGrantRequest memory _erc1155Request =
+            generateCollectionRoleGrantRequest(roleGranterAddress, address(erc1155Consumer));
 
         //Sign all three as a trusted signer
-        bytes memory erc20Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc20Request));
-        bytes memory erc721Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc721Request));
-        bytes memory erc1155Sig = signHash(signingPK, collectionRoleGrantRequestToHash(erc1155Request));
+        bytes memory _erc20Sig = signHash(signingPK, collectionRoleGrantRequestToHash(_erc20Request));
+        bytes memory _erc721Sig = signHash(signingPK, collectionRoleGrantRequestToHash(_erc721Request));
+        bytes memory _erc1155Sig = signHash(signingPK, collectionRoleGrantRequestToHash(_erc1155Request));
 
         //Prank as random address
         vm.startPrank(address(23548760));
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc20Request, erc20Sig);
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc721Request, erc721Sig);
+        CollectionAccessControlFacet(address(diamond)).grantCollectionRoleGranter(_erc20Request, _erc20Sig);
+        CollectionAccessControlFacet(address(diamond)).grantCollectionRoleGranter(_erc721Request, _erc721Sig);
         vm.stopPrank();
         //Execute this one as deployer.
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionRoleGranter(erc1155Request, erc1155Sig);
+        CollectionAccessControlFacet(address(diamond)).grantCollectionRoleGranter(_erc1155Request, _erc1155Sig);
 
         //Prank as role granter.
         vm.startPrank(roleGranterAddress);
         //Grant admin to address 1
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc20Admin, address(_ERC20Consumer));
+        CollectionAccessControlFacet(address(diamond)).grantCollectionAdmin(erc20Admin, address(erc20Consumer));
         //Grant admin to address 2
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc721Admin, address(_ERC721Consumer));
+        CollectionAccessControlFacet(address(diamond)).grantCollectionAdmin(erc721Admin, address(erc721Consumer));
         //Grant admin to address 3
-        CollectionAccessControlFacet(address(_diamond)).grantCollectionAdmin(erc1155Admin, address(_ERC1155Consumer));
+        CollectionAccessControlFacet(address(diamond)).grantCollectionAdmin(erc1155Admin, address(erc1155Consumer));
         //Stop prenk
         vm.stopPrank();
 
         vm.prank(erc20Admin);
-        _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC20Consumer), 0);
+        simpleCrafting.setRecipeToAllowedAsAdmin(address(erc20Consumer), 0);
 
         vm.prank(erc721Admin);
-        _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC721Consumer), 0);
+        simpleCrafting.setRecipeToAllowedAsAdmin(address(erc721Consumer), 0);
 
         vm.prank(erc1155Admin);
-        _simpleCrafting.setRecipeToAllowedAsAdmin(address(_ERC1155Consumer), 0);
+        simpleCrafting.setRecipeToAllowedAsAdmin(address(erc1155Consumer), 0);
 
-        _simpleCrafting.craft(0);
+        simpleCrafting.craft(0);
 
-        //Balance of ingredients
+        //Balance of _ingredients
 
         //Should have 1 (leftover) + 20 (result) left of ERC20
-        assertEq(_ERC20Consumer.balanceOf(deployer), 21 * 10 ** 18);
+        assertEq(erc20Consumer.balanceOf(deployer), 21 * 10 ** 18);
         //Owner of ERC721 token 10 should be crafting
-        assertEq(_ERC721Consumer.ownerOf(10), address(_simpleCrafting));
+        assertEq(erc721Consumer.ownerOf(10), address(simpleCrafting));
         //Deployer has 1 of token Id 2 left over from ERC1155
-        assertEq(_ERC1155Consumer.balanceOf(deployer, 2), 1);
+        assertEq(erc1155Consumer.balanceOf(deployer, 2), 1);
 
-        //Balances of results
+        //Balances of _results
 
         //Owner of ERC721 token 20 should be deployer
-        assertEq(_ERC721Consumer.ownerOf(20), address(deployer));
+        assertEq(erc721Consumer.ownerOf(20), address(deployer));
         //Deployer has 10 of token Id 3 from ERC1155
-        assertEq(_ERC1155Consumer.balanceOf(deployer, 3), 10);
+        assertEq(erc1155Consumer.balanceOf(deployer, 3), 10);
     }
 }

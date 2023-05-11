@@ -8,20 +8,20 @@ import { IGuildManager } from "src/interfaces/IGuildManager.sol";
  * @notice The contract that handles validating meta transaction delegate approvals
  * @dev References to 'System' are synonymous with 'Organization'
  */
-interface ISystem_Delegate_Approver {
+interface ISystemDelegateApprover {
     function isDelegateApprovedForSystem(
-        address account,
-        bytes32 systemId,
-        address delegate
+        address _account,
+        bytes32 _systemId,
+        address _delegate
     ) external view returns (bool);
-    function setDelegateApprovalForSystem(bytes32 systemId, address delegate, bool approved) external;
+    function setDelegateApprovalForSystem(bytes32 _systemId, address _delegate, bool _approved) external;
     function setDelegateApprovalForSystemBySignature(
-        bytes32 systemId,
-        address delegate,
-        bool approved,
-        address signer,
-        uint256 nonce,
-        bytes calldata signature
+        bytes32 _systemId,
+        address _delegate,
+        bool _approved,
+        address _signer,
+        uint256 _nonce,
+        bytes calldata _signature
     ) external;
 }
 
@@ -89,7 +89,7 @@ library MetaTxFacetStorage {
          * @notice The delegate approver that tracks which wallet can run txs on behalf of the real sending account
          * @dev References to 'System' are synonymous with 'Organization'
          */
-        ISystem_Delegate_Approver systemDelegateApprover;
+        ISystemDelegateApprover systemDelegateApprover;
         /**
          * @notice Tracks which nonces have been used by the from address. Prevents replay attacks.
          * @dev Key1: from address, Key2: nonce, Value: used or not
@@ -104,10 +104,10 @@ library MetaTxFacetStorage {
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.facet.metatx");
 
-    function layout() internal pure returns (Layout storage s) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            s.slot := position
+            l_.slot := _position
         }
     }
 }

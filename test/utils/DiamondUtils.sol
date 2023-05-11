@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import { Script } from "forge-std/Script.sol";
-import { IDiamondCut } from "../../src/diamond/IDiamondCut.sol";
-import { Diamond } from "../../src/diamond/Diamond.sol";
-import { DiamondCutFacet } from "../../src/diamond/DiamondCutFacet.sol";
-import { DiamondLoupeFacet } from "../../src/diamond/DiamondLoupeFacet.sol";
-import { AccessControlFacet } from "../../src/access/AccessControlFacet.sol";
-import { OwnershipFacet } from "../../src/access/OwnershipFacet.sol";
-import { PausableFacet } from "../../src/security/PausableFacet.sol";
+import { IDiamondCut } from "src/diamond/IDiamondCut.sol";
+import { Diamond } from "src/diamond/Diamond.sol";
+import { DiamondCutFacet } from "src/diamond/DiamondCutFacet.sol";
+import { DiamondLoupeFacet } from "src/diamond/DiamondLoupeFacet.sol";
+import { AccessControlFacet } from "src/access/AccessControlFacet.sol";
+import { OwnershipFacet } from "src/access/OwnershipFacet.sol";
+import { PausableFacet } from "src/security/PausableFacet.sol";
 
 library DiamondUtils {
     function grantRole(Diamond _diamond, string memory _roleName, address _addr) public {

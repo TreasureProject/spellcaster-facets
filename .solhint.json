@@ -1,0 +1,43 @@
+{
+  "extends": "solhint:recommended",
+  "plugins": [
+    "defi-wonderland",
+    "spellcaster"
+  ],
+  "rules": {
+    "compiler-version": [
+      "off"
+    ],
+    "contract-name-camelcase": "warn",
+    "event-name-camelcase": "warn",
+    "func-name-mixedcase": "off",
+    "var-name-mixedcase": "off",
+    "const-name-snakecase": "off",
+    "defi-wonderland/enum-name-camelcase": [
+      "warn"
+    ],
+    "defi-wonderland/struct-name-camelcase": [
+      "warn"
+    ],
+    "no-global-import": "warn",
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "constructor-syntax": "warn",
+    "func-visibility": [
+      "error",
+      {
+        "ignoreConstructors": true
+      }
+    ],
+    "not-rely-on-time": "off",
+    "no-inline-assembly": "off",
+    "no-empty-blocks": "off",
+    "avoid-low-level-calls": "off",
+    "spellcaster/non-state-vars-contains-underscore": [
+      "warn"
+    ],
+    "reentrancy": "warn"
+  }
+}

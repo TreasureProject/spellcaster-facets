@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
-import "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
 
 import { FacetInitializable } from "../utils/FacetInitializable.sol";
 import { LibAccessControlRoles } from "../libraries/LibAccessControlRoles.sol";
@@ -11,13 +11,14 @@ import { LibMeta } from "../libraries/LibMeta.sol";
 
 import { CollectionRoleGrantRequest } from "../interfaces/ISpellcasterGM.sol";
 
-import "forge-std/console.sol";
-
 bytes32 constant COLLECTION_ROLE_GRANT_REQUEST_TYPEHASH =
     keccak256("CollectionRoleGrantRequest(address collection,uint96 nonce,address receiver,bytes32 role)");
 
 contract CollectionAccessControlFacet is FacetInitializable, EIP712Upgradeable {
-    function CollectionAccessControlFacet_init() external facetInitializer(keccak256("CollectionAccessControlFacet_init")) {
+    function CollectionAccessControlFacet_init()
+        external
+        facetInitializer(keccak256("CollectionAccessControlFacet_init"))
+    {
         __EIP712_init("Spellcaster", "1.0.0");
     }
 
@@ -42,7 +43,7 @@ contract CollectionAccessControlFacet is FacetInitializable, EIP712Upgradeable {
         CollectionRoleGrantRequest calldata _collectionRoleGrantRequest,
         bytes calldata _signature
     ) internal returns (bool) {
-        address signer = _hashTypedDataV4(
+        address _signer = _hashTypedDataV4(
             keccak256(
                 abi.encode(
                     COLLECTION_ROLE_GRANT_REQUEST_TYPEHASH,
@@ -55,13 +56,13 @@ contract CollectionAccessControlFacet is FacetInitializable, EIP712Upgradeable {
         ).recover(_signature);
 
         //Use the nonce, revert if used.
-        LibSpellcasterGM.useNonce(signer, _collectionRoleGrantRequest.nonce);
+        LibSpellcasterGM.useNonce(_signer, _collectionRoleGrantRequest.nonce);
 
         //Require signer is trusted.
-        LibSpellcasterGM.requireTrustedSigner(signer);
+        LibSpellcasterGM.requireTrustedSigner(_signer);
 
         //Return bool of whether signer is trusted.
-        return (LibSpellcasterGM.isTrustedSigner(signer));
+        return (LibSpellcasterGM.isTrustedSigner(_signer));
     }
 
     /**

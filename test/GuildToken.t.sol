@@ -15,50 +15,50 @@ contract GuildTokenTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
-    GuildToken internal _token;
+    GuildToken internal token;
 
     function setUp() public {
-        _token = new GuildToken();
-        _token.initialize(_org2);
+        token = new GuildToken();
+        token.initialize(org2);
     }
 
     function testIsSetUp() public {
         vm.expectRevert(errAlreadyInitialized("initialize"));
-        _token.initialize(_org2);
+        token.initialize(org2);
 
         // This address called initialize so it is the manager
-        assertEq(_token.guildManager(), deployer);
-        assertEq(_token.organizationId(), _org2);
-        assertTrue(_token.hasRole(roleBytes("ADMIN"), deployer));
-        assertTrue(_token.hasRole(roleBytes("ADMIN_GRANTER"), deployer));
+        assertEq(token.guildManager(), deployer);
+        assertEq(token.organizationId(), org2);
+        assertTrue(token.hasRole(_roleBytes("ADMIN"), deployer));
+        assertTrue(token.hasRole(_roleBytes("ADMIN_GRANTER"), deployer));
     }
 
     function testAllowAdminMintAndBurn() public {
-        _token.grantRole(roleBytes("ADMIN"), alice);
+        token.grantRole(_roleBytes("ADMIN"), alice);
 
-        _token.adminMint(alice, 1, 1);
-        assertEq(_token.balanceOf(alice, 1), 1);
-
-        vm.prank(alice);
-        _token.adminMint(leet, 1, 1);
-
-        _token.adminBurn(alice, 1, 1);
-        assertEq(_token.balanceOf(alice, 1), 0);
+        token.adminMint(alice, 1, 1);
+        assertEq(token.balanceOf(alice, 1), 1);
 
         vm.prank(alice);
-        _token.adminBurn(leet, 1, 1);
+        token.adminMint(leet, 1, 1);
 
-        assertEq(_token.balanceOf(leet, 1), 0);
+        token.adminBurn(alice, 1, 1);
+        assertEq(token.balanceOf(alice, 1), 0);
+
+        vm.prank(alice);
+        token.adminBurn(leet, 1, 1);
+
+        assertEq(token.balanceOf(leet, 1), 0);
     }
 
     function testRevertNonAdminMintAndBurn() public {
         vm.prank(alice);
         vm.expectRevert(errMissingRole("ADMIN", alice));
-        _token.adminMint(alice, 1, 1);
+        token.adminMint(alice, 1, 1);
 
         vm.prank(alice);
         vm.expectRevert(errMissingRole("ADMIN", alice));
-        _token.adminBurn(alice, 1, 1);
+        token.adminBurn(alice, 1, 1);
     }
 
     function testMetaTransaction() public { }

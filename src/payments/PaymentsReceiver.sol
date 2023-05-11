@@ -250,8 +250,9 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
      * @dev Enables external contracts to query if this contract implements the IPaymentsReceiver interface.
      *      Needed for compliant implementation of Spellcaster Payments.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IPaymentsReceiver).interfaceId || interfaceId == type(IERC165Upgradeable).interfaceId;
+    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
+        return
+            _interfaceId == type(IPaymentsReceiver).interfaceId || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 
     /**

@@ -2,18 +2,15 @@
 
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
-import "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
 
 import { FacetInitializable } from "src/utils/FacetInitializable.sol";
 import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 import { LibUtilities } from "src/libraries/LibUtilities.sol";
 
 import {
-    MetaTxFacetStorage,
-    ForwardRequest,
-    ISystem_Delegate_Approver,
-    FORWARD_REQ_TYPEHASH
+    MetaTxFacetStorage, ForwardRequest, ISystemDelegateApprover, FORWARD_REQ_TYPEHASH
 } from "./MetaTxFacetStorage.sol";
 
 abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
@@ -30,7 +27,7 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
         }
         __EIP712_init("Spellcaster", "1.0.0");
 
-        MetaTxFacetStorage.layout().systemDelegateApprover = ISystem_Delegate_Approver(_organizationDelegateApprover);
+        MetaTxFacetStorage.layout().systemDelegateApprover = ISystemDelegateApprover(_organizationDelegateApprover);
     }
 
     /**
@@ -40,15 +37,15 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
      * @param _organizationId The organization ID to be verified against the session ID
      */
     function verifyAndConsumeSessionId(bytes32 _organizationId) internal {
-        MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
-        bytes32 sessionId = l.sessionOrganizationId;
+        MetaTxFacetStorage.Layout storage _l = MetaTxFacetStorage.layout();
+        bytes32 _sessionId = _l.sessionOrganizationId;
 
-        if (sessionId != "") {
-            if (sessionId != _organizationId) {
-                revert MetaTxFacetStorage.SessionOrganizationIdMismatch(sessionId, _organizationId);
+        if (_sessionId != "") {
+            if (_sessionId != _organizationId) {
+                revert MetaTxFacetStorage.SessionOrganizationIdMismatch(_sessionId, _organizationId);
             }
 
-            l.sessionOrganizationId = "";
+            _l.sessionOrganizationId = "";
         }
     }
 
@@ -61,15 +58,15 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
     }
 
     modifier supportsMetaTx(bytes32 _organizationId) virtual {
-        MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
-        bytes32 sessionId = l.sessionOrganizationId;
+        MetaTxFacetStorage.Layout storage _l = MetaTxFacetStorage.layout();
+        bytes32 _sessionId = _l.sessionOrganizationId;
         // If the call is from a meta tx, consume the session id and require it to match
-        if (sessionId != "") {
-            if (sessionId != _organizationId) {
-                revert MetaTxFacetStorage.SessionOrganizationIdMismatch(sessionId, _organizationId);
+        if (_sessionId != "") {
+            if (_sessionId != _organizationId) {
+                revert MetaTxFacetStorage.SessionOrganizationIdMismatch(_sessionId, _organizationId);
             }
             // Reset the session id before the call to ensure that subsequent calls do not keep validating
-            l.sessionOrganizationId = "";
+            _l.sessionOrganizationId = "";
         }
         _;
     }
@@ -77,11 +74,11 @@ abstract contract SupportsMetaTx is FacetInitializable, EIP712Upgradeable {
     modifier supportsMetaTxNoId() virtual {
         _;
 
-        MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
+        MetaTxFacetStorage.Layout storage _l = MetaTxFacetStorage.layout();
         // If the call is from a meta tx, consume the session id
-        if (l.sessionOrganizationId != "") {
+        if (_l.sessionOrganizationId != "") {
             // Reset the session id after the call to ensure that a subsequent call will validate the session id if applicable
-            l.sessionOrganizationId = "";
+            _l.sessionOrganizationId = "";
         }
     }
 }

@@ -6,10 +6,10 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-diamond/utils/String
 import { LibMeta } from "./LibMeta.sol";
 
 library LibUtilities {
-    event Paused(address _account);
-    event Unpaused(address _account);
+    event Paused(address account);
+    event Unpaused(address account);
 
-    error ArrayLengthMismatch(uint256 _len1, uint256 _len2);
+    error ArrayLengthMismatch(uint256 len1, uint256 len2);
 
     error IsPaused();
     error NotPaused();
@@ -38,8 +38,8 @@ library LibUtilities {
     //                     Misc Functions
     // =============================================================
 
-    function compareStrings(string memory a, string memory b) public pure returns (bool) {
-        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    function compareStrings(string memory _a, string memory _b) public pure returns (bool) {
+        return (keccak256(abi.encodePacked((_a))) == keccak256(abi.encodePacked((_b))));
     }
 
     function setPause(bool _paused) internal {
@@ -72,17 +72,17 @@ library LibUtilities {
     }
 
     /**
-     * @notice This function takes the first 4 MSB of the given bytes32 and converts them to a bytes4
+     * @notice This function takes the first 4 MSB of the given bytes32 and converts them to _a bytes4
      * @dev This function is useful for grabbing function selectors from calldata
-     * @param inBytes The bytes to convert to bytes4
+     * @param _inBytes The bytes to convert to bytes4
      */
-    function convertBytesToBytes4(bytes memory inBytes) internal pure returns (bytes4 outBytes4) {
-        if (inBytes.length == 0) {
+    function convertBytesToBytes4(bytes memory _inBytes) internal pure returns (bytes4 outBytes4_) {
+        if (_inBytes.length == 0) {
             return 0x0;
         }
 
         assembly {
-            outBytes4 := mload(add(inBytes, 32))
+            outBytes4_ := mload(add(_inBytes, 32))
         }
     }
 }

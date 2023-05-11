@@ -25,13 +25,13 @@ abstract contract GuildTokenBase is IGuildToken, AccessControlFacet, ERC1155Face
     /**
      * @dev Overrides and passes through to ERC1155
      */
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         override(AccessControlFacet, ERC1155Facet)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     modifier whenNotPaused() {

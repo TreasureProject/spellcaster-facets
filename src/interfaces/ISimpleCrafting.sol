@@ -52,26 +52,26 @@ struct CraftingRecipe {
 interface ISimpleCrafting {
     /**
      * @dev Emitted when a crafting recipe is created
-     * @param _craftingRecipeId The crafting recipe Id.
+     * @param craftingRecipeId The crafting recipe Id.
      */
-    event CraftingRecipeCreated(uint256 _craftingRecipeId);
+    event CraftingRecipeCreated(uint256 craftingRecipeId);
 
     /**
      * @dev Emitted when a crafting recipe is crafting
-     * @param _craftingRecipeId The crafting recipe Id.
-     * @param _user The crafter.
+     * @param craftingRecipeId The crafting recipe Id.
+     * @param user The crafter.
      */
-    event CraftingRecipeCrafted(uint256 _craftingRecipeId, address _user);
+    event CraftingRecipeCrafted(uint256 craftingRecipeId, address user);
 
     /**
      * @dev Emitted when a user is not permitted to set a recipe as allowed.
-     * @param _account The user.
+     * @param account The user.
      */
-    error UserNotPermitted(address _account);
+    error UserNotPermitted(address account);
 
     /**
      * @dev Emitted when a recipe is not yet fully allowed
-     * @param _recipeId The recipeId.
+     * @param recipeId The recipeId.
      */
-    error RecipeNotAllowed(uint256 _recipeId);
+    error RecipeNotAllowed(uint256 recipeId);
 }
