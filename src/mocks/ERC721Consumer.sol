@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
+import { ERC721EnumerableUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import { IERC721Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
 
 contract ERC721Consumer is ERC721EnumerableUpgradeable, OwnableUpgradeable {
-    uint256 internal _counter;
+    uint256 internal counter;
     address public worldAddress;
 
     mapping(address => bool) public isAdmin;
@@ -26,15 +27,15 @@ contract ERC721Consumer is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     }
 
     function mintFromWorld(address _user, uint256 _tokenId) public {
-        require(msg.sender == worldAddress);
+        require(msg.sender == worldAddress, "Sender not world");
         _mint(_user, _tokenId);
     }
 
     function mintArbitrary(address _user, uint256 _quantity) public {
-        for (uint256 i = _counter; i < _counter + _quantity; i++) {
-            _mint(_user, _counter + i);
+        for (uint256 i = counter; i < counter + _quantity; i++) {
+            _mint(_user, counter + i);
         }
-        _counter += _quantity;
+        counter += _quantity;
     }
 
     function walletOfOwner(address _user) public view returns (uint256[] memory) {

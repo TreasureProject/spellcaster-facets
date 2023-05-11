@@ -33,9 +33,9 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
     /// @param _roles Roles to be granted to the account in the same index of the _accounts array
     /// @param _accounts Addresses to grant the role in the same index of the _roles array
     function grantRoles(bytes32[] calldata _roles, address[] calldata _accounts) external {
-        uint256 roleLength = _roles.length;
-        LibUtilities.requireArrayLengthMatch(roleLength, _accounts.length);
-        for (uint256 i = 0; i < roleLength; i++) {
+        uint256 _roleLength = _roles.length;
+        LibUtilities.requireArrayLengthMatch(_roleLength, _accounts.length);
+        for (uint256 i = 0; i < _roleLength; i++) {
             grantRole(_roles[i], _accounts[i]);
         }
     }
@@ -50,9 +50,9 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
     /**
      * @dev Overrides to use custom error vs string building
      */
-    function _checkRole(bytes32 role, address account) internal view virtual override {
-        if (!hasRole(role, account)) {
-            revert LibAccessControlRoles.MissingRole(account, role);
+    function _checkRole(bytes32 _role, address _account) internal view virtual override {
+        if (!hasRole(_role, _account)) {
+            revert LibAccessControlRoles.MissingRole(_account, _role);
         }
     }
 
@@ -68,7 +68,7 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
      * @dev Overrides AccessControlEnumerableUpgradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(_interfaceId);
     }
 }

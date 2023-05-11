@@ -10,22 +10,22 @@ import { LibMeta } from "./LibMeta.sol";
 library LibSpellcasterGM {
     /**
      * @dev Emitted when an account is not a trusted signer.
-     * @param _account The signer address
+     * @param account The signer address
      */
-    error AccountIsNotTrustedSigner(address _account);
+    error AccountIsNotTrustedSigner(address account);
 
     /**
      * @dev Emitted when a nonce is already used.
-     * @param _account The signer address
-     * @param _nonce The nonce
+     * @param account The signer address
+     * @param nonce The nonce
      */
-    error NonceUsed(address _account, uint256 _nonce);
+    error NonceUsed(address account, uint256 nonce);
 
     /**
      * @dev Emitted when the msg sender was not the contact owner.
-     * @param _account The msg sender
+     * @param account The msg sender
      */
-    error MsgSenderIsNotContractOwner(address _account);
+    error MsgSenderIsNotContractOwner(address account);
 
     /**
      * @dev Sets a trusted signer to spellcaster

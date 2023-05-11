@@ -8,29 +8,25 @@ import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
  *         Used to check emissions of the internal functions with correct argument values.
  */
 contract MockPaymentsReceiver is PaymentsReceiver {
-    event AcceptStaticMagic(address _payor, uint256 _paymentAmount);
-    event AcceptMagicPricedInUSD(address _payor, uint256 _paymentAmount, uint256 _priceInUSD);
-    event AcceptMagicPricedInGasToken(address _payor, uint256 _paymentAmount, uint256 _priceInGasToken);
-    event AcceptMagicPricedInERC20(address _payor, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20);
-    event AcceptGasTokenPricedInMagic(address _payor, uint256 _paymentAmount, uint256 _priceInMagic);
-    event AcceptERC20PricedInMagic(
-        address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInMagic
-    );
+    event AcceptStaticMagic(address payor, uint256 paymentAmount);
+    event AcceptMagicPricedInUSD(address payor, uint256 paymentAmount, uint256 priceInUSD);
+    event AcceptMagicPricedInGasToken(address payor, uint256 paymentAmount, uint256 priceInGasToken);
+    event AcceptMagicPricedInERC20(address payor, uint256 paymentAmount, address pricedERC20, uint256 priceInERC20);
+    event AcceptGasTokenPricedInMagic(address payor, uint256 paymentAmount, uint256 priceInMagic);
+    event AcceptERC20PricedInMagic(address payor, address paymentERC20, uint256 paymentAmount, uint256 priceInMagic);
 
-    event AcceptStaticERC20(address _payor, address _paymentERC20, uint256 _paymentAmount);
+    event AcceptStaticERC20(address payor, address paymentERC20, uint256 paymentAmount);
     event AcceptERC20PricedInERC20(
-        address _payor, address _paymentERC20, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20
+        address payor, address paymentERC20, uint256 paymentAmount, address pricedERC20, uint256 priceInERC20
     );
-    event AcceptERC20PricedInUSD(address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInUSD);
+    event AcceptERC20PricedInUSD(address payor, address paymentERC20, uint256 paymentAmount, uint256 priceInUSD);
     event AcceptERC20PricedInGasToken(
-        address _payor, address _paymentERC20, uint256 _paymentAmount, uint256 _priceInGasToken
+        address payor, address paymentERC20, uint256 paymentAmount, uint256 priceInGasToken
     );
 
-    event AcceptStaticGasToken(address _payor, uint256 _paymentAmount);
-    event AcceptGasTokenPricedInERC20(
-        address _payor, uint256 _paymentAmount, address _pricedERC20, uint256 _priceInERC20
-    );
-    event AcceptGasTokenPricedInUSD(address _payor, uint256 _paymentAmount, uint256 _priceInUSD);
+    event AcceptStaticGasToken(address payor, uint256 paymentAmount);
+    event AcceptGasTokenPricedInERC20(address payor, uint256 paymentAmount, address pricedERC20, uint256 priceInERC20);
+    event AcceptGasTokenPricedInUSD(address payor, uint256 paymentAmount, uint256 priceInUSD);
 
     function initialize(address _spellcasterPayments) external {
         PaymentsReceiver.PaymentsReceiver_init(_spellcasterPayments);

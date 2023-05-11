@@ -18,21 +18,19 @@ import { MockV3Aggregator } from "@chainlink/contracts/src/v0.8/tests/MockV3Aggr
 import { PaymentsFacet, PaymentsStorage, PriceType } from "src/payments/PaymentsFacet.sol";
 import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 
-import "forge-std/console.sol";
-
 contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
     // Events copied from other contracts for testing
-    event PaymentSent(address _payor, address _token, uint256 _amount, address _paymentsReceiver);
+    event PaymentSent(address payor, address token, uint256 amount, address paymentsReceiver);
     event PaymentReceived(
-        address _payor,
-        address _paymentERC20,
-        uint256 _paymentAmount,
-        uint256 _paymentAmountInPricedToken,
-        PriceType _priceType,
-        address _pricedERC20
+        address payor,
+        address paymentERC20,
+        uint256 paymentAmount,
+        uint256 paymentAmountInPricedToken,
+        PriceType priceType,
+        address pricedERC20
     );
 
     PaymentsFacet internal payments;
@@ -45,16 +43,16 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
     MockV3Aggregator internal ethMagicPriceFeed;
     // Taken from the ETH / USD price feed when this test was written and 1 ETH equaled 1758.71877553 USD
     // Stored in 8 decimal places because it's USD
-    int256 usdToEthPrice = 175871877553;
+    int256 public usdToEthPrice = 175871877553;
     // Taken from the MAGIC / USD price feed when this test was written and 1 MAGIC equaled 1.98940930 USD
     // Stored in 8 decimal places because it's USD
-    int256 usdToMagicPrice = 198940930;
+    int256 public usdToMagicPrice = 198940930;
     // MAGIC / ETH - Manually converted from https://coincodex.com/convert/magic-token/ethereum/ when this test was written
     // Stored in 18 decimal places because it's ETH
-    int256 ethToMagicPrice = 0.001103 ether;
+    int256 public ethToMagicPrice = 0.001103 ether;
     // ETH / MAGIC - Manually converted from https://coincodex.com/convert/ethereum/magic-token/ when this test was written
     // Stored in 18 decimal places because it's MAGIC
-    int256 magicToEthPrice = 906.84 ether;
+    int256 public magicToEthPrice = 906.84 ether;
 
     ERC20MockDecimals internal mockUSDC = new ERC20MockDecimals(6);
     ERC20MockDecimals internal mockWETH = new ERC20MockDecimals(18);
@@ -66,20 +64,20 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         magicEthPriceFeed = new MockV3Aggregator(18, ethToMagicPrice);
         ethMagicPriceFeed = new MockV3Aggregator(18, magicToEthPrice);
 
-        FacetInfo[] memory facetInfo = new FacetInfo[](1);
-        Diamond.Initialization[] memory initializations = new Diamond.Initialization[](1);
+        FacetInfo[] memory _facetInfo = new FacetInfo[](1);
+        Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](1);
 
-        facetInfo[0] = FacetInfo(address(new PaymentsFacet()), "PaymentsFacet", IDiamondCut.FacetCutAction.Add);
-        initializations[0] = Diamond.Initialization({
-            initContract: facetInfo[0].addr,
+        _facetInfo[0] = FacetInfo(address(new PaymentsFacet()), "PaymentsFacet", IDiamondCut.FacetCutAction.Add);
+        _initializations[0] = Diamond.Initialization({
+            initContract: _facetInfo[0].addr,
             initData: abi.encodeWithSelector(
                 PaymentsFacet.PaymentsFacet_init.selector, address(ethUsdPriceFeed), address(mockMagic)
                 )
         });
 
-        init(facetInfo, initializations);
+        init(_facetInfo, _initializations);
 
-        payments = PaymentsFacet(address(_diamond));
+        payments = PaymentsFacet(address(diamond));
         payments.initializeERC20(
             address(mockMagic),
             18,
@@ -124,56 +122,56 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
     }
 
     function testCalculateStaticPaymentAmountsCorrectly() public {
-        uint256 expectedAmount = 150; // Amount before accounting for token decimals
+        uint256 _expectedAmount = 150; // Amount before accounting for token decimals
 
-        uint256 magicPaymentAmount = payments.calculatePaymentAmountByPriceType(
-            address(mockMagic), expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
+        uint256 _magicPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), _expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
         );
-        uint256 usdcPaymentAmount = payments.calculatePaymentAmountByPriceType(
-            address(mockUSDC), expectedAmount * 10 ** 6, PriceType.STATIC, address(0)
+        uint256 _usdcPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockUSDC), _expectedAmount * 10 ** 6, PriceType.STATIC, address(0)
         );
-        uint256 gasTokenPaymentAmount = payments.calculatePaymentAmountByPriceType(
-            address(0), expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
+        uint256 _gasTokenPaymentAmount = payments.calculatePaymentAmountByPriceType(
+            address(0), _expectedAmount * 10 ** 18, PriceType.STATIC, address(0)
         );
 
-        assertEq(magicPaymentAmount, expectedAmount * 10 ** 18);
-        assertEq(usdcPaymentAmount, expectedAmount * 10 ** 6);
-        assertEq(gasTokenPaymentAmount, expectedAmount * 10 ** 18);
+        assertEq(_magicPaymentAmount, _expectedAmount * 10 ** 18);
+        assertEq(_usdcPaymentAmount, _expectedAmount * 10 ** 6);
+        assertEq(_gasTokenPaymentAmount, _expectedAmount * 10 ** 18);
     }
 
     function testCalculateGasTokenByPriceTypeCorrectly() public {
-        uint256 usdAmount = 1000 * 10 ** 8; // 1000 USD
-        uint256 magicAmount = 500 * 10 ** 18; // 500 MAGIC
+        uint256 _usdAmount = 1000 * 10 ** 8; // 1000 USD
+        uint256 _magicAmount = 500 * 10 ** 18; // 500 MAGIC
 
-        uint256 expectedGasTokenAmountFromUSD = usdAmount * 10 ** 18 / uint256(usdToEthPrice); // Convert to 18 decimals before converting
-        uint256 expectedGasTokenAmountFromMagic = magicAmount * 10 ** 18 / uint256(magicToEthPrice); // Increase decimals to allow for division back to 18 decimals
+        uint256 _expectedGasTokenAmountFromUSD = _usdAmount * 10 ** 18 / uint256(usdToEthPrice); // Convert to 18 decimals before converting
+        uint256 _expectedGasTokenAmountFromMagic = _magicAmount * 10 ** 18 / uint256(magicToEthPrice); // Increase decimals to allow for division back to 18 decimals
 
-        uint256 gasTokenUSDAmount =
-            payments.calculatePaymentAmountByPriceType(address(0), usdAmount, PriceType.PRICED_IN_USD, address(0));
-        uint256 gasTokenMagicAmount = payments.calculatePaymentAmountByPriceType(
-            address(0), magicAmount, PriceType.PRICED_IN_ERC20, address(mockMagic)
+        uint256 _gasTokenUSDAmount =
+            payments.calculatePaymentAmountByPriceType(address(0), _usdAmount, PriceType.PRICED_IN_USD, address(0));
+        uint256 _gasTokenMagicAmount = payments.calculatePaymentAmountByPriceType(
+            address(0), _magicAmount, PriceType.PRICED_IN_ERC20, address(mockMagic)
         );
 
-        assertEq(gasTokenUSDAmount, expectedGasTokenAmountFromUSD);
-        assertEq(gasTokenMagicAmount, expectedGasTokenAmountFromMagic);
+        assertEq(_gasTokenUSDAmount, _expectedGasTokenAmountFromUSD);
+        assertEq(_gasTokenMagicAmount, _expectedGasTokenAmountFromMagic);
     }
 
     function testCalculateERC20ByPriceTypeCorrectly() public {
-        uint256 usdAmount = 1000 * 10 ** 8; // 1000 USD
-        uint256 gasTokenAmount = 0.5 ether; // 0.5 ETH
+        uint256 _usdAmount = 1000 * 10 ** 8; // 1000 USD
+        uint256 _gasTokenAmount = 0.5 ether; // 0.5 ETH
 
-        uint256 expectedMagicAmountFromUSD = usdAmount * 10 ** 18 / uint256(usdToMagicPrice); // Convert to 18 decimals before converting
-        uint256 expectedMagicAmountFromGasToken = gasTokenAmount * 10 ** 18 / uint256(ethToMagicPrice); // Increase decimals to allow for division back to 18 decimals
+        uint256 _expectedMagicAmountFromUSD = _usdAmount * 10 ** 18 / uint256(usdToMagicPrice); // Convert to 18 decimals before converting
+        uint256 _expectedMagicAmountFromGasToken = _gasTokenAmount * 10 ** 18 / uint256(ethToMagicPrice); // Increase decimals to allow for division back to 18 decimals
 
-        uint256 magicUSDAmount = payments.calculatePaymentAmountByPriceType(
-            address(mockMagic), usdAmount, PriceType.PRICED_IN_USD, address(0)
+        uint256 _magicUSDAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), _usdAmount, PriceType.PRICED_IN_USD, address(0)
         );
-        uint256 magicGasTokenAmount = payments.calculatePaymentAmountByPriceType(
-            address(mockMagic), gasTokenAmount, PriceType.PRICED_IN_GAS_TOKEN, address(0)
+        uint256 _magicGasTokenAmount = payments.calculatePaymentAmountByPriceType(
+            address(mockMagic), _gasTokenAmount, PriceType.PRICED_IN_GAS_TOKEN, address(0)
         );
 
-        assertEq(magicUSDAmount, expectedMagicAmountFromUSD);
-        assertEq(magicGasTokenAmount, expectedMagicAmountFromGasToken);
+        assertEq(_magicUSDAmount, _expectedMagicAmountFromUSD);
+        assertEq(_magicGasTokenAmount, _expectedMagicAmountFromGasToken);
     }
 
     function testIsValidPriceType() public {
@@ -194,10 +192,10 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
     }
 
     function testStaticPaymentsCorrect() public {
-        uint256 paymentAmount = 100 ether;
-        vm.deal(deployer, paymentAmount);
-        mockMagic.mint(deployer, paymentAmount);
-        mockMagic.approve(address(payments), paymentAmount);
+        uint256 _paymentAmount = 100 ether;
+        vm.deal(deployer, _paymentAmount);
+        mockMagic.mint(deployer, _paymentAmount);
+        mockMagic.approve(address(payments), _paymentAmount);
 
         assertEq(receiverAddress.balance, 0);
         assertEq(mockMagic.balanceOf(receiverAddress), 0);
@@ -207,21 +205,21 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
             abi.encodeWithSelector(
                 PaymentsReceiver.acceptGasToken.selector,
                 deployer,
-                paymentAmount,
-                paymentAmount,
+                _paymentAmount,
+                _paymentAmount,
                 PriceType.STATIC,
                 address(0)
             )
         );
         vm.expectEmit(true, true, false, false, address(payments));
-        emit PaymentSent(LibMeta._msgSender(), address(0), paymentAmount, receiverAddress);
+        emit PaymentSent(LibMeta._msgSender(), address(0), _paymentAmount, receiverAddress);
         vm.expectEmit(true, true, false, false, receiverAddress);
-        emit PaymentReceived(deployer, address(0), paymentAmount, paymentAmount, PriceType.STATIC, address(0));
-        payments.makeStaticGasTokenPayment{ value: paymentAmount }(receiverAddress, paymentAmount);
+        emit PaymentReceived(deployer, address(0), _paymentAmount, _paymentAmount, PriceType.STATIC, address(0));
+        payments.makeStaticGasTokenPayment{ value: _paymentAmount }(receiverAddress, _paymentAmount);
 
-        payments.makeStaticERC20Payment(receiverAddress, address(mockMagic), paymentAmount);
+        payments.makeStaticERC20Payment(receiverAddress, address(mockMagic), _paymentAmount);
 
-        assertEq(receiverAddress.balance, paymentAmount);
-        assertEq(mockMagic.balanceOf(receiverAddress), paymentAmount);
+        assertEq(receiverAddress.balance, _paymentAmount);
+        assertEq(mockMagic.balanceOf(receiverAddress), _paymentAmount);
     }
 }

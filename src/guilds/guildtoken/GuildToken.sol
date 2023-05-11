@@ -66,14 +66,14 @@ contract GuildToken is GuildTokenContracts {
      * - Guild tokens cannot be transferred while the contract is paused
      */
     function _beforeTokenTransfer(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        address _operator,
+        address _from,
+        address _to,
+        uint256[] memory _ids,
+        uint256[] memory _amounts,
+        bytes memory _data
     ) internal virtual override {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         LibUtilities.requireNotPaused();
         LibAccessControlRoles.requireRole(ADMIN_ROLE, LibMeta._msgSender());
     }

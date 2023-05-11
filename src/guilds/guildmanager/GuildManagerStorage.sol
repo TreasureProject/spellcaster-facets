@@ -49,10 +49,10 @@ library GuildManagerStorage {
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildmanager");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 
@@ -166,9 +166,9 @@ library GuildManagerStorage {
 
     /**
      * @dev Emitted when a user attempts to interact with a function gated to treasure tag holders.
-     * @param _user The address of the sender
+     * @param user The address of the sender
      */
-    error UserDoesNotOwnTreasureTag(address _user);
+    error UserDoesNotOwnTreasureTag(address user);
 
     /**
      * @dev Emitted when a guild organization has already been initialized.

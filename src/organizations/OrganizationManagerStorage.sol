@@ -16,10 +16,10 @@ library OrganizationManagerStorage {
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.organization.manager");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 

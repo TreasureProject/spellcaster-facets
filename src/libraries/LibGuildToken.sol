@@ -31,14 +31,14 @@ library LibGuildToken {
     }
 
     function uri(uint256 _tokenId) internal view returns (string memory) {
-        GuildTokenStorage.Layout storage l = GuildTokenStorage.layout();
+        GuildTokenStorage.Layout storage _l = GuildTokenStorage.layout();
         uint32 _castedtokenId = uint32(_tokenId);
         // For our purposes, token id and guild id are the same.
         //
-        require(l.guildManager.isValidGuild(l.organizationId, _castedtokenId), "Not valid guild");
+        require(_l.guildManager.isValidGuild(_l.organizationId, _castedtokenId), "Not valid guild");
 
         (string memory _imageData, bool _isSymbolOnChain) =
-            l.guildManager.guildSymbolInfo(l.organizationId, _castedtokenId);
+            _l.guildManager.guildSymbolInfo(_l.organizationId, _castedtokenId);
 
         string memory _finalImageData;
 
@@ -50,20 +50,20 @@ library LibGuildToken {
             //
             _finalImageData = _imageData;
         }
-
-        string memory metadata = string(
+        // solhint-disable quotes
+        string memory _metadata = string(
             abi.encodePacked(
                 '{"name": "',
-                l.guildManager.guildName(l.organizationId, _castedtokenId),
+                _l.guildManager.guildName(_l.organizationId, _castedtokenId),
                 '", "description": "',
-                l.guildManager.guildDescription(l.organizationId, _castedtokenId),
+                _l.guildManager.guildDescription(_l.organizationId, _castedtokenId),
                 '", "image": "',
                 _finalImageData,
                 '", "attributes": []}'
             )
         );
 
-        return string(abi.encodePacked("data:application/json;base64,", LibBBase64.encode(bytes(metadata))));
+        return string(abi.encodePacked("data:application/json;base64,", LibBBase64.encode(bytes(_metadata))));
     }
 
     // =============================================================
@@ -81,12 +81,12 @@ library LibGuildToken {
     }
 
     function _drawSVG(string memory _data) private pure returns (string memory) {
-        string memory svgString = string(abi.encodePacked(_drawImage(_data)));
+        string memory _svgString = string(abi.encodePacked(_drawImage(_data)));
 
         return string(
             abi.encodePacked(
                 '<svg id="imageRender" width="100%" height="100%" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">',
-                svgString,
+                _svgString,
                 "</svg>"
             )
         );

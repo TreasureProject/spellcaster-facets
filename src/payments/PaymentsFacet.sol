@@ -87,24 +87,24 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
             return;
         }
         ERC20Info storage _baseInfo = LibPayments.getERC20Info(_paymentERC20);
-        AggregatorV3Interface priceFeed;
+        AggregatorV3Interface _priceFeed;
 
         if (_priceType == PriceType.PRICED_IN_USD) {
-            priceFeed = _baseInfo.usdAggregator;
+            _priceFeed = _baseInfo.usdAggregator;
         } else if (_priceType == PriceType.PRICED_IN_ERC20) {
-            priceFeed = _baseInfo.priceFeeds[_pricedERC20];
+            _priceFeed = _baseInfo.priceFeeds[_pricedERC20];
         } else if (_priceType == PriceType.PRICED_IN_GAS_TOKEN) {
-            priceFeed = _baseInfo.pricedInGasTokenAggregator;
+            _priceFeed = _baseInfo.pricedInGasTokenAggregator;
         } else {
             revert PaymentsStorage.InvalidPriceType();
         }
-        if (address(priceFeed) == address(0)) {
+        if (address(_priceFeed) == address(0)) {
             revert PaymentsStorage.NonexistantPriceFeed(_paymentERC20, _priceType, _pricedERC20);
         }
 
-        uint256 price = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, _baseInfo.decimals);
+        uint256 _price = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, _baseInfo.decimals);
 
-        _sendERC20(_recipient, _paymentERC20, price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+        _sendERC20(_recipient, _paymentERC20, _price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
     }
 
     /**
@@ -125,26 +125,26 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
             );
             return;
         }
-        AggregatorV3Interface priceFeed;
+        AggregatorV3Interface _priceFeed;
 
         if (_priceType == PriceType.PRICED_IN_USD) {
-            priceFeed = LibPayments.getGasTokenUSDPriceFeed();
+            _priceFeed = LibPayments.getGasTokenUSDPriceFeed();
         } else if (_priceType == PriceType.PRICED_IN_ERC20) {
-            priceFeed = LibPayments.getGasTokenERC20PriceFeed(_pricedERC20);
+            _priceFeed = LibPayments.getGasTokenERC20PriceFeed(_pricedERC20);
         } else {
             revert PaymentsStorage.InvalidPriceType();
         }
-        if (address(priceFeed) == address(0)) {
+        if (address(_priceFeed) == address(0)) {
             revert PaymentsStorage.NonexistantPriceFeed(address(0), _priceType, _pricedERC20);
         }
 
-        uint256 price = _pricedTokenToPaymentAmount(
+        uint256 _price = _pricedTokenToPaymentAmount(
             _paymentAmountInPricedToken,
-            priceFeed,
+            _priceFeed,
             18 // GasToken assumed to have 18 decimals (ETH, MATIC, etc.)
         );
 
-        _sendGasToken(_recipient, price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+        _sendGasToken(_recipient, _price, _paymentAmountInPricedToken, _priceType, _pricedERC20);
     }
 
     /**
@@ -158,14 +158,14 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         address[] calldata _pricedERC20s,
         address[] calldata _priceFeeds
     ) external onlyRole(ADMIN_ROLE) {
-        uint256 numQuotes = _pricedERC20s.length;
-        LibUtilities.requireArrayLengthMatch(numQuotes, _priceFeeds.length);
-        ERC20Info storage info = LibPayments.getERC20Info(_erc20);
-        info.decimals = _decimals;
-        info.pricedInGasTokenAggregator = AggregatorV3Interface(_pricedInGasTokenAggregator);
-        info.usdAggregator = AggregatorV3Interface(_usdAggregator);
-        for (uint256 i = 0; i < numQuotes; i++) {
-            info.priceFeeds[_pricedERC20s[i]] = AggregatorV3Interface(_priceFeeds[i]);
+        uint256 _numQuotes = _pricedERC20s.length;
+        LibUtilities.requireArrayLengthMatch(_numQuotes, _priceFeeds.length);
+        ERC20Info storage _info = LibPayments.getERC20Info(_erc20);
+        _info.decimals = _decimals;
+        _info.pricedInGasTokenAggregator = AggregatorV3Interface(_pricedInGasTokenAggregator);
+        _info.usdAggregator = AggregatorV3Interface(_usdAggregator);
+        for (uint256 i = 0; i < _numQuotes; i++) {
+            _info.priceFeeds[_pricedERC20s[i]] = AggregatorV3Interface(_priceFeeds[i]);
         }
     }
 
@@ -177,8 +177,8 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         address _pricedERC20,
         address _priceFeed
     ) external onlyRole(ADMIN_ROLE) {
-        ERC20Info storage info = LibPayments.getERC20Info(_erc20);
-        info.priceFeeds[_pricedERC20] = AggregatorV3Interface(_priceFeed);
+        ERC20Info storage _info = LibPayments.getERC20Info(_erc20);
+        _info.priceFeeds[_pricedERC20] = AggregatorV3Interface(_priceFeed);
     }
 
     /**
@@ -209,8 +209,8 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         ) {
             return true;
         }
-        AggregatorV3Interface priceFeed = _getPriceFeed(_paymentToken, _pricedERC20, _priceType);
-        return address(priceFeed) != address(0);
+        AggregatorV3Interface _priceFeed = _getPriceFeed(_paymentToken, _pricedERC20, _priceType);
+        return address(_priceFeed) != address(0);
     }
 
     /**
@@ -228,16 +228,16 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         ) {
             return _paymentAmountInPricedToken;
         }
-        AggregatorV3Interface priceFeed = _getPriceFeed(_paymentToken, _pricedToken, _priceType);
-        if (address(priceFeed) == address(0)) {
+        AggregatorV3Interface _priceFeed = _getPriceFeed(_paymentToken, _pricedToken, _priceType);
+        if (address(_priceFeed) == address(0)) {
             revert PaymentsStorage.NonexistantPriceFeed(_paymentToken, _priceType, _pricedToken);
         }
         // GasToken conversion, assume 18 decimals
         if (_paymentToken == address(0)) {
-            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, 18);
+            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, 18);
         } else {
             ERC20Info storage _baseInfo = LibPayments.getERC20Info(_paymentToken);
-            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, priceFeed, _baseInfo.decimals);
+            paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, _baseInfo.decimals);
         }
     }
 
@@ -308,11 +308,11 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     /**
-     * @dev returns the given price in the given decimal format after converting the price into the related value from the price feed
-     * @param _paymentAmountInPricedToken The price to convert to the value from the given price feed
-     * @param _priceFeed The price feed to use to convert the price
-     * @param _paymentDecimals The number of decimals to format the price as
-     * @return paymentAmount_ The price in the given decimal format
+     * @dev returns the given _price in the given decimal format after converting the _price into the related value from the _price feed
+     * @param _paymentAmountInPricedToken The _price to convert to the value from the given _price feed
+     * @param _priceFeed The _price feed to use to convert the _price
+     * @param _paymentDecimals The number of decimals to format the _price as
+     * @return paymentAmount_ The _price in the given decimal format
      */
     function _pricedTokenToPaymentAmount(
         uint256 _paymentAmountInPricedToken,
@@ -320,9 +320,9 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
         uint8 _paymentDecimals
     ) internal view returns (uint256 paymentAmount_) {
         //  Because fixed precision is e18, value will be 5494505494505494505 and needs to be converted to payment token decimal
-        // NOTE: It is assumed that the  _paymentAmountInPricedToken and the price feed's price are in the same decimal unit
+        // NOTE: It is assumed that the  _paymentAmountInPricedToken and the _price feed's _price are in the same decimal unit
         UD60x18 _priceFP = ud(_paymentAmountInPricedToken).div(ud(uint256(_getQuotePrice(_priceFeed))));
-        // Lastly, we must convert the price into the payment token's decimal amount
+        // Lastly, we must convert the _price into the payment token's decimal amount
         if (_paymentDecimals > 18) {
             // Add digits equal to the difference of fp's 18 decimals and the payment token's decimals
             paymentAmount_ = _priceFP.unwrap() * 10 ** (_paymentDecimals - 18);
@@ -333,9 +333,9 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     /**
-     * @dev returns the current relative value of the given price feed
-     * @param _priceFeed The price feed to get the price of
-     * @return price_ The current relative price of the given price feed
+     * @dev returns the current relative value of the given _price feed
+     * @param _priceFeed The _price feed to get the _price of
+     * @return price_ The current relative _price of the given _price feed
      */
     function _getQuotePrice(AggregatorV3Interface _priceFeed) internal view returns (uint256 price_) {
         (, int256 _quotePrice,,,) = _priceFeed.latestRoundData();
