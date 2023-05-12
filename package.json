@@ -14,11 +14,11 @@
     "lint:forge": "forge fmt",
     "lint:solhint": "yarn build:solhint-plugin && npx solhint -c .solhint.json 'src/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky install",
-    "test": "forge test"
+    "test": "forge test --sizes"
   },
   "lint-staged": {
-    "*.{js,css,md,ts,sol}": "forge fmt",
-    "*.sol": "npx solhint --fix 'src/**/*.sol'",
+    "*.{js,css,md,ts,sol}": "yarn lint:forge",
+    "*.sol": "yarn lint:solhint --fix",
     "package.json": "sort-package-json"
   },
   "devDependencies": {
