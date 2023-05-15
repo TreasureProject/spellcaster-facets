@@ -298,13 +298,12 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
     }
 
     function testAllowAdminToBeDemoted(address _user) public {
-        //Mint them a treasure tag
-        erc721Consumer.mintArbitrary(_user, 1);
-
         diamond.setPause(false);
         createDefaultOrgAndGuild();
         // User cannot be the owner or a contract
         vm.assume(_user != address(0) && _user != manager.guildOwner(org1, guild1) && !_user.isContract());
+        //Mint them a treasure tag
+        erc721Consumer.mintArbitrary(_user, 1);
         inviteAndAcceptGuildInvite(org1, guild1, _user);
         changeGuildMemberAdminStatus(_user, true);
         GuildUserStatus _before = manager.getGuildMemberStatus(org1, guild1, _user);
@@ -534,10 +533,10 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
 
         assertEq(3, manager.getGuildMemberInfo(org1, guild1, leet).memberLevel);
 
-        vm.expectRevert("Not a valid _member level.");
+        vm.expectRevert("Not a valid member level.");
         manager.adjustMemberLevel(org1, guild1, leet, 6);
 
-        vm.expectRevert("Not a valid _member level.");
+        vm.expectRevert("Not a valid member level.");
         manager.adjustMemberLevel(org1, guild1, leet, 0);
     }
 
