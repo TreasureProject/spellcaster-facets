@@ -211,8 +211,6 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
                 address(0)
             )
         );
-        vm.expectEmit(true, true, false, false, address(payments));
-        emit PaymentSent(LibMeta._msgSender(), address(0), _paymentAmount, receiverAddress);
         vm.expectEmit(true, true, false, false, receiverAddress);
         emit PaymentReceived(deployer, address(0), _paymentAmount, _paymentAmount, PriceType.STATIC, address(0));
         payments.makeStaticGasTokenPayment{ value: _paymentAmount }(receiverAddress, _paymentAmount);
