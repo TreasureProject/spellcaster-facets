@@ -8,13 +8,14 @@
   "main": "index.js",
   "scripts": {
     "build": "forge build --sizes",
+    "build:cargo": "cargo build",
     "build:solhint-plugin": "cd solhint/spellcaster && yarn install && yarn build && cd ../.. && yarn add --dev file:./solhint/spellcaster",
     "lint:check": "yarn lint:solhint && yarn lint:forge --check",
     "lint:fix": "sort-package-json && yarn lint:solhint --fix && yarn lint:forge",
     "lint:forge": "forge fmt",
     "lint:solhint": "yarn build:solhint-plugin && npx solhint -c .solhint.json 'src/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky install",
-    "test": "forge test --sizes"
+    "test": "forge test"
   },
   "lint-staged": {
     "*.{js,css,md,ts,sol}": "yarn lint:forge",
