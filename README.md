@@ -65,23 +65,49 @@ By working on the secure, customizable, and user-centric blockchain features and
 ## Developer Resources
 
 ### Initial installation
-*IMPORTANT: Use Node version 18.*
+*IMPORTANT: Use Node version 18.x*
+1. Install [NodeJS](https://nodejs.org/en/download/package-manager/). You can also install/manage NodeJS via [nvm](https://nodejs.org/en/download/package-manager/#nvm), which helps with managing multiple repos with varying versions needed
+2. Install [Yarn](https://yarnpkg.com/getting-started/install), the package manager that is used to build and cache dependencies as well as the `solhint/spellcaster` solhint plugin nested locally
+3. (Optional) Install [act - Local GitHub Actions](https://github.com/nektos/act#installation), a local GitHub Action runner, to ensure code stability before PRing. This will save from PRs that get flagged with errors
 
+### Install dependencies
 ```sh
-npm install
+yarn install
 ```
 
 To install Forge, go to https://book.getfoundry.sh/getting-started/installation
 
+### Linting
+The following command gets ran via ci and will block code that doesn't conform.
+```
+yarn lint:check
+```
+Run the following command to try to automatically fix linting errors.
+```
+yarn lint:fix
+```
+
 ### Building
 ```
-forge build
+yarn build
 ```
 
 ### Testing
 ```
-forge test
+yarn test
 ```
+
+### Commiting
+When committing code, Husky will run 2 pre-commit hooks:
+1. [commitlint](https://github.com/conventional-changelog/commitlint) - A conventional commit messaging enforcer. See https://www.conventionalcommits.org/en/v1.0.0/ for what conventional commits strive to achieve
+2. Lint / format fixing - Runs solhint + forge fmt to ensure code style formats are consistent across the repo. Will prevent commits if any errors are found
+
+### Running GitHub Actions
+To run the `lint-build-test` GitHub Action job, execute the following:
+```sh
+act -j lint-build-test 
+```
+NOTE: You may need to add ` --container-architecture linux/amd64` if you have a Mac Silicon CPU (M1, M2, etc) and act is failing for unknown reasons
 
 ### Recommended Setup
 For optimal intellisense and NatSpec completion, it is recommended to use the Nomic Foundation's Solidity extension, in addition to adding the following VSCode snippet (since there isn't any native event/struct completion snippets)
