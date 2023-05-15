@@ -3,7 +3,7 @@ src = 'src'
 out = '_out'
 test = 'test'
 libs = ['lib']
-fuzz_runs = 1024
+fuzz_runs = 256
 gas_reports = ["*"]
 # These compiler settings must match hardhat.config.ts to avoid unexpected issues
 solc = "0.8.19"
@@ -13,7 +13,7 @@ ffi = true
 
 [profile.ci]
 fuzz_runs = 1_000
-verbosity = 4
+verbosity = 2
 
 [fmt]
 multiline_func_header = "params_first"
