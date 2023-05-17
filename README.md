@@ -68,7 +68,7 @@ By working on the secure, customizable, and user-centric blockchain features and
 *IMPORTANT: Use Node version 18.x*
 1. Install [NodeJS](https://nodejs.org/en/download/package-manager/). You can also install/manage NodeJS via [nvm](https://nodejs.org/en/download/package-manager/#nvm), which helps with managing multiple repos with varying versions needed
 2. Install [Yarn](https://yarnpkg.com/getting-started/install), the package manager that is used to build and cache dependencies as well as the `solhint/spellcaster` solhint plugin nested locally
-3. (Optional) Install [act - Local GitHub Actions](https://github.com/nektos/act#installation), a local GitHub Action runner, to ensure code stability before PRing. This will save from PRs that get flagged with errors
+3. (Optional) Install [act - Local GitHub Actions](https://github.com/nektos/act#installation), a local GitHub Action runner, to ensure code stability before PRing. This will save from PRs that get flagged with errors. You will need to install [Docker](https://docs.docker.com/engine/install/) if you have not already
 
 ### Install dependencies
 ```sh
@@ -103,11 +103,11 @@ When committing code, Husky will run 2 pre-commit hooks:
 2. Lint / format fixing - Runs solhint + forge fmt to ensure code style formats are consistent across the repo. Will prevent commits if any errors are found
 
 ### Running GitHub Actions
-To run the `lint-build-test` GitHub Action job, execute the following:
+To run the `lint-build-test` GitHub Action job, execute the following script:
 ```sh
-act -j lint-build-test 
+./run-gh-actions.sh -j lint-build-test 
 ```
-NOTE: You may need to add ` --container-architecture linux/amd64` if you have a Mac Silicon CPU (M1, M2, etc) and act is failing for unknown reasons
+NOTE: This requires `docker` and `act` to be installed and will prompt if they are missing. It will automatically tag --container-architecture linux/amd64 if you are running a Mac with an Apple Silicon CPU. If this causes issues, comment out the line in the script and add an issue outlining your issue.
 
 ### Recommended Setup
 For optimal intellisense and NatSpec completion, it is recommended to use the Nomic Foundation's Solidity extension, in addition to adding the following VSCode snippet (since there isn't any native event/struct completion snippets)
