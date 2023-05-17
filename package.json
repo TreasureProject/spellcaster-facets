@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "build": "forge build --sizes",
-    "build:cargo": "cargo build",
+    "build:cargo": "cargo build --release",
     "build:solhint-plugin": "cd solhint/spellcaster && yarn install && yarn build && cd ../.. && yarn add --dev file:./solhint/spellcaster",
     "lint:check": "yarn lint:solhint && yarn lint:forge --check",
     "lint:fix": "sort-package-json && yarn lint:solhint --fix && yarn lint:forge",

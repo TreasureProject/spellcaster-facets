@@ -120,7 +120,7 @@ contract DiamondManager is Script {
 
     function generateSelectors(string memory _facetName) internal returns (bytes4[] memory _selectors) {
         string[] memory _cmd = new string[](2);
-        _cmd[0] = "_target/debug/get_facet_selectors";
+        _cmd[0] = "target/release/get_facet_selectors";
         _cmd[1] = _facetName;
 
         bytes memory _res = vm.ffi(_cmd);
