@@ -6,8 +6,8 @@ env:
   ARBITRUM_MAINNET_RPC_URL: ""
   DEV_PRIVATE_KEY: "0x0000000000000000000000000000000000000000000000000000000000000000"
   ARBITRUM_MAINNET_PK: "0x0000000000000000000000000000000000000000000000000000000000000000"
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 
 on:
   workflow_dispatch:
@@ -32,31 +32,20 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      - name: Run sccache stat for check
-        shell: bash
-        run: ${SCCACHE_PATH} --show-stats
-
-      - name: "Install Rust toolchain"
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      
-      - name: "Build facet selector test script"
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-
-      - name: "Install Foundry"
-        uses: "foundry-rs/foundry-toolchain@v1"
-
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: "yarn"
+
+      - uses: moonrepo/setup-rust@v0
+        with:
+          cache-target: release
+      - run: cargo build --release
+        shell: bash
+
+      - name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1"
 
       - name: Install dependencies
         run: yarn --frozen-lockfile --network-concurrency 1
