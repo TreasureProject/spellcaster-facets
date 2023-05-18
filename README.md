@@ -143,7 +143,7 @@ Now you can find these completions whenever typing '/'. For non-events/structs, 
 <!-- CONTACT -->
 ## Contact
 
-Treasure - [@Treasure_DAO](https://twitter.com/Treasure_DAO) - email@example.com
+Treasure - [@Treasure_DAO](https://twitter.com/Treasure_DAO) - info@treasure.lol
 
 Project Link: [https://treasure.lol](https://treasure.lol)
 
