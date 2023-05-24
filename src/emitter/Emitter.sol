@@ -8,7 +8,6 @@ import { LibUtilities } from "src/libraries/LibUtilities.sol";
 import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 import { LibOrganizationManager } from "src/libraries/LibOrganizationManager.sol";
 import { EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior } from "src/interfaces/IEmitter.sol";
-import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract Emitter is EmitterBase {
     /**

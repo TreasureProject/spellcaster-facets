@@ -11,6 +11,7 @@ import { LibMeta } from "src/libraries/LibMeta.sol";
 import { EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior } from "src/interfaces/IEmitter.sol";
 
 import { LibEmitterStorage } from "src/emitter/LibEmitterStorage.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 /**
  * @title Emitter Library
