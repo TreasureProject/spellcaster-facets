@@ -59,7 +59,7 @@ contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimple
      */
     function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipeInput) public supportsMetaTxNoId {
         //Pull the current recipe Id
-        uint256 _currentRecipeId = SimpleCraftingStorage.getState()._currentRecipeId;
+        uint256 _currentRecipeId = SimpleCraftingStorage.getState().currentRecipeId;
 
         //Create a pointer to this recipeId (empty)
         CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage.getState().craftingRecipes[_currentRecipeId];
@@ -79,7 +79,7 @@ contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimple
         emit CraftingRecipeCreated(_currentRecipeId);
 
         //Increment currentRecipeId
-        _currentRecipeId++;
+        SimpleCraftingStorage.getState().currentRecipeId++;
     }
 
     /**
@@ -143,16 +143,16 @@ contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimple
 
     /**
      * @dev supportsInterface
-     * @param interfaceId The interface id.
+     * @param _interfaceId The interface id.
      */
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         virtual
         override(ERC1155ReceiverUpgradeable)
         returns (bool)
     {
-        if (interfaceId == type(ISimpleCrafting).interfaceId) return true;
-        return super.supportsInterface(interfaceId);
+        if (_interfaceId == type(ISimpleCrafting).interfaceId) return true;
+        return super.supportsInterface(_interfaceId);
     }
 }

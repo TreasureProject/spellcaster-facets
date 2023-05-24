@@ -13,7 +13,7 @@ library SimpleCraftingStorage {
          * @dev Store all crafting recipes
          */
         mapping(uint256 => CraftingRecipe) craftingRecipes;
-        uint256 _currentRecipeId;
+        uint256 currentRecipeId;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.simple.crafting");
@@ -21,10 +21,10 @@ library SimpleCraftingStorage {
     /**
      * @dev Returns the state struct at a given storage position.
      */
-    function getState() internal pure returns (SimpleCraftingState storage s) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function getState() internal pure returns (SimpleCraftingState storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            s.slot := position
+            l_.slot := _position
         }
     }
 }

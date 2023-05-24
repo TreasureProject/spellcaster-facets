@@ -1,28 +1,35 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {TestBase} from "./utils/TestBase.sol";
-import {DiamondManager, Diamond, IDiamondCut, FacetInfo} from "./utils/DiamondManager.sol";
-import {DiamondUtils} from "./utils/DiamondUtils.sol";
+import { ERC1155HolderUpgradeable } from
+    "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import { TestBase } from "./utils/TestBase.sol";
+import { DiamondManager, Diamond, IDiamondCut, FacetInfo } from "./utils/DiamondManager.sol";
+import { DiamondUtils } from "./utils/DiamondUtils.sol";
 
-import {ERC721Consumer} from "src/mocks/ERC721Consumer.sol";
+import { ERC721Consumer } from "src/mocks/ERC721Consumer.sol";
 
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
-import {GuildToken} from "src/guilds/guildtoken/GuildToken.sol";
-import {Emitter} from "src/emitter/Emitter.sol";
-import {GuildManagerStorage} from "src/guilds/guildmanager/GuildManagerStorage.sol";
-import {LibGuildManager} from "src/libraries/LibGuildManager.sol";
-import {OrganizationManagerStorage} from "src/organizations/OrganizationManagerStorage.sol";
-import {OrganizationFacet, OrganizationManagerStorage} from "src/organizations/OrganizationFacet.sol";
-import {IGuildManager, GuildCreationRule, MaxUsersPerGuildRule, GuildUserStatus, GuildStatus} from "src/interfaces/IGuildManager.sol";
-import {EmittingCollectionType, EmittingRateChangeBehavior} from "src/interfaces/IEmitter.sol";
-import {LibEmitterStorage} from "src/emitter/LibEmitterStorage.sol";
-import {CollectionAccessControlFacet} from "src/access/CollectionAccessControlFacet.sol";
-import {ERC1155Consumer} from "src/mocks/ERC1155Consumer.sol";
+import { GuildToken } from "src/guilds/guildtoken/GuildToken.sol";
+import { Emitter } from "src/emitter/Emitter.sol";
+import { GuildManagerStorage } from "src/guilds/guildmanager/GuildManagerStorage.sol";
+import { LibGuildManager } from "src/libraries/LibGuildManager.sol";
+import { OrganizationManagerStorage } from "src/organizations/OrganizationManagerStorage.sol";
+import { OrganizationFacet, OrganizationManagerStorage } from "src/organizations/OrganizationFacet.sol";
+import {
+    IGuildManager,
+    GuildCreationRule,
+    MaxUsersPerGuildRule,
+    GuildUserStatus,
+    GuildStatus
+} from "src/interfaces/IGuildManager.sol";
+import { EmittingCollectionType, EmittingRateChangeBehavior } from "src/interfaces/IEmitter.sol";
+import { LibEmitterStorage } from "src/emitter/LibEmitterStorage.sol";
+import { CollectionAccessControlFacet } from "src/access/CollectionAccessControlFacet.sol";
+import { ERC1155Consumer } from "src/mocks/ERC1155Consumer.sol";
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
@@ -34,58 +41,40 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     ERC1155Consumer internal erc1155Consumer;
 
     function setUp() public {
-        FacetInfo[] memory facetInfo = new FacetInfo[](3);
-        Diamond.Initialization[]
-            memory initializations = new Diamond.Initialization[](1);
+        FacetInfo[] memory _facetInfo = new FacetInfo[](3);
+        Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](1);
 
-        facetInfo[0] = FacetInfo(
-            address(new Emitter()),
-            "Emitter",
-            IDiamondCut.FacetCutAction.Add
+        _facetInfo[0] = FacetInfo(address(new Emitter()), "Emitter", IDiamondCut.FacetCutAction.Add);
+        _facetInfo[1] = FacetInfo(address(new OrganizationFacet()), "OrganizationFacet", IDiamondCut.FacetCutAction.Add);
+        _facetInfo[2] = FacetInfo(
+            address(new CollectionAccessControlFacet()), "CollectionAccessControlFacet", IDiamondCut.FacetCutAction.Add
         );
-        facetInfo[1] = FacetInfo(
-            address(new OrganizationFacet()),
-            "OrganizationFacet",
-            IDiamondCut.FacetCutAction.Add
-        );
-        facetInfo[2] = FacetInfo(
-            address(new CollectionAccessControlFacet()),
-            "CollectionAccessControlFacet",
-            IDiamondCut.FacetCutAction.Add
-        );
-        initializations[0] = Diamond.Initialization({
-            initContract: facetInfo[0].addr,
+        _initializations[0] = Diamond.Initialization({
+            initContract: _facetInfo[0].addr,
             initData: abi.encodeWithSelector(Emitter.Emitter_init.selector)
         });
 
-        init(facetInfo, initializations);
+        init(_facetInfo, _initializations);
 
-        emitter = Emitter(address(_diamond));
-        organizationFacet = OrganizationFacet(address(_diamond));
-        collectionAccessControl = CollectionAccessControlFacet(
-            address(_diamond)
-        );
+        emitter = Emitter(address(diamond));
+        organizationFacet = OrganizationFacet(address(diamond));
+        collectionAccessControl = CollectionAccessControlFacet(address(diamond));
         erc1155Consumer = new ERC1155Consumer();
         erc1155Consumer.initialize();
 
-        _diamond.grantRole("ADMIN", deployer);
+        diamond.grantRole("ADMIN", deployer);
 
         createDefaultOrg();
     }
 
     function createDefaultOrg() internal {
-        organizationFacet.createOrganization(_org1, "My org", "My descr");
+        organizationFacet.createOrganization(org1, "My org", "My descr");
     }
 
     function test_createEmittingInstance_invalidOrg() public {
         bytes32 _organizationId = "abc";
         vm.prank(leet);
-        vm.expectRevert(
-            err(
-                OrganizationManagerStorage.NonexistantOrganization.selector,
-                _organizationId
-            )
-        );
+        vm.expectRevert(err(OrganizationManagerStorage.NonexistantOrganization.selector, _organizationId));
 
         emitter.createEmittingInstance(
             _organizationId,
@@ -106,7 +95,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.expectRevert(err(LibEmitterStorage.InvalidStartTime.selector));
 
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             leet,
             1,
@@ -124,7 +113,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.expectRevert(err(LibEmitterStorage.BadEmittingRate.selector));
 
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             leet,
             1,
@@ -139,7 +128,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.expectRevert(err(LibEmitterStorage.BadEmittingRate.selector));
 
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             leet,
             0, // Bad frequency
@@ -157,7 +146,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.expectRevert(err(LibEmitterStorage.BadEndTime.selector));
 
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             leet,
             1,
@@ -174,16 +163,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.prank(leet);
 
         emitter.createEmittingInstance(
-            _org1,
-            EmittingCollectionType.ERC1155,
-            leet,
-            1,
-            1,
-            2,
-            4,
-            EmittingRateChangeBehavior.CLAIM_PARTIAL,
-            1,
-            ""
+            org1, EmittingCollectionType.ERC1155, leet, 1, 1, 2, 4, EmittingRateChangeBehavior.CLAIM_PARTIAL, 1, ""
         );
     }
 
@@ -197,16 +177,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     function test_claim_instanceWasDisabled() public {
         vm.prank(leet);
         emitter.createEmittingInstance(
-            _org1,
-            EmittingCollectionType.ERC1155,
-            leet,
-            1,
-            1,
-            2,
-            4,
-            EmittingRateChangeBehavior.CLAIM_PARTIAL,
-            1,
-            ""
+            org1, EmittingCollectionType.ERC1155, leet, 1, 1, 2, 4, EmittingRateChangeBehavior.CLAIM_PARTIAL, 1, ""
         );
 
         vm.prank(leet);
@@ -221,16 +192,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     function test_claim_claimerNotApproved() public {
         vm.prank(leet);
         emitter.createEmittingInstance(
-            _org1,
-            EmittingCollectionType.ERC1155,
-            leet,
-            1,
-            1,
-            2,
-            4,
-            EmittingRateChangeBehavior.CLAIM_PARTIAL,
-            1,
-            ""
+            org1, EmittingCollectionType.ERC1155, leet, 1, 1, 2, 4, EmittingRateChangeBehavior.CLAIM_PARTIAL, 1, ""
         );
 
         vm.prank(alice);
@@ -242,16 +204,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     function test_claim_collectionHasNotApproved() public {
         vm.prank(leet);
         emitter.createEmittingInstance(
-            _org1,
-            EmittingCollectionType.ERC1155,
-            leet,
-            1,
-            1,
-            2,
-            4,
-            EmittingRateChangeBehavior.CLAIM_PARTIAL,
-            1,
-            ""
+            org1, EmittingCollectionType.ERC1155, leet, 1, 1, 2, 4, EmittingRateChangeBehavior.CLAIM_PARTIAL, 1, ""
         );
 
         vm.prank(leet);
@@ -263,7 +216,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     function test_claim_successBasic() public {
         vm.prank(leet);
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             address(erc1155Consumer),
             1,
@@ -276,10 +229,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         );
         uint64 _emittingInstanceId = 1;
 
-        collectionAccessControl.grantCollectionAdmin(
-            leet,
-            address(erc1155Consumer)
-        );
+        collectionAccessControl.grantCollectionAdmin(leet, address(erc1155Consumer));
 
         vm.prank(leet);
         emitter.changeEmittingInstanceApproval(_emittingInstanceId, true);
@@ -296,12 +246,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function test_claim_successCliff() public {
-        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(
-            10,
-            1,
-            0,
-            1 ether
-        );
+        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(10, 1, 0, 1 ether);
 
         warp(10);
 
@@ -320,12 +265,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function test_claim_accruedLessThan1() public {
-        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(
-            1,
-            1,
-            0,
-            0.09 ether
-        );
+        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(1, 1, 0, 0.09 ether);
 
         warp(12);
 
@@ -338,12 +278,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function test_claim_acrrueRightAfterClaim() public {
-        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(
-            10,
-            1,
-            0,
-            1 ether
-        );
+        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(10, 1, 0, 1 ether);
 
         warp(20);
 
@@ -360,13 +295,8 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function test_claim_changeRate_claimPartial() public {
-        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(
-            10,
-            1,
-            0,
-            1 ether,
-            EmittingRateChangeBehavior.CLAIM_PARTIAL
-        );
+        uint64 _emittingInstanceId =
+            _setupAndApproveEmitterInstance(10, 1, 0, 1 ether, EmittingRateChangeBehavior.CLAIM_PARTIAL);
 
         warp(11);
 
@@ -386,13 +316,8 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function test_claim_changeRate_discardExtra() public {
-        uint64 _emittingInstanceId = _setupAndApproveEmitterInstance(
-            10,
-            1,
-            0,
-            1 ether,
-            EmittingRateChangeBehavior.DISCARD_PARTIAL
-        );
+        uint64 _emittingInstanceId =
+            _setupAndApproveEmitterInstance(10, 1, 0, 1 ether, EmittingRateChangeBehavior.DISCARD_PARTIAL);
 
         warp(11);
 
@@ -411,17 +336,9 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         assertEq(erc1155Consumer.balanceOf(leet, 1), 15);
     }
 
-    function _changeFrequencyAndRate(
-        uint64 _emittingInstance,
-        uint256 _frequency,
-        uint256 _amount
-    ) private {
+    function _changeFrequencyAndRate(uint64 _emittingInstance, uint256 _frequency, uint256 _amount) private {
         vm.prank(leet);
-        emitter.changeEmittingInstanceFrequencyAndRate(
-            _emittingInstance,
-            _frequency,
-            _amount
-        );
+        emitter.changeEmittingInstanceFrequencyAndRate(_emittingInstance, _frequency, _amount);
     }
 
     function _setupAndApproveEmitterInstance(
@@ -430,14 +347,9 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         uint256 _endTime,
         uint256 _rate
     ) private returns (uint64) {
-        return
-            _setupAndApproveEmitterInstance(
-                _frequency,
-                _startTime,
-                _endTime,
-                _rate,
-                EmittingRateChangeBehavior.CLAIM_PARTIAL
-            );
+        return _setupAndApproveEmitterInstance(
+            _frequency, _startTime, _endTime, _rate, EmittingRateChangeBehavior.CLAIM_PARTIAL
+        );
     }
 
     function _setupAndApproveEmitterInstance(
@@ -450,7 +362,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         vm.prank(leet);
         // Emits 1 item per second, every 10 seconds.
         emitter.createEmittingInstance(
-            _org1,
+            org1,
             EmittingCollectionType.ERC1155,
             address(erc1155Consumer),
             _frequency,
@@ -462,10 +374,7 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
             ERC1155Consumer.mintArbitrary.selector
         );
 
-        collectionAccessControl.grantCollectionAdmin(
-            leet,
-            address(erc1155Consumer)
-        );
+        collectionAccessControl.grantCollectionAdmin(leet, address(erc1155Consumer));
 
         vm.prank(leet);
         emitter.changeEmittingInstanceApproval(1, true);
@@ -473,20 +382,12 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         return 1;
     }
 
-    function _amountToClaim(
-        uint64 _emittingInstanceId
-    ) private view returns (uint256) {
+    function _amountToClaim(uint64 _emittingInstanceId) private view returns (uint256) {
         return _amountToClaim(_emittingInstanceId, false);
     }
 
-    function _amountToClaim(
-        uint64 _emittingInstanceId,
-        bool _includePartial
-    ) private view returns (uint256) {
-        (uint256 _amount, ) = emitter.amountToClaim(
-            _emittingInstanceId,
-            _includePartial
-        );
+    function _amountToClaim(uint64 _emittingInstanceId, bool _includePartial) private view returns (uint256) {
+        (uint256 _amount,) = emitter.amountToClaim(_emittingInstanceId, _includePartial);
         return _amount;
     }
 }

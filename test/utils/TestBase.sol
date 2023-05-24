@@ -12,10 +12,10 @@ abstract contract TestBase is Test, TestUtilities, TestMeta, TestErrors, TestLog
     address internal alice = address(0xa11ce);
     address internal deployer = address(this);
 
-    bytes32 constant _org1 = keccak256("1");
-    bytes32 constant _org2 = keccak256("2");
-    uint32 constant _guild1 = 1;
-    uint32 constant _guild2 = 2;
+    bytes32 internal constant org1 = keccak256("1");
+    bytes32 internal constant org2 = keccak256("2");
+    uint32 internal constant guild1 = 1;
+    uint32 internal constant guild2 = 2;
 
     constructor() {
         vm.label(leet, "L33T");
@@ -23,7 +23,7 @@ abstract contract TestBase is Test, TestUtilities, TestMeta, TestErrors, TestLog
         vm.label(deployer, "Deployer");
     }
 
-    function warp(uint256 timestamp) internal {
-        vm.warp(timestamp);
+    function warp(uint256 _timestamp) internal {
+        vm.warp(_timestamp);
     }
 }

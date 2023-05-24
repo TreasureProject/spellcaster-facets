@@ -7,19 +7,19 @@ struct ERC721TokenStorageData {
 }
 
 library StakingStorage {
-    struct State {
+    struct Layout {
         mapping(address => mapping(uint256 => ERC721TokenStorageData)) tokenAddressToTokenIdToERC721TokenStorageData;
         mapping(address => mapping(address => uint256)) tokenAddressToAddressToTokensStored;
         mapping(address => mapping(uint256 => mapping(address => uint256))) tokenAddressToTokenIdToUserToQuantityStored;
         mapping(uint256 => bool) usedNonces;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("staking.diamond");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.staking");
 
-    function getState() internal pure returns (State storage s) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function getState() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            s.slot := position
+            l_.slot := _position
         }
     }
 
@@ -71,7 +71,7 @@ library StakingStorage {
         getState().usedNonces[_nonce] = _set;
     }
 
-    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
-        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    function compareStrings(string memory _a, string memory _b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked((_a))) == keccak256(abi.encodePacked((_b))));
     }
 }

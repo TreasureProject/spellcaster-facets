@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior} from "src/interfaces/IEmitter.sol";
+import { EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior } from "src/interfaces/IEmitter.sol";
 
 /**
  * @title LibEmitterStorage library
@@ -16,13 +16,12 @@ library LibEmitterStorage {
         uint64 currentEmittingId;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION =
-        keccak256("spellcaster.storage.emitter");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.emitter");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 
@@ -37,45 +36,23 @@ library LibEmitterStorage {
         bytes4 emitFunctionSelector
     );
 
-    event EmittingInstanceCreatorChanged(
-        uint64 indexed emittingId,
-        address oldCreator,
-        address newCreator
-    );
+    event EmittingInstanceCreatorChanged(uint64 indexed emittingId, address oldCreator, address newCreator);
 
-    event EmittingInstanceEndTimeChanged(
-        uint64 indexed emittingId,
-        uint256 endTime
-    );
+    event EmittingInstanceEndTimeChanged(uint64 indexed emittingId, uint256 endTime);
 
     event EmittingInstanceRateChanged(
-        uint64 indexed emittingId,
-        uint256 emittingFrequencyInSeconds,
-        uint256 amountToEmitPerSecond
+        uint64 indexed emittingId, uint256 emittingFrequencyInSeconds, uint256 amountToEmitPerSecond
     );
 
-    event EmittingInstanceCanClaimChanged(
-        uint64 indexed emittingId,
-        address user,
-        bool canClaim
-    );
+    event EmittingInstanceCanClaimChanged(uint64 indexed emittingId, address user, bool canClaim);
 
-    event EmittingInstanceCollectionApprovalChanged(
-        uint64 indexed emittingId,
-        address collection,
-        bool isApproved
-    );
+    event EmittingInstanceCollectionApprovalChanged(uint64 indexed emittingId, address collection, bool isApproved);
 
     event EmittingInstanceClaimed(
-        uint64 indexed emittingId,
-        address claimedBy,
-        uint256 amountClaimed,
-        uint256 lastClaimWindowTime
+        uint64 indexed emittingId, address claimedBy, uint256 amountClaimed, uint256 lastClaimWindowTime
     );
 
-    event EmittingInstanceDeactivated(
-        uint64 indexed emittingId
-    );
+    event EmittingInstanceDeactivated(uint64 indexed emittingId);
 
     error InvalidStartTime();
     error BadEmittingRate();

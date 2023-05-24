@@ -18,10 +18,11 @@ struct GuildOrganizationInfo {
     GuildCreationRule creationRule;
     uint8 maxGuildsPerUser;
     uint32 timeoutAfterLeavingGuild;
-    // Slot 4 (200/256)
+    // Slot 4 (202/256)
     address tokenAddress;
     MaxUsersPerGuildRule maxUsersPerGuildRule;
     uint32 maxUsersPerGuildConstant;
+    bool requireTreasureTagForGuilds;
     // Slot 5 (160/256) - customGuildManagerAddress
     address customGuildManagerAddress;
 }
@@ -279,6 +280,7 @@ interface IGuildManager {
      * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
      * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
      * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     * @param _requireTreasureTagForGuilds Whether this org requires a treasure tag for guilds
      *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
      */
     function initializeForOrganization(
@@ -288,7 +290,8 @@ interface IGuildManager {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress
+        address _customGuildManagerAddress,
+        bool _requireTreasureTagForGuilds
     ) external;
 
     /**
@@ -325,12 +328,25 @@ interface IGuildManager {
     ) external;
 
     /**
+     * @dev Sets whether an org requires treasure tags for guilds
+     * @param _organizationId The id of the organization to adjust
+     * @param _requireTreasureTagForGuilds Whether treasure tags are required
+     */
+    function setRequireTreasureTagForGuilds(bytes32 _organizationId, bool _requireTreasureTagForGuilds) external;
+
+    /**
      * @dev Sets the contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      * @param _organizationId The id of the organization to set the custom guild manager address for
      * @param _customGuildManagerAddress The contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      *  This is used for guild creation if the saved `guildCreationRule` == CUSTOM_RULE
      */
     function setCustomGuildManagerAddress(bytes32 _organizationId, address _customGuildManagerAddress) external;
+
+    /**
+     * @dev Sets the treasure tag nft address
+     * @param _treasureTagNFTAddress The address of the treasure tag nft contract
+     */
+    function setTreasureTagNFTAddress(address _treasureTagNFTAddress) external;
 
     /**
      * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from

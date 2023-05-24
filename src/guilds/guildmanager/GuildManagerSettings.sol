@@ -24,7 +24,8 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress
+        address _customGuildManagerAddress,
+        bool _requireTreasureTagForGuilds
     ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibOrganizationManager.requireOrganizationValid(_organizationId);
         LibOrganizationManager.requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
@@ -36,6 +37,7 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         LibGuildManager.setGuildCreationRule(_organizationId, _guildCreationRule);
         LibGuildManager.setMaxUsersPerGuild(_organizationId, _maxUsersPerGuildRule, _maxUsersPerGuildConstant);
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
+        LibGuildManager.setRequireTreasureTagForGuilds(_organizationId, _requireTreasureTagForGuilds);
     }
 
     /**
@@ -94,6 +96,19 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
     /**
      * @inheritdoc IGuildManager
      */
+    function setRequireTreasureTagForGuilds(
+        bytes32 _organizationId,
+        bool _requireTreasureTagForGuilds
+    ) external onlyRole(ADMIN_ROLE) contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibOrganizationManager.requireOrganizationValid(_organizationId);
+        LibOrganizationManager.requireOrganizationAdmin(LibMeta._msgSender(), _organizationId);
+
+        LibGuildManager.setRequireTreasureTagForGuilds(_organizationId, _requireTreasureTagForGuilds);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
     function setCustomGuildManagerAddress(
         bytes32 _organizationId,
         address _customGuildManagerAddress
@@ -104,6 +119,9 @@ abstract contract GuildManagerSettings is GuildManagerContracts {
         LibGuildManager.setCustomGuildManagerAddress(_organizationId, _customGuildManagerAddress);
     }
 
+    /**
+     * @inheritdoc IGuildManager
+     */
     function setTreasureTagNFTAddress(address _treasureTagNFTAddress) external onlyRole(ADMIN_ROLE) {
         LibGuildManager.setTreasureTagNFTAddress(_treasureTagNFTAddress);
     }

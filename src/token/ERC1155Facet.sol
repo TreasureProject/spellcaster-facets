@@ -22,40 +22,40 @@ abstract contract ERC1155Facet is FacetInitializable, SupportsMetaTx, ERC1155Upg
      * @dev Overrides ERC1155Ugradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(_interfaceId);
     }
 
     /**
      * @dev Adding support for meta transactions
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override supportsMetaTxNoId {
-        super.setApprovalForAll(operator, approved);
+    function setApprovalForAll(address _operator, bool _approved) public virtual override supportsMetaTxNoId {
+        super.setApprovalForAll(_operator, _approved);
     }
 
     /**
      * @dev Adding support for meta transactions
      */
     function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        address _from,
+        address _to,
+        uint256[] memory _ids,
+        uint256[] memory _amounts,
+        bytes memory _data
     ) public virtual override supportsMetaTxNoId {
-        super.safeBatchTransferFrom(from, to, ids, amounts, data);
+        super.safeBatchTransferFrom(_from, _to, _ids, _amounts, _data);
     }
 
     /**
      * @dev Adding support for meta transactions
      */
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
+        address _from,
+        address _to,
+        uint256 _id,
+        uint256 _amount,
+        bytes memory _data
     ) public virtual override supportsMetaTxNoId {
-        super.safeTransferFrom(from, to, id, amount, data);
+        super.safeTransferFrom(_from, _to, _id, _amount, _data);
     }
 }

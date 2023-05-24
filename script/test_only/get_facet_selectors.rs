@@ -1,3 +1,5 @@
+mod bytes;
+
 use std::env;
 use std::fs;
 use std::process;
@@ -5,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use rustc_hex::FromHex;
 use itertools::Itertools;
-use ethers::abi::Token;
+use ethabi::Token;
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,7 +45,7 @@ fn main() {
     }
 
     let token_array: Token = Token::Array(token_vec);
-    let encoded: Vec<u8> = ethers::abi::encode(&[token_array]);
+    let encoded: Vec<u8> = ethabi::encode(&[token_array]);
 
-    println!("{}", ethers::types::Bytes::from(encoded));
+    println!("{}", bytes::Bytes::from(encoded));
 }

@@ -6,79 +6,81 @@ import { StakingERC20, WithdrawRequest, Signature } from "../src/StakingERC20.so
 import { ERC20Consumer } from "../src/mocks/ERC20Consumer.sol";
 
 contract StakingERC20Test is TestBase {
-    StakingERC20 internal _staking;
-    ERC20Consumer internal _consumer;
+    StakingERC20 internal staking;
+    ERC20Consumer internal consumer;
 
     function setUp() public {
-        _staking = new StakingERC20();
-        _consumer = new ERC20Consumer();
+        staking = new StakingERC20();
+        consumer = new ERC20Consumer();
 
-        _staking.initialize();
-        _consumer.initialize();
+        staking.initialize();
+        consumer.initialize();
 
-        _consumer.setWorldAddress(address(_staking));
-        _consumer.mintArbitrary(deployer, 2_000 ether);
+        consumer.setWorldAddress(address(staking));
+        consumer.mintArbitrary(deployer, 2_000 ether);
     }
 
     function toSigHash(
-        uint256 nonce,
-        address token,
-        uint256 amount,
-        address recipient
+        uint256 _nonce,
+        address _token,
+        uint256 _amount,
+        address _recipient
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(nonce, token, amount, recipient));
+        return keccak256(abi.encodePacked(_nonce, _token, _amount, _recipient));
     }
 
     function testDepositsAndWithdraws2000TokensFromWorld() public {
-        _consumer.approve(address(_staking), 2_000 ether);
+        consumer.approve(address(staking), 2_000 ether);
 
-        assertEq(2_000 ether, _consumer.balanceOf(deployer));
+        assertEq(2_000 ether, consumer.balanceOf(deployer));
 
-        _staking.depositERC20(address(_consumer), deployer, 2_000 ether);
+        staking.depositERC20(address(consumer), deployer, 2_000 ether);
 
-        assertEq(0, _consumer.balanceOf(deployer));
+        assertEq(0, consumer.balanceOf(deployer));
 
-        WithdrawRequest[] memory req = new WithdrawRequest[](1);
-        req[0] = WithdrawRequest({
-            tokenAddress: address(_consumer),
+        WithdrawRequest[] memory _req = new WithdrawRequest[](1);
+        _req[0] = WithdrawRequest({
+            tokenAddress: address(consumer),
             reciever: deployer,
             amount: 2_000 ether,
             nonce: 0,
             stored: true,
             signature: Signature(0, 0x0, 0x0)
         });
-        _staking.withdrawERC20(req);
+        staking.withdrawERC20(_req);
 
-        assertEq(2_000 ether, _consumer.balanceOf(deployer));
+        assertEq(2_000 ether, consumer.balanceOf(deployer));
     }
 
     function testAllowTrustedWithdraw() public {
-        (address addr, uint256 pk) = makeAddrAndKey("trustedSigner");
-        _consumer.setAdmin(addr, true);
+        (address _addr, uint256 _pk) = makeAddrAndKey("trustedSigner");
+        consumer.setAdmin(_addr, true);
 
-        (uint8 v1, bytes32 r1, bytes32 s1) = signHashEthVRS(pk, toSigHash(0, address(_consumer), 2_000 ether, deployer));
-        (uint8 v2, bytes32 r2, bytes32 s2) = signHashEthVRS(pk, toSigHash(1, address(_consumer), 1_000 ether, deployer));
+        (uint8 _v1, bytes32 _r1, bytes32 _s1) =
+            signHashEthVRS(_pk, toSigHash(0, address(consumer), 2_000 ether, deployer));
+        (uint8 _v2, bytes32 _r2, bytes32 _s2) =
+            signHashEthVRS(_pk, toSigHash(1, address(consumer), 1_000 ether, deployer));
 
-        WithdrawRequest[] memory req = new WithdrawRequest[](2);
-        req[0] = WithdrawRequest({
-            tokenAddress: address(_consumer),
+        WithdrawRequest[] memory _req = new WithdrawRequest[](2);
+        _req[0] = WithdrawRequest({
+            tokenAddress: address(consumer),
             reciever: deployer,
             amount: 2_000 ether,
             nonce: 0,
             stored: false,
-            signature: Signature(v1, r1, s1)
+            signature: Signature(_v1, _r1, _s1)
         });
-        req[1] = WithdrawRequest({
-            tokenAddress: address(_consumer),
+        _req[1] = WithdrawRequest({
+            tokenAddress: address(consumer),
             reciever: deployer,
             amount: 1_000 ether,
             nonce: 1,
             stored: false,
-            signature: Signature(v2, r2, s2)
+            signature: Signature(_v2, _r2, _s2)
         });
 
-        _staking.withdrawERC20(req);
-        assertEq(5_000 ether, _consumer.balanceOf(deployer));
+        staking.withdrawERC20(_req);
+        assertEq(5_000 ether, consumer.balanceOf(deployer));
     }
 
     function test() public { }

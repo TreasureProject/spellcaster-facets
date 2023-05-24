@@ -16,79 +16,79 @@ abstract contract TestUtilities is Test {
         return _val.toString();
     }
 
-    function roleBytes(string memory _roleName) public pure returns (bytes32) {
+    function _roleBytes(string memory _roleName) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(_roleName));
     }
 
-    function namehash(bytes memory domain) internal pure returns (bytes32) {
-        return namehash(domain, 0);
+    function namehash(bytes memory _domain) internal pure returns (bytes32) {
+        return namehash(_domain, 0);
     }
 
-    function namehash(bytes memory domain, uint256 i) internal pure returns (bytes32) {
-        if (domain.length <= i) {
+    function namehash(bytes memory _domain, uint256 i) internal pure returns (bytes32) {
+        if (_domain.length <= i) {
             return 0x0000000000000000000000000000000000000000000000000000000000000000;
         }
 
-        uint256 len = labelLength(domain, i);
+        uint256 _len = labelLength(_domain, i);
 
-        return keccak256(abi.encodePacked(namehash(domain, i + len + 1), keccak(domain, i, len)));
+        return keccak256(abi.encodePacked(namehash(_domain, i + _len + 1), keccak(_domain, i, _len)));
     }
 
-    function labelLength(bytes memory domain, uint256 i) private pure returns (uint256) {
-        uint256 len;
-        while (i + len != domain.length && domain[i + len] != 0x2e) {
-            len++;
+    function labelLength(bytes memory _domain, uint256 i) private pure returns (uint256) {
+        uint256 _len;
+        while (i + _len != _domain.length && _domain[i + _len] != 0x2e) {
+            _len++;
         }
-        return len;
+        return _len;
     }
 
-    function keccak(bytes memory data, uint256 offset, uint256 len) private pure returns (bytes32 ret) {
-        require(offset + len <= data.length);
+    function keccak(bytes memory _data, uint256 _offset, uint256 _len) private pure returns (bytes32 _ret) {
+        require(_offset + _len <= _data.length, "Out of bounds");
         assembly {
-            ret := keccak256(add(add(data, 32), offset), len)
-        }
-    }
-
-    // Taken from AddressResolver for tests
-    function addressToBytes(address a) internal pure returns (bytes memory b) {
-        b = new bytes(20);
-        assembly {
-            mstore(add(b, 32), mul(a, exp(256, 12)))
+            _ret := keccak256(add(add(_data, 32), _offset), _len)
         }
     }
 
     // Taken from AddressResolver for tests
-    function bytesToAddress(bytes memory b) internal pure returns (address payable a) {
-        require(b.length == 20);
+    function addressToBytes(address _a) internal pure returns (bytes memory _b) {
+        _b = new bytes(20);
         assembly {
-            a := div(mload(add(b, 32)), exp(256, 12))
+            mstore(add(_b, 32), mul(_a, exp(256, 12)))
+        }
+    }
+
+    // Taken from AddressResolver for tests
+    function bytesToAddress(bytes memory _b) internal pure returns (address payable _a) {
+        require(_b.length == 20, "Invalid address length");
+        assembly {
+            _a := div(mload(add(_b, 32)), exp(256, 12))
         }
     }
 
     /**
      * @dev An optimised function to compute the sha3 of the lower-case
      *      hexadecimal representation of an Ethereum address.
-     * @param addr The address to hash
-     * @return ret The SHA3 hash of the lower-case hexadecimal encoding of the
+     * @param _addr The address to hash
+     * @return _ret The SHA3 hash of the lower-case hexadecimal encoding of the
      *         input address.
      */
-    function sha3HexAddress(address addr) internal pure returns (bytes32 ret) {
+    function sha3HexAddress(address _addr) internal pure returns (bytes32 _ret) {
         assembly {
             for { let i := 40 } gt(i, 0) { } {
                 i := sub(i, 1)
-                mstore8(i, byte(and(addr, 0xf), ALPHANUMERIC_HEX))
-                addr := div(addr, 0x10)
+                mstore8(i, byte(and(_addr, 0xf), ALPHANUMERIC_HEX))
+                _addr := div(_addr, 0x10)
                 i := sub(i, 1)
-                mstore8(i, byte(and(addr, 0xf), ALPHANUMERIC_HEX))
-                addr := div(addr, 0x10)
+                mstore8(i, byte(and(_addr, 0xf), ALPHANUMERIC_HEX))
+                _addr := div(_addr, 0x10)
             }
 
-            ret := keccak256(0, 40)
+            _ret := keccak256(0, 40)
         }
     }
 
     /**
-     * @dev Returns the domain separator for the current chain.
+     * @dev Returns the _domain separator for the current chain.
      */
     function _domainSeparatorV4(
         bytes memory _domainName,
@@ -96,7 +96,7 @@ abstract contract TestUtilities is Test {
         address _receivingContractAddress
     ) internal view returns (bytes32) {
         // Hardcoded name+version to the current version of the forwarder
-        // Must pass in the address of the receiving contract because they will build the domain separator
+        // Must pass in the address of the receiving contract because they will build the _domain separator
         //  with their address
         return _buildDomainSeparator(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -107,27 +107,27 @@ abstract contract TestUtilities is Test {
     }
 
     function _buildDomainSeparator(
-        bytes32 typeHash,
-        bytes32 nameHash,
-        bytes32 versionHash,
+        bytes32 _typeHash,
+        bytes32 _nameHash,
+        bytes32 _versionHash,
         address _receivingContractAddress
     ) private view returns (bytes32) {
-        return keccak256(abi.encode(typeHash, nameHash, versionHash, block.chainid, _receivingContractAddress));
+        return keccak256(abi.encode(_typeHash, _nameHash, _versionHash, block.chainid, _receivingContractAddress));
     }
 
     /**
      * @dev Given an already https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct[hashed struct], this
-     * function returns the hash of the fully encoded EIP712 message for this domain.
+     * function returns the hash of the fully encoded EIP712 message for this _domain.
      *
      * This hash can be used together with {ECDSAUpgradeable-recover} to obtain the signer of a message. For example:
      *
      * ```solidity
-     * bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
+     * bytes32 _digest = _hashTypedDataV4(keccak256(abi.encode(
      *     keccak256("Mail(address to,string contents)"),
      *     mailTo,
      *     keccak256(bytes(mailContents))
      * )));
-     * address signer = ECDSAUpgradeable.recover(digest, signature);
+     * address signer = ECDSAUpgradeable.recover(_digest, signature);
      * ```
      */
     function _hashTypedDataV4(
@@ -141,23 +141,29 @@ abstract contract TestUtilities is Test {
         );
     }
 
-    function signHash(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory bytes_) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+    function signHash(uint256 _privateKey, bytes32 _digest) internal pure returns (bytes memory bytes_) {
+        (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_privateKey, _digest);
         // convert curve to sig bytes for using with ECDSAUpgradeable vs ecrecover
-        bytes_ = abi.encodePacked(r, s, v);
+        bytes_ = abi.encodePacked(_r, _s, _v);
     }
 
-    function signHashVRS(uint256 privateKey, bytes32 digest) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        (v, r, s) = vm.sign(privateKey, digest);
+    function signHashVRS(
+        uint256 _privateKey,
+        bytes32 _digest
+    ) internal pure returns (uint8 _v, bytes32 _r, bytes32 _s) {
+        (_v, _r, _s) = vm.sign(_privateKey, _digest);
     }
 
-    function signHashEth(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory bytes_) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, ECDSAUpgradeable.toEthSignedMessageHash(digest));
+    function signHashEth(uint256 _privateKey, bytes32 _digest) internal pure returns (bytes memory bytes_) {
+        (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_privateKey, ECDSAUpgradeable.toEthSignedMessageHash(_digest));
         // convert curve to sig bytes for using with ECDSAUpgradeable vs ecrecover
-        bytes_ = abi.encodePacked(r, s, v);
+        bytes_ = abi.encodePacked(_r, _s, _v);
     }
 
-    function signHashEthVRS(uint256 privateKey, bytes32 digest) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        (v, r, s) = vm.sign(privateKey, ECDSAUpgradeable.toEthSignedMessageHash(digest));
+    function signHashEthVRS(
+        uint256 _privateKey,
+        bytes32 _digest
+    ) internal pure returns (uint8 _v, bytes32 _r, bytes32 _s) {
+        (_v, _r, _s) = vm.sign(_privateKey, ECDSAUpgradeable.toEthSignedMessageHash(_digest));
     }
 }

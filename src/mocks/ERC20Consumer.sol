@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-diamond/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/ERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-diamond/access/OwnableUpgradeable.sol";
 
 contract ERC20Consumer is ERC20Upgradeable, OwnableUpgradeable {
     address public worldAddress;
@@ -25,7 +25,7 @@ contract ERC20Consumer is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function mintFromWorld(address _user, uint256 _tokenId) public {
-        require(msg.sender == worldAddress);
+        require(msg.sender == worldAddress, "Sender not world");
         _mint(_user, _tokenId);
     }
 

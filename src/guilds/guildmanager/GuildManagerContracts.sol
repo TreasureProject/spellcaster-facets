@@ -14,7 +14,7 @@ abstract contract GuildManagerContracts is GuildManagerBase {
     }
 
     modifier contractsAreSet() {
-        require(areContractsSet(), "GuildManager: Contracts aren't set");
+        require(areContractsSet(), "Contracts aren't set");
         _;
     }
 

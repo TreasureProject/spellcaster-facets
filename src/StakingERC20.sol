@@ -27,8 +27,8 @@ struct WithdrawRequest {
 }
 
 contract StakingERC20 is Initializable {
-    event ERC20Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _amount);
-    event ERC20Withdrawn(address _tokenAddress, address _reciever, uint256 _amount);
+    event ERC20Deposited(address tokenAddress, address depositor, address reciever, uint256 amount);
+    event ERC20Withdrawn(address tokenAddress, address reciever, uint256 amount);
 
     function initialize() external initializer { }
 
@@ -42,10 +42,10 @@ contract StakingERC20 is Initializable {
         emit ERC20Deposited(_tokenAddress, msg.sender, _reciever, _amount);
     }
 
-    function verifyHash(bytes32 _hash, Signature calldata signature) internal pure returns (address) {
-        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+    function verifyHash(bytes32 _hash, Signature calldata _signature) internal pure returns (address) {
+        bytes32 _messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
 
-        return ecrecover(messageDigest, signature.v, signature.r, signature.s);
+        return ecrecover(_messageDigest, _signature.v, _signature.r, _signature.s);
     }
 
     function withdrawERC20(WithdrawRequest[] calldata _withdrawRequests) public {
@@ -59,7 +59,7 @@ contract StakingERC20 is Initializable {
                 //It's stored in the contract
                 //Permissioned by chain
 
-                require(_amountStored >= _withdrawRequest.amount, "You don't have enough stored to withdraw.");
+                require(_amountStored >= _withdrawRequest.amount, "Not enough stored to withdraw.");
 
                 StakingStorage.setERC20TokensStored(_tokenAddress, msg.sender, _amountStored - _withdrawRequest.amount);
 
