@@ -15,6 +15,4 @@ import { LibEmitterStorage } from "src/emitter/LibEmitterStorage.sol";
  * @title Emitter Library
  * @dev This library is used to implement features that use/update storage data for the Emitter contracts
  */
-library LibEmitter {
-
-}
+library LibEmitter { }

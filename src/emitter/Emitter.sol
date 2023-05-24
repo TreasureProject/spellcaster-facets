@@ -1,23 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {EmitterBase, LibEmitter, IEmitter} from "./EmitterBase.sol";
-import {LibEmitterStorage} from "./LibEmitterStorage.sol";
-import {LibMeta} from "src/libraries/LibMeta.sol";
-import {LibUtilities} from "src/libraries/LibUtilities.sol";
-import {LibAccessControlRoles} from "src/libraries/LibAccessControlRoles.sol";
-import {LibOrganizationManager} from "src/libraries/LibOrganizationManager.sol";
-import {EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior} from "src/interfaces/IEmitter.sol";
-import {AddressUpgradeable} from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
+import { EmitterBase, LibEmitter, IEmitter } from "./EmitterBase.sol";
+import { LibEmitterStorage } from "./LibEmitterStorage.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { LibUtilities } from "src/libraries/LibUtilities.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
+import { LibOrganizationManager } from "src/libraries/LibOrganizationManager.sol";
+import { EmittingCollectionType, EmittingInfo, EmittingRateChangeBehavior } from "src/interfaces/IEmitter.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 contract Emitter is EmitterBase {
     /**
      * @inheritdoc IEmitter
      */
-    function Emitter_init()
-        external
-        facetInitializer(keccak256("Emitter_init"))
-    {
+    function Emitter_init() external facetInitializer(keccak256("Emitter_init")) {
         __EmitterBase_init();
     }
 
@@ -42,9 +39,7 @@ contract Emitter is EmitterBase {
         uint64 _emittingId = LibEmitterStorage.layout().currentEmittingId;
         LibEmitterStorage.layout().currentEmittingId++;
 
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
         _emittingInfo.organizationId = _organizationId;
         _emittingInfo.collectionType = _collectionType;
         _emittingInfo.collection = _collection;
@@ -68,33 +63,22 @@ contract Emitter is EmitterBase {
 
         _setEmittingInstanceCreator(_emittingId, LibMeta._msgSender());
         _setEmittingInstanceCanClaim(_emittingId, LibMeta._msgSender(), true);
-        _setEmittingInstanceFrequencyAndRate(
-            _emittingId,
-            _emittingFrequencyInSeconds,
-            _amountToEmitPerSecond
-        );
+        _setEmittingInstanceFrequencyAndRate(_emittingId, _emittingFrequencyInSeconds, _amountToEmitPerSecond);
         _setEmittingInstanceEndTime(_emittingId, _endTime);
     }
 
-    function deactivateEmittingInstance(
-        uint64 _emittingId
-    ) external whenNotPaused {
+    function deactivateEmittingInstance(uint64 _emittingId) external whenNotPaused {
         _requireEmittingInstanceCreator(_emittingId);
         _requireEmittingInstanceActive(_emittingId);
 
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         _emittingInfo.isActive = false;
 
         emit LibEmitterStorage.EmittingInstanceDeactivated(_emittingId);
     }
 
-    function changeEmittingInstanceCreator(
-        uint64 _emittingId,
-        address _newOwner
-    ) external whenNotPaused {
+    function changeEmittingInstanceCreator(uint64 _emittingId, address _newOwner) external whenNotPaused {
         _requireEmittingInstanceCreator(_emittingId);
 
         _setEmittingInstanceCreator(_emittingId, _newOwner);
@@ -107,11 +91,7 @@ contract Emitter is EmitterBase {
     ) external whenNotPaused {
         _requireEmittingInstanceCreator(_emittingId);
 
-        _setEmittingInstanceFrequencyAndRate(
-            _emittingId,
-            _emittingFrequencyInSeconds,
-            _amountToEmitPerSecond
-        );
+        _setEmittingInstanceFrequencyAndRate(_emittingId, _emittingFrequencyInSeconds, _amountToEmitPerSecond);
     }
 
     function changeEmittingInstanceCanClaim(
@@ -124,30 +104,20 @@ contract Emitter is EmitterBase {
         _setEmittingInstanceCanClaim(_emittingId, _address, _canClaim);
     }
 
-    function changeEmittingInstanceApproval(
-        uint64 _emittingId,
-        bool _isApproved
-    ) external whenNotPaused {
+    function changeEmittingInstanceApproval(uint64 _emittingId, bool _isApproved) external whenNotPaused {
         _requireEmittingInstanceActive(_emittingId);
 
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         require(
-            LibAccessControlRoles.isCollectionAdmin(
-                LibMeta._msgSender(),
-                _emittingInfo.collection
-            ),
+            LibAccessControlRoles.isCollectionAdmin(LibMeta._msgSender(), _emittingInfo.collection),
             "Not collection admin"
         );
 
         _emittingInfo.isApprovedByCollection = _isApproved;
 
         emit LibEmitterStorage.EmittingInstanceCollectionApprovalChanged(
-            _emittingId,
-            _emittingInfo.collection,
-            _isApproved
+            _emittingId, _emittingInfo.collection, _isApproved
         );
     }
 
@@ -156,34 +126,19 @@ contract Emitter is EmitterBase {
         _requireEmittingInstanceCanClaim(_emittingId);
         _requireEmittingInstanceApproved(_emittingId);
 
-        (
-            uint256 _amountToClaim,
-            uint256 _newLastClaimWindowTime
-        ) = amountToClaim(_emittingId, false);
+        (uint256 _amountToClaim, uint256 _newLastClaimWindowTime) = amountToClaim(_emittingId, false);
 
         if (_amountToClaim == 0) {
             return;
         }
 
-        bytes4 _functionSelector = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .emitFunctionSelector;
+        bytes4 _functionSelector = LibEmitterStorage.layout().emittingIdToInfo[_emittingId].emitFunctionSelector;
 
-        address _collection = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .collection;
+        address _collection = LibEmitterStorage.layout().emittingIdToInfo[_emittingId].collection;
 
-        EmittingCollectionType _collectionType = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .collectionType;
+        EmittingCollectionType _collectionType = LibEmitterStorage.layout().emittingIdToInfo[_emittingId].collectionType;
 
-        LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .lastClaimWindowTime = _newLastClaimWindowTime;
+        LibEmitterStorage.layout().emittingIdToInfo[_emittingId].lastClaimWindowTime = _newLastClaimWindowTime;
 
         delete LibEmitterStorage
             .layout()
@@ -192,12 +147,7 @@ contract Emitter is EmitterBase {
 
         if (_collectionType == EmittingCollectionType.ERC20) {
             AddressUpgradeable.functionCall(
-                _collection,
-                abi.encodePacked(
-                    _functionSelector,
-                    abi.encode(LibMeta._msgSender()),
-                    _amountToClaim
-                )
+                _collection, abi.encodePacked(_functionSelector, abi.encode(LibMeta._msgSender()), _amountToClaim)
             );
         } else {
             // 1155
@@ -206,59 +156,42 @@ contract Emitter is EmitterBase {
                 abi.encodePacked(
                     _functionSelector,
                     abi.encode(LibMeta._msgSender()),
-                    LibEmitterStorage
-                        .layout()
-                        .emittingIdToInfo[_emittingId]
-                        .tokenId,
+                    LibEmitterStorage.layout().emittingIdToInfo[_emittingId].tokenId,
                     _amountToClaim
                 )
             );
         }
     }
 
-    function amountToClaim(
-        uint64 _emittingId,
-        bool _includePartialAmount
-    ) public view returns (uint256, uint256) {
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+    function amountToClaim(uint64 _emittingId, bool _includePartialAmount) public view returns (uint256, uint256) {
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         if (!_emittingInfo.isActive) {
             return (0, 0);
         }
 
-        uint256 _currentTimeForCalculation = _emittingInfo.endTime != 0 &&
-            block.timestamp > _emittingInfo.endTime
+        uint256 _currentTimeForCalculation = _emittingInfo.endTime != 0 && block.timestamp > _emittingInfo.endTime
             ? _emittingInfo.endTime
             : block.timestamp;
-        uint256 _timeSinceLastClaimWindow = _currentTimeForCalculation <
-            _emittingInfo.lastClaimWindowTime
+        uint256 _timeSinceLastClaimWindow = _currentTimeForCalculation < _emittingInfo.lastClaimWindowTime
             ? 0
             : _currentTimeForCalculation - _emittingInfo.lastClaimWindowTime;
 
-        uint256 _numberOfWindowsToClaim = _timeSinceLastClaimWindow /
-            _emittingInfo.emittingFrequencyInSeconds;
-        uint256 _amountToClaim = (_numberOfWindowsToClaim *
-            _emittingInfo.emittingFrequencyInSeconds *
-            _emittingInfo.amountToEmitPerSecond) +
-            _emittingInfo.additionalAmountToClaim;
+        uint256 _numberOfWindowsToClaim = _timeSinceLastClaimWindow / _emittingInfo.emittingFrequencyInSeconds;
+        uint256 _amountToClaim = (
+            _numberOfWindowsToClaim * _emittingInfo.emittingFrequencyInSeconds * _emittingInfo.amountToEmitPerSecond
+        ) + _emittingInfo.additionalAmountToClaim;
 
         if (_includePartialAmount) {
-            _amountToClaim +=
-                (_timeSinceLastClaimWindow %
-                    _emittingInfo.emittingFrequencyInSeconds) *
-                _emittingInfo.amountToEmitPerSecond;
+            _amountToClaim += (_timeSinceLastClaimWindow % _emittingInfo.emittingFrequencyInSeconds)
+                * _emittingInfo.amountToEmitPerSecond;
         }
 
         if (_amountToClaim == 0) {
             return (0, 0);
         }
 
-        if (
-            !_includePartialAmount &&
-            _emittingInfo.collectionType == EmittingCollectionType.ERC1155
-        ) {
+        if (!_includePartialAmount && _emittingInfo.collectionType == EmittingCollectionType.ERC1155) {
             _amountToClaim = _amountToClaim / 1 ether;
         }
 
@@ -266,51 +199,25 @@ contract Emitter is EmitterBase {
             _amountToClaim,
             _includePartialAmount
                 ? block.timestamp
-                : _emittingInfo.lastClaimWindowTime +
-                    (_numberOfWindowsToClaim *
-                        _emittingInfo.emittingFrequencyInSeconds)
+                : _emittingInfo.lastClaimWindowTime + (_numberOfWindowsToClaim * _emittingInfo.emittingFrequencyInSeconds)
         );
     }
 
-    function _setEmittingInstanceCreator(
-        uint64 _emittingId,
-        address _creator
-    ) private {
+    function _setEmittingInstanceCreator(uint64 _emittingId, address _creator) private {
         if (_creator == address(0)) {
             revert LibEmitterStorage.BadCreator();
         }
 
-        address _oldCreator = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .creator;
-        LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .creator = _creator;
+        address _oldCreator = LibEmitterStorage.layout().emittingIdToInfo[_emittingId].creator;
+        LibEmitterStorage.layout().emittingIdToInfo[_emittingId].creator = _creator;
 
-        emit LibEmitterStorage.EmittingInstanceCreatorChanged(
-            _emittingId,
-            _oldCreator,
-            _creator
-        );
+        emit LibEmitterStorage.EmittingInstanceCreatorChanged(_emittingId, _oldCreator, _creator);
     }
 
-    function _setEmittingInstanceCanClaim(
-        uint64 _emittingId,
-        address _address,
-        bool _canClaim
-    ) private {
-        LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId]
-            .addressToCanClaim[_address] = _canClaim;
+    function _setEmittingInstanceCanClaim(uint64 _emittingId, address _address, bool _canClaim) private {
+        LibEmitterStorage.layout().emittingIdToInfo[_emittingId].addressToCanClaim[_address] = _canClaim;
 
-        emit LibEmitterStorage.EmittingInstanceCanClaimChanged(
-            _emittingId,
-            _address,
-            _canClaim
-        );
+        emit LibEmitterStorage.EmittingInstanceCanClaimChanged(_emittingId, _address, _canClaim);
     }
 
     function _setEmittingInstanceFrequencyAndRate(
@@ -318,23 +225,17 @@ contract Emitter is EmitterBase {
         uint256 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond
     ) private {
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
-        bool _isSettingInitially = _emittingInfo.emittingFrequencyInSeconds ==
-            0;
+        bool _isSettingInitially = _emittingInfo.emittingFrequencyInSeconds == 0;
 
         if (_emittingFrequencyInSeconds == 0 || _amountToEmitPerSecond == 0) {
             revert LibEmitterStorage.BadEmittingRate();
         }
 
         if (!_isSettingInitially) {
-            (uint256 _amountToClaim, ) = amountToClaim(
-                _emittingId,
-                _emittingInfo.rateChangeBehavior ==
-                    EmittingRateChangeBehavior.CLAIM_PARTIAL
-            );
+            (uint256 _amountToClaim,) =
+                amountToClaim(_emittingId, _emittingInfo.rateChangeBehavior == EmittingRateChangeBehavior.CLAIM_PARTIAL);
 
             _emittingInfo.additionalAmountToClaim = _amountToClaim;
             _emittingInfo.lastClaimWindowTime = block.timestamp;
@@ -344,19 +245,12 @@ contract Emitter is EmitterBase {
         _emittingInfo.amountToEmitPerSecond = _amountToEmitPerSecond;
 
         emit LibEmitterStorage.EmittingInstanceRateChanged(
-            _emittingId,
-            _emittingFrequencyInSeconds,
-            _amountToEmitPerSecond
+            _emittingId, _emittingFrequencyInSeconds, _amountToEmitPerSecond
         );
     }
 
-    function _setEmittingInstanceEndTime(
-        uint64 _emittingId,
-        uint256 _endTime
-    ) private {
-        EmittingInfo storage _emittingInfo = LibEmitterStorage
-            .layout()
-            .emittingIdToInfo[_emittingId];
+    function _setEmittingInstanceEndTime(uint64 _emittingId, uint256 _endTime) private {
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         if (_endTime != 0) {
             if (_emittingInfo.startTime >= _endTime) {
@@ -366,51 +260,29 @@ contract Emitter is EmitterBase {
 
         _emittingInfo.endTime = _endTime;
 
-        emit LibEmitterStorage.EmittingInstanceEndTimeChanged(
-            _emittingId,
-            _endTime
-        );
+        emit LibEmitterStorage.EmittingInstanceEndTimeChanged(_emittingId, _endTime);
     }
 
     function _requireEmittingInstanceCreator(uint64 _emittingId) internal view {
-        if (
-            LibMeta._msgSender() !=
-            LibEmitterStorage.layout().emittingIdToInfo[_emittingId].creator
-        ) {
+        if (LibMeta._msgSender() != LibEmitterStorage.layout().emittingIdToInfo[_emittingId].creator) {
             revert LibEmitterStorage.InstanceCreatorOnly();
         }
     }
 
-    function _requireEmittingInstanceCanClaim(
-        uint64 _emittingId
-    ) internal view {
-        if (
-            !LibEmitterStorage
-                .layout()
-                .emittingIdToInfo[_emittingId]
-                .addressToCanClaim[LibMeta._msgSender()]
-        ) {
+    function _requireEmittingInstanceCanClaim(uint64 _emittingId) internal view {
+        if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].addressToCanClaim[LibMeta._msgSender()]) {
             revert LibEmitterStorage.ApprovedClaimerOnly();
         }
     }
 
     function _requireEmittingInstanceActive(uint64 _emittingId) internal view {
-        if (
-            !LibEmitterStorage.layout().emittingIdToInfo[_emittingId].isActive
-        ) {
+        if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].isActive) {
             revert LibEmitterStorage.InstanceDeactivated();
         }
     }
 
-    function _requireEmittingInstanceApproved(
-        uint64 _emittingId
-    ) internal view {
-        if (
-            !LibEmitterStorage
-                .layout()
-                .emittingIdToInfo[_emittingId]
-                .isApprovedByCollection
-        ) {
+    function _requireEmittingInstanceApproved(uint64 _emittingId) internal view {
+        if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].isApprovedByCollection) {
             revert LibEmitterStorage.CollectionNotApproved();
         }
     }
