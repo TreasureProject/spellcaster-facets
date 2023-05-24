@@ -124,6 +124,33 @@ contract Emitter is EmitterBase {
         _setEmittingInstanceCanClaim(_emittingId, _address, _canClaim);
     }
 
+    function changeEmittingInstanceApproval(
+        uint64 _emittingId,
+        bool _isApproved
+    ) external whenNotPaused {
+        _requireEmittingInstanceActive(_emittingId);
+
+        EmittingInfo storage _emittingInfo = LibEmitterStorage
+            .layout()
+            .emittingIdToInfo[_emittingId];
+
+        require(
+            LibAccessControlRoles.isCollectionAdmin(
+                LibMeta._msgSender(),
+                _emittingInfo.collection
+            ),
+            "Not collection admin"
+        );
+
+        _emittingInfo.isApprovedByCollection = _isApproved;
+
+        emit LibEmitterStorage.EmittingInstanceCollectionApprovalChanged(
+            _emittingId,
+            _emittingInfo.collection,
+            _isApproved
+        );
+    }
+
     function claim(uint64 _emittingId) external whenNotPaused {
         _requireEmittingInstanceActive(_emittingId);
         _requireEmittingInstanceCanClaim(_emittingId);
@@ -157,6 +184,11 @@ contract Emitter is EmitterBase {
             .layout()
             .emittingIdToInfo[_emittingId]
             .lastClaimWindowTime = _newLastClaimWindowTime;
+
+        delete LibEmitterStorage
+            .layout()
+            .emittingIdToInfo[_emittingId]
+            .additionalAmountToClaim;
 
         if (_collectionType == EmittingCollectionType.ERC20) {
             AddressUpgradeable.functionCall(
@@ -221,6 +253,13 @@ contract Emitter is EmitterBase {
 
         if (_amountToClaim == 0) {
             return (0, 0);
+        }
+
+        if (
+            !_includePartialAmount &&
+            _emittingInfo.collectionType == EmittingCollectionType.ERC1155
+        ) {
+            _amountToClaim = _amountToClaim / 1 ether;
         }
 
         return (

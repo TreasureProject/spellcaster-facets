@@ -22,4 +22,8 @@ abstract contract TestBase is Test, TestUtilities, TestMeta, TestErrors, TestLog
         vm.label(alice, "Alice");
         vm.label(deployer, "Deployer");
     }
+
+    function warp(uint256 timestamp) internal {
+        vm.warp(timestamp);
+    }
 }
