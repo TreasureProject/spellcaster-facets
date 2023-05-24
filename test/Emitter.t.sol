@@ -307,6 +307,10 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         warp(20);
         _changeFrequencyAndRate(_emittingInstanceId, 10, 0.5 ether);
 
+        // Reapprove collection since changing the frequency/rate removes approval.
+        vm.prank(leet);
+        emitter.changeEmittingInstanceApproval(_emittingInstanceId, true);
+
         // Window should restart at the time of change. Claim partial should save the 9 items that hadn't been claimed because the window hadn't been reached.
         warp(30);
 
@@ -328,6 +332,10 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         warp(20);
         _changeFrequencyAndRate(_emittingInstanceId, 10, 0.5 ether);
 
+        // Reapprove collection since changing the frequency/rate removes approval.
+        vm.prank(leet);
+        emitter.changeEmittingInstanceApproval(_emittingInstanceId, true);
+
         // Window should restart at the time of change. Discard partial should have discarded the 9 almost accrued items.
         warp(30);
 
@@ -336,15 +344,15 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
         assertEq(erc1155Consumer.balanceOf(leet, 1), 15);
     }
 
-    function _changeFrequencyAndRate(uint64 _emittingInstance, uint256 _frequency, uint256 _amount) private {
+    function _changeFrequencyAndRate(uint64 _emittingInstance, uint64 _frequency, uint256 _amount) private {
         vm.prank(leet);
         emitter.changeEmittingInstanceFrequencyAndRate(_emittingInstance, _frequency, _amount);
     }
 
     function _setupAndApproveEmitterInstance(
-        uint256 _frequency,
-        uint256 _startTime,
-        uint256 _endTime,
+        uint64 _frequency,
+        uint64 _startTime,
+        uint64 _endTime,
         uint256 _rate
     ) private returns (uint64) {
         return _setupAndApproveEmitterInstance(
@@ -353,9 +361,9 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function _setupAndApproveEmitterInstance(
-        uint256 _frequency,
-        uint256 _startTime,
-        uint256 _endTime,
+        uint64 _frequency,
+        uint64 _startTime,
+        uint64 _endTime,
         uint256 _rate,
         EmittingRateChangeBehavior _changeBehavior
     ) private returns (uint64) {
@@ -383,11 +391,6 @@ contract EmitterTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     }
 
     function _amountToClaim(uint64 _emittingInstanceId) private view returns (uint256) {
-        return _amountToClaim(_emittingInstanceId, false);
-    }
-
-    function _amountToClaim(uint64 _emittingInstanceId, bool _includePartial) private view returns (uint256) {
-        (uint256 _amount,) = emitter.amountToClaim(_emittingInstanceId, _includePartial);
-        return _amount;
+        return emitter.amountToClaim(_emittingInstanceId);
     }
 }

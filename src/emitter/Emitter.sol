@@ -21,10 +21,10 @@ contract Emitter is EmitterBase {
         bytes32 _organizationId,
         EmittingCollectionType _collectionType,
         address _collection,
-        uint256 _emittingFrequencyInSeconds,
+        uint64 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond,
-        uint256 _startTime,
-        uint256 _endTime,
+        uint64 _startTime,
+        uint64 _endTime,
         EmittingRateChangeBehavior _rateChangeBehavior,
         uint256 _tokenId,
         bytes4 _emitFunctionSelector
@@ -53,7 +53,7 @@ contract Emitter is EmitterBase {
 
     function changeEmittingInstanceFrequencyAndRate(
         uint64 _emittingId,
-        uint256 _emittingFrequencyInSeconds,
+        uint64 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond
     ) external whenNotPaused {
         LibEmitter.changeEmittingInstanceFrequencyAndRate(
@@ -77,7 +77,8 @@ contract Emitter is EmitterBase {
         LibEmitter.claim(_emittingId);
     }
 
-    function amountToClaim(uint64 _emittingId, bool _includePartialAmount) public view returns (uint256, uint256) {
-        return LibEmitter.amountToClaim(_emittingId, _includePartialAmount);
+    function amountToClaim(uint64 _emittingId) public view returns (uint256) {
+        (uint256 _retVal,) = LibEmitter.amountToClaim(_emittingId, false);
+        return _retVal;
     }
 }

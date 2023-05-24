@@ -22,10 +22,10 @@ library LibEmitter {
         bytes32 _organizationId,
         EmittingCollectionType _collectionType,
         address _collection,
-        uint256 _emittingFrequencyInSeconds,
+        uint64 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond,
-        uint256 _startTime,
-        uint256 _endTime,
+        uint64 _startTime,
+        uint64 _endTime,
         EmittingRateChangeBehavior _rateChangeBehavior,
         uint256 _tokenId,
         bytes4 _emitFunctionSelector
@@ -86,12 +86,17 @@ library LibEmitter {
 
     function changeEmittingInstanceFrequencyAndRate(
         uint64 _emittingId,
-        uint256 _emittingFrequencyInSeconds,
+        uint64 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond
     ) internal {
         _requireEmittingInstanceCreator(_emittingId);
 
         _setEmittingInstanceFrequencyAndRate(_emittingId, _emittingFrequencyInSeconds, _amountToEmitPerSecond);
+
+        EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
+        _emittingInfo.isApprovedByCollection = false;
+
+        emit LibEmitterStorage.EmittingInstanceCollectionApprovalChanged(_emittingId, _emittingInfo.collection, false);
     }
 
     function changeEmittingInstanceCanClaim(uint64 _emittingId, address _address, bool _canClaim) internal {
@@ -122,7 +127,7 @@ library LibEmitter {
         _requireEmittingInstanceCanClaim(_emittingId);
         _requireEmittingInstanceApproved(_emittingId);
 
-        (uint256 _amountToClaim, uint256 _newLastClaimWindowTime) = amountToClaim(_emittingId, false);
+        (uint256 _amountToClaim, uint64 _newLastClaimWindowTime) = amountToClaim(_emittingId, false);
 
         if (_amountToClaim == 0) {
             return;
@@ -159,7 +164,7 @@ library LibEmitter {
         }
     }
 
-    function amountToClaim(uint64 _emittingId, bool _includePartialAmount) internal view returns (uint256, uint256) {
+    function amountToClaim(uint64 _emittingId, bool _includePartialAmount) internal view returns (uint256, uint64) {
         EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         if (!_emittingInfo.isActive) {
@@ -194,14 +199,16 @@ library LibEmitter {
         return (
             _amountToClaim,
             _includePartialAmount
-                ? block.timestamp
-                : _emittingInfo.lastClaimWindowTime + (_numberOfWindowsToClaim * _emittingInfo.emittingFrequencyInSeconds)
+                ? uint64(block.timestamp)
+                : uint64(
+                    _emittingInfo.lastClaimWindowTime + (_numberOfWindowsToClaim * _emittingInfo.emittingFrequencyInSeconds)
+                )
         );
     }
 
     function _setEmittingInstanceFrequencyAndRate(
         uint64 _emittingId,
-        uint256 _emittingFrequencyInSeconds,
+        uint64 _emittingFrequencyInSeconds,
         uint256 _amountToEmitPerSecond
     ) private {
         EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
@@ -217,7 +224,7 @@ library LibEmitter {
                 amountToClaim(_emittingId, _emittingInfo.rateChangeBehavior == EmittingRateChangeBehavior.CLAIM_PARTIAL);
 
             _emittingInfo.additionalAmountToClaim = _amountToClaim;
-            _emittingInfo.lastClaimWindowTime = block.timestamp;
+            _emittingInfo.lastClaimWindowTime = uint64(block.timestamp);
         }
 
         _emittingInfo.emittingFrequencyInSeconds = _emittingFrequencyInSeconds;
@@ -228,7 +235,7 @@ library LibEmitter {
         );
     }
 
-    function _setEmittingInstanceEndTime(uint64 _emittingId, uint256 _endTime) private {
+    function _setEmittingInstanceEndTime(uint64 _emittingId, uint64 _endTime) private {
         EmittingInfo storage _emittingInfo = LibEmitterStorage.layout().emittingIdToInfo[_emittingId];
 
         if (_endTime != 0) {
