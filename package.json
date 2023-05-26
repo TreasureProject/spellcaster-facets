@@ -10,6 +10,7 @@
     "build": "forge build --sizes",
     "build:cargo": "cargo build --release",
     "build:solhint-plugin": "cd solhint/spellcaster && yarn install && yarn build && cd ../.. && yarn add --dev file:./solhint/spellcaster",
+    "init": "yarn --frozen-lockfile && yarn build:cargo && yarn build:solhint-plugin",
     "lint:check": "yarn lint:solhint && yarn lint:forge --check",
     "lint:fix": "sort-package-json && yarn lint:solhint --fix && yarn lint:forge",
     "lint:forge": "forge fmt",
