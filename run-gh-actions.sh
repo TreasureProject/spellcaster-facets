@@ -17,14 +17,16 @@ ARCH=$(uname -m)
 if [ "$ARCH" = x86_64 ]; then ARCH=x64; fi
 if [ "$ARCH" = aarch64 ]; then ARCH=arm64; fi
 # Build our local image to use as a runner. This is necessary because there are no hub images anywhere that use Node+Rust+Yarn like the GitHub Actions runner does.
-if ! docker build --build-arg ARCH=$ARCH . --progress plain --platform linux/amd64 -t local/runner:latest
+if ! docker build --build-arg ARCH=$ARCH . -t local/runner:latest
 then exit
 fi
 
 params=''
 if [[ $(uname -m) == 'arm64' && $(uname -s) == 'Darwin' ]]; then
-  # For macOS on M1, we want to use linux/arm64 otherwise cargo.io indexing takes 5+ minutes for no reason
-  params='--container-architecture linux/amd64'
+  # For macOS on M1, we may want to use linux/amd64 if there are issues running ci as arm64. However, those
+  #  Docker instances are slower so it's not as ideal
+  # params='--container-architecture linux/amd64'
+  params=''
 fi
 # --reuse allows for utilizing the rust/yarn cache to speed up compilations
 # --rm removes the container if the job fails
