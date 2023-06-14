@@ -249,25 +249,25 @@ library LibEmitter {
         emit LibEmitterStorage.EmittingInstanceEndTimeChanged(_emittingId, _endTime);
     }
 
-    function _requireEmittingInstanceCreator(uint64 _emittingId) internal view {
+    function _requireEmittingInstanceCreator(uint64 _emittingId) private view {
         if (LibMeta._msgSender() != LibEmitterStorage.layout().emittingIdToInfo[_emittingId].creator) {
             revert LibEmitterStorage.InstanceCreatorOnly();
         }
     }
 
-    function _requireEmittingInstanceCanClaim(uint64 _emittingId) internal view {
+    function _requireEmittingInstanceCanClaim(uint64 _emittingId) private view {
         if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].addressToCanClaim[LibMeta._msgSender()]) {
             revert LibEmitterStorage.ApprovedClaimerOnly();
         }
     }
 
-    function _requireEmittingInstanceActive(uint64 _emittingId) internal view {
+    function _requireEmittingInstanceActive(uint64 _emittingId) private view {
         if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].isActive) {
             revert LibEmitterStorage.InstanceDeactivated();
         }
     }
 
-    function _requireEmittingInstanceApproved(uint64 _emittingId) internal view {
+    function _requireEmittingInstanceApproved(uint64 _emittingId) private view {
         if (!LibEmitterStorage.layout().emittingIdToInfo[_emittingId].isApprovedByCollection) {
             revert LibEmitterStorage.CollectionNotApproved();
         }
