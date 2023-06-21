@@ -25,18 +25,18 @@ library AdvancedCraftingStorage {
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.crafting.advanced");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 
     event RecipeCreated(
-        uint64 indexed _recipeId, bytes32 indexed _organizationId, CreateRecipeArgs _recipeArgs, bool _isRandomRequired
+        uint64 indexed recipeId, bytes32 indexed organizationId, CreateRecipeArgs recipeArgs, bool isRandomRequired
     );
 
-    event RecipeDeleted(uint64 indexed _recipeId);
+    event RecipeDeleted(uint64 indexed recipeId);
 
     error InvalidRecipeId();
 

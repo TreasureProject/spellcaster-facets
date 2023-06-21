@@ -79,8 +79,8 @@ library LibAdvancedCrafting {
 
         _recipeInfo.numberOfInputs = uint16(_recipeArgs.inputs.length);
         // Input validation
-        for (uint16 i = 0; i < _recipeArgs.inputs.length; i++) {
-            RecipeInputArgs calldata _input = _recipeArgs.inputs[i];
+        for (uint16 _i = 0; _i < _recipeArgs.inputs.length; _i++) {
+            RecipeInputArgs calldata _input = _recipeArgs.inputs[_i];
             if (_input.options.length == 0) {
                 revert AdvancedCraftingStorage.NoInputOptionsSupplied();
             }
@@ -88,25 +88,25 @@ library LibAdvancedCrafting {
                 revert AdvancedCraftingStorage.BadInputAmount();
             }
 
-            _recipeInfo.indexToInput[i].amount = _input.amount;
-            _recipeInfo.indexToInput[i].isRequired = _input.isRequired;
-            _recipeInfo.indexToInput[i].numberOfInputOptions = uint16(_input.options.length);
+            _recipeInfo.indexToInput[_i].amount = _input.amount;
+            _recipeInfo.indexToInput[_i].isRequired = _input.isRequired;
+            _recipeInfo.indexToInput[_i].numberOfInputOptions = uint16(_input.options.length);
 
-            for (uint16 j = 0; j < _input.options.length; j++) {
-                RecipeInputOptionArgs calldata _inputOption = _input.options[j];
+            for (uint16 _j = 0; _j < _input.options.length; _j++) {
+                RecipeInputOptionArgs calldata _inputOption = _input.options[_j];
 
                 if (_inputOption.itemInfo.collectionAddress == address(0) && _inputOption.inputType != InputType.CUSTOM)
                 {
                     revert AdvancedCraftingStorage.InvalidInputOption();
                 }
 
-                _recipeInfo.indexToInput[i].indexToInputOption[j].inputType = _inputOption.inputType;
-                _recipeInfo.indexToInput[i].indexToInputOption[j].timeReduction = _inputOption.timeReduction;
-                _recipeInfo.indexToInput[i].indexToInputOption[j].itemInfo.tokenId = _inputOption.itemInfo.tokenId;
-                _recipeInfo.indexToInput[i].indexToInputOption[j].itemInfo.amount = _inputOption.itemInfo.amount;
-                _recipeInfo.indexToInput[i].indexToInputOption[j].itemInfo.collectionType =
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].inputType = _inputOption.inputType;
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].timeReduction = _inputOption.timeReduction;
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].itemInfo.tokenId = _inputOption.itemInfo.tokenId;
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].itemInfo.amount = _inputOption.itemInfo.amount;
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].itemInfo.collectionType =
                     _inputOption.itemInfo.collectionType;
-                _recipeInfo.indexToInput[i].indexToInputOption[j].itemInfo.collectionAddress =
+                _recipeInfo.indexToInput[_i].indexToInputOption[_j].itemInfo.collectionAddress =
                     _inputOption.itemInfo.collectionAddress;
             }
         }
@@ -114,8 +114,8 @@ library LibAdvancedCrafting {
         _recipeInfo.numberOfLootTables = uint16(_recipeArgs.lootTables.length);
         // Loot table validation.
         bool _isRandomRequiredForRecipe;
-        for (uint16 i = 0; i < _recipeArgs.lootTables.length; i++) {
-            RecipeLootTableArgs calldata _lootTable = _recipeArgs.lootTables[i];
+        for (uint16 _i = 0; _i < _recipeArgs.lootTables.length; _i++) {
+            RecipeLootTableArgs calldata _lootTable = _recipeArgs.lootTables[_i];
 
             if (
                 _lootTable.rollAmounts.length == 0 && _lootTable.rollAmounts.length != _lootTable.rollOdds.length
@@ -124,74 +124,74 @@ library LibAdvancedCrafting {
                 revert AdvancedCraftingStorage.BadLootTable();
             }
 
-            _recipeInfo.indexToLootTable[i].rollAmounts = _lootTable.rollAmounts;
+            _recipeInfo.indexToLootTable[_i].rollAmounts = _lootTable.rollAmounts;
 
             // If there is a variable amount for this LootTable or multiple options,
             // a random is required.
             _isRandomRequiredForRecipe =
                 _isRandomRequiredForRecipe || _lootTable.options.length > 1 || _lootTable.rollAmounts.length > 1;
 
-            for (uint16 j = 0; j < _lootTable.rollAmounts.length; j++) {
-                _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].baseOdds = _lootTable.rollOdds[j].baseOdds;
-                _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].numberOfBoostOdds =
-                    uint16(_lootTable.rollOdds[j].boostOdds.length);
-                for (uint16 k = 0; k < _lootTable.rollOdds[j].boostOdds.length; k++) {
-                    _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].indexToBoostOdds[k].collectionAddress =
-                        _lootTable.rollOdds[j].boostOdds[k].collectionAddress;
-                    _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].indexToBoostOdds[k].tokenId =
-                        _lootTable.rollOdds[j].boostOdds[k].tokenId;
-                    _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].indexToBoostOdds[k].minimumAmount =
-                        _lootTable.rollOdds[j].boostOdds[k].minimumAmount;
-                    _recipeInfo.indexToLootTable[i].rollIndexToOdds[j].indexToBoostOdds[k].boostOddChanges =
-                        _lootTable.rollOdds[j].boostOdds[k].boostOddChanges;
+            for (uint16 _j = 0; _j < _lootTable.rollAmounts.length; _j++) {
+                _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].baseOdds = _lootTable.rollOdds[_j].baseOdds;
+                _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].numberOfBoostOdds =
+                    uint16(_lootTable.rollOdds[_j].boostOdds.length);
+                for (uint16 _k = 0; _k < _lootTable.rollOdds[_j].boostOdds.length; _k++) {
+                    _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].indexToBoostOdds[_k].collectionAddress =
+                        _lootTable.rollOdds[_j].boostOdds[_k].collectionAddress;
+                    _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].indexToBoostOdds[_k].tokenId =
+                        _lootTable.rollOdds[_j].boostOdds[_k].tokenId;
+                    _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].indexToBoostOdds[_k].minimumAmount =
+                        _lootTable.rollOdds[_j].boostOdds[_k].minimumAmount;
+                    _recipeInfo.indexToLootTable[_i].rollIndexToOdds[_j].indexToBoostOdds[_k].boostOddChanges =
+                        _lootTable.rollOdds[_j].boostOdds[_k].boostOddChanges;
                 }
             }
 
-            _recipeInfo.indexToLootTable[i].numberOfOptions = uint16(_lootTable.options.length);
-            for (uint16 j = 0; j < _lootTable.options.length; j++) {
-                RecipeLootTableOptionArgs calldata _option = _lootTable.options[j];
-                _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.baseOdds = _option.optionOdds.baseOdds;
-                _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.numberOfBoostOdds =
+            _recipeInfo.indexToLootTable[_i].numberOfOptions = uint16(_lootTable.options.length);
+            for (uint16 _j = 0; _j < _lootTable.options.length; _j++) {
+                RecipeLootTableOptionArgs calldata _option = _lootTable.options[_j];
+                _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.baseOdds = _option.optionOdds.baseOdds;
+                _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.numberOfBoostOdds =
                     uint16(_option.optionOdds.boostOdds.length);
-                for (uint16 k = 0; k < _option.optionOdds.boostOdds.length; k++) {
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.indexToBoostOdds[k].collectionAddress =
-                        _option.optionOdds.boostOdds[k].collectionAddress;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.indexToBoostOdds[k].tokenId =
-                        _option.optionOdds.boostOdds[k].tokenId;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.indexToBoostOdds[k].minimumAmount =
-                        _option.optionOdds.boostOdds[k].minimumAmount;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].optionOdds.indexToBoostOdds[k].boostOddChanges =
-                        _option.optionOdds.boostOdds[k].boostOddChanges;
+                for (uint16 _k = 0; _k < _option.optionOdds.boostOdds.length; _k++) {
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.indexToBoostOdds[_k].collectionAddress
+                    = _option.optionOdds.boostOdds[_k].collectionAddress;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.indexToBoostOdds[_k].tokenId =
+                        _option.optionOdds.boostOdds[_k].tokenId;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.indexToBoostOdds[_k].minimumAmount =
+                        _option.optionOdds.boostOdds[_k].minimumAmount;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].optionOdds.indexToBoostOdds[_k].boostOddChanges =
+                        _option.optionOdds.boostOdds[_k].boostOddChanges;
                 }
 
-                _recipeInfo.indexToLootTable[i].indexToOption[j].numberOfResults = uint16(_option.results.length);
-                for (uint16 k = 0; k < _option.results.length; k++) {
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].collectionAddress =
-                        _option.results[k].collectionAddress;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].collectionType =
-                        _option.results[k].collectionType;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].tokenId =
-                        _option.results[k].tokenId;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].amount =
-                        _option.results[k].amount;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].mintSelector =
-                        _option.results[k].mintSelector;
-                    _recipeInfo.indexToLootTable[i].indexToOption[j].indexToResults[k].resultType =
-                        _option.results[k].resultType;
+                _recipeInfo.indexToLootTable[_i].indexToOption[_j].numberOfResults = uint16(_option.results.length);
+                for (uint16 _k = 0; _k < _option.results.length; _k++) {
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].collectionAddress =
+                        _option.results[_k].collectionAddress;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].collectionType =
+                        _option.results[_k].collectionType;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].tokenId =
+                        _option.results[_k].tokenId;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].amount =
+                        _option.results[_k].amount;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].mintSelector =
+                        _option.results[_k].mintSelector;
+                    _recipeInfo.indexToLootTable[_i].indexToOption[_j].indexToResults[_k].resultType =
+                        _option.results[_k].resultType;
 
                     // Track this collection as one that needs to be approved.
-                    if (_option.results[k].collectionAddress != address(0)) {
+                    if (_option.results[_k].collectionAddress != address(0)) {
                         bool _wasFound = false;
 
-                        for (uint16 l = 0; l < _recipeInfo.contractsThatNeedApproved.length; l++) {
-                            if (_recipeInfo.contractsThatNeedApproved[l] == _option.results[k].collectionAddress) {
+                        for (uint16 _l = 0; _l < _recipeInfo.contractsThatNeedApproved.length; _l++) {
+                            if (_recipeInfo.contractsThatNeedApproved[_l] == _option.results[_k].collectionAddress) {
                                 _wasFound = true;
                                 break;
                             }
                         }
 
                         if (!_wasFound) {
-                            _recipeInfo.contractsThatNeedApproved.push(_option.results[k].collectionAddress);
+                            _recipeInfo.contractsThatNeedApproved.push(_option.results[_k].collectionAddress);
                         }
                     }
                 }
