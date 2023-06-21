@@ -13,7 +13,7 @@ import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "../librar
  * @dev Use this facet to limit the spread of third-party dependency references and allow new functionality to be shared
  */
 contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControlEnumerableUpgradeable {
-    function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet")) {
+    function AccessControlFacet_init() external facetInitializer(keccak256("AccessControlFacet_init")) {
         __AccessControlEnumerable_init();
 
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
@@ -33,9 +33,9 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
     /// @param _roles Roles to be granted to the account in the same index of the _accounts array
     /// @param _accounts Addresses to grant the role in the same index of the _roles array
     function grantRoles(bytes32[] calldata _roles, address[] calldata _accounts) external {
-        uint256 roleLength = _roles.length;
-        LibUtilities.requireArrayLengthMatch(roleLength, _accounts.length);
-        for (uint256 i = 0; i < roleLength; i++) {
+        uint256 _roleLength = _roles.length;
+        LibUtilities.requireArrayLengthMatch(_roleLength, _accounts.length);
+        for (uint256 i = 0; i < _roleLength; i++) {
             grantRole(_roles[i], _accounts[i]);
         }
     }
@@ -50,17 +50,25 @@ contract AccessControlFacet is FacetInitializable, SupportsMetaTx, AccessControl
     /**
      * @dev Overrides to use custom error vs string building
      */
-    function _checkRole(bytes32 role, address account) internal view virtual override {
-        if (!hasRole(role, account)) {
-            revert LibAccessControlRoles.MissingRole(account, role);
+    function _checkRole(bytes32 _role, address _account) internal view virtual override {
+        if (!hasRole(_role, _account)) {
+            revert LibAccessControlRoles.MissingRole(_account, _role);
         }
+    }
+
+    function _grantRole(bytes32 _role, address _account) internal override {
+        LibAccessControlRoles._grantRole(_role, _account);
+    }
+
+    function _revokeRole(bytes32 _role, address _account) internal override {
+        LibAccessControlRoles._revokeRole(_role, _account);
     }
 
     /**
      * @dev Overrides AccessControlEnumerableUpgradeable and passes through to it.
      *  This is to have multiple inheritance overrides to be from this repo instead of OZ
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(_interfaceId);
     }
 }

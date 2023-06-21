@@ -13,10 +13,10 @@ library LibMeta {
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.metatx");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 
@@ -24,8 +24,8 @@ library LibMeta {
     //                      State Helpers
     // =============================================================
 
-    function isTrustedForwarder(address forwarder) internal view returns (bool isTrustedForwarder_) {
-        isTrustedForwarder_ = layout().trustedForwarder == forwarder;
+    function isTrustedForwarder(address _forwarder) internal view returns (bool isTrustedForwarder_) {
+        isTrustedForwarder_ = layout().trustedForwarder == _forwarder;
     }
 
     // =============================================================

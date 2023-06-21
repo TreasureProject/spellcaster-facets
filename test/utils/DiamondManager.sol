@@ -18,7 +18,7 @@ struct FacetInfo {
 }
 
 contract DiamondManager is Script {
-    Diamond internal _diamond;
+    Diamond internal diamond;
 
     /**
      * @dev Creates and sets up a new Diamond. Includes AccessControl and OwnershipFacets automatically
@@ -39,7 +39,7 @@ contract DiamondManager is Script {
      *  Includes AccessControl and OwnershipFacets automatically
      */
     function init(FacetInfo[] memory _facets, Diamond.Initialization[] memory _inits) public {
-        _diamond = createDiamondAndInit(_facets, _inits);
+        diamond = createDiamondAndInit(_facets, _inits);
     }
 
     function createDiamondAndInit() internal returns (Diamond) {
@@ -62,48 +62,48 @@ contract DiamondManager is Script {
         Diamond.Initialization[] memory _inits,
         FacetInfo[] memory _optionalFacets
     ) internal returns (Diamond) {
-        DiamondCutFacet diamondCut = new DiamondCutFacet();
-        DiamondLoupeFacet diamondLoupe = new DiamondLoupeFacet();
-        OwnershipFacet ownership = new OwnershipFacet();
-        AccessControlFacet accessControl = new AccessControlFacet();
-        PausableFacet pausable = new PausableFacet();
-        MetaTxFacet meta = new MetaTxFacet();
+        DiamondCutFacet _diamondCut = new DiamondCutFacet();
+        DiamondLoupeFacet _diamondLoupe = new DiamondLoupeFacet();
+        OwnershipFacet _ownership = new OwnershipFacet();
+        AccessControlFacet _accessControl = new AccessControlFacet();
+        PausableFacet _pausable = new PausableFacet();
+        MetaTxFacet _meta = new MetaTxFacet();
 
-        FacetInfo[6] memory staticFacets = [
-            FacetInfo(address(diamondCut), "DiamondCutFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(diamondLoupe), "DiamondLoupeFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(ownership), "OwnershipFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(pausable), "PausableFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(accessControl), "AccessControlFacet", IDiamondCut.FacetCutAction.Add),
-            FacetInfo(address(meta), "MetaTxFacet", IDiamondCut.FacetCutAction.Add)
+        FacetInfo[6] memory _staticFacets = [
+            FacetInfo(address(_diamondCut), "DiamondCutFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(_diamondLoupe), "DiamondLoupeFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(_ownership), "OwnershipFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(_pausable), "PausableFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(_accessControl), "AccessControlFacet", IDiamondCut.FacetCutAction.Add),
+            FacetInfo(address(_meta), "MetaTxFacet", IDiamondCut.FacetCutAction.Add)
         ];
 
-        IDiamondCut.FacetCut[] memory cuts =
-            new IDiamondCut.FacetCut[](staticFacets.length + _facets.length + _optionalFacets.length);
+        IDiamondCut.FacetCut[] memory _cuts =
+            new IDiamondCut.FacetCut[](_staticFacets.length + _facets.length + _optionalFacets.length);
 
-        for (uint256 i = 0; i < staticFacets.length; i++) {
-            cuts[i] = IDiamondCut.FacetCut(
-                staticFacets[i].addr, staticFacets[i].action, generateSelectors(staticFacets[i].name)
+        for (uint256 i = 0; i < _staticFacets.length; i++) {
+            _cuts[i] = IDiamondCut.FacetCut(
+                _staticFacets[i].addr, _staticFacets[i].action, generateSelectors(_staticFacets[i].name)
             );
         }
 
         for (uint256 i = 0; i < _facets.length; i++) {
             if (_facets[i].addr == address(0)) {
-                revert("TEST ARGS INVALID: Invalid FacetInfo given");
+                revert("TEST: Invalid FacetInfo given");
             }
-            cuts[i + staticFacets.length] =
+            _cuts[i + _staticFacets.length] =
                 IDiamondCut.FacetCut(_facets[i].addr, _facets[i].action, generateSelectors(_facets[i].name));
         }
 
         for (uint256 i = 0; i < _optionalFacets.length; i++) {
-            cuts[i + staticFacets.length + _facets.length] = IDiamondCut.FacetCut(
+            _cuts[i + _staticFacets.length + _facets.length] = IDiamondCut.FacetCut(
                 _optionalFacets[i].addr, _optionalFacets[i].action, generateSelectors(_optionalFacets[i].name)
             );
         }
 
         Diamond.Initialization[] memory _initsAll = new Diamond.Initialization[](1 + _inits.length);
         _initsAll[0] = Diamond.Initialization({
-            initContract: address(accessControl),
+            initContract: address(_accessControl),
             initData: abi.encodeWithSelector(AccessControlFacet.AccessControlFacet_init.selector)
         });
 
@@ -111,19 +111,19 @@ contract DiamondManager is Script {
             _initsAll[i + 1] = _inits[i];
         }
 
-        return new Diamond(address(this), cuts, _initsAll);
+        return new Diamond(address(this), _cuts, _initsAll);
     }
 
     function diamondCutInit(address _facetAddr, bytes memory _calldata) internal {
-        IDiamondCut(address(_diamond)).diamondCut(new IDiamondCut.FacetCut[](0), _facetAddr, _calldata);
+        IDiamondCut(address(diamond)).diamondCut(new IDiamondCut.FacetCut[](0), _facetAddr, _calldata);
     }
 
-    function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {
-        string[] memory cmd = new string[](2);
-        cmd[0] = "_target/debug/get_facet_selectors";
-        cmd[1] = _facetName;
+    function generateSelectors(string memory _facetName) internal returns (bytes4[] memory _selectors) {
+        string[] memory _cmd = new string[](2);
+        _cmd[0] = "target/release/get_facet_selectors";
+        _cmd[1] = _facetName;
 
-        bytes memory res = vm.ffi(cmd);
-        selectors = abi.decode(res, (bytes4[]));
+        bytes memory _res = vm.ffi(_cmd);
+        _selectors = abi.decode(_res, (bytes4[]));
     }
 }

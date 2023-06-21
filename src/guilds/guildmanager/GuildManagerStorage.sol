@@ -41,14 +41,18 @@ library GuildManagerStorage {
          * @dev The organizationId is the key for the first mapping, the user is the key for the second mapping
          */
         mapping(bytes32 => mapping(address => GuildOrganizationUserInfo)) organizationIdToAddressToInfo;
+        /**
+         * @dev The address of the treasureTag NFT contract (for ensuring user has a treasureTag when joining guilds)
+         */
+        address treasureTagNFTAddress;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.guildmanager");
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    function layout() internal pure returns (Layout storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            l.slot := position
+            l_.slot := _position
         }
     }
 
@@ -97,6 +101,22 @@ library GuildManagerStorage {
      */
     event CustomGuildManagerAddressUpdated(bytes32 organizationId, address customGuildManagerAddress);
 
+    /**
+     * @dev Emitted when the requirement for a treasure tag is updated.
+     * @param organizationId The ID of the guild's organization
+     * @param requireTreasureTagForGuildsUpdated Whether this org requires treasure tags
+     */
+    event RequireTreasureTagForGuildsUpdated(bytes32 organizationId, bool requireTreasureTagForGuildsUpdated);
+
+    /**
+     * @dev Emitted when a members level has been updated.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The guild ID
+     * @param user The user
+     * @param memberLevel The new member level
+     */
+    event MemberLevelUpdated(bytes32 organizationId, uint32 guildId, address user, uint8 memberLevel);
+
     // Guild Events
 
     /**
@@ -105,6 +125,15 @@ library GuildManagerStorage {
      * @param guildId The ID of the newly created guild
      */
     event GuildCreated(bytes32 organizationId, uint32 guildId);
+
+    /**
+     * @dev Emitted when a guild is terminated.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The ID of the terminated guild
+     * @param terminator The address of the initiator of the termination
+     * @param reason The reason for the termination
+     */
+    event GuildTerminated(bytes32 organizationId, uint32 guildId, address terminator, string reason);
 
     /**
      * @dev Emitted when a guild's information is updated.
@@ -134,6 +163,12 @@ library GuildManagerStorage {
     event GuildUserStatusChanged(bytes32 organizationId, uint32 guildId, address user, GuildUserStatus status);
 
     // Errors
+
+    /**
+     * @dev Emitted when a user attempts to interact with a function gated to treasure tag holders.
+     * @param user The address of the sender
+     */
+    error UserDoesNotOwnTreasureTag(address user);
 
     /**
      * @dev Emitted when a guild organization has already been initialized.
@@ -197,4 +232,11 @@ library GuildManagerStorage {
      * @param user The address that is invalid
      */
     error InvalidAddress(address user);
+
+    /**
+     * @dev Error when trying to interact with a terminated or inactive guild.
+     * @param organizationId The ID of the guild's organization
+     * @param guildId The ID of the guild
+     */
+    error GuildIsNotActive(bytes32 organizationId, uint32 guildId);
 }

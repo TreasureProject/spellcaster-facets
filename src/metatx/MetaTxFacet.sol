@@ -2,18 +2,15 @@
 
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
-import "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/ECDSAUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-diamond/utils/cryptography/EIP712Upgradeable.sol";
 
 import { FacetInitializable } from "src/utils/FacetInitializable.sol";
 import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 import { LibUtilities } from "src/libraries/LibUtilities.sol";
 
 import {
-    MetaTxFacetStorage,
-    ForwardRequest,
-    ISystem_Delegate_Approver,
-    FORWARD_REQ_TYPEHASH
+    MetaTxFacetStorage, ForwardRequest, ISystemDelegateApprover, FORWARD_REQ_TYPEHASH
 } from "./MetaTxFacetStorage.sol";
 import { SupportsMetaTx } from "./SupportsMetaTx.sol";
 
@@ -25,70 +22,70 @@ contract MetaTxFacet is SupportsMetaTx {
 
     /**
      * @dev Sets all necessary state and permissions for the contract
-     * @param _organizationDelegateApprover The delegate approver address that tracks which wallet can run txs on
      *  behalf of the real sending account
+     *  Assumes that the _systemDelegateApprover is already set
      */
-    function __MetaTxFacet_init(address _organizationDelegateApprover) internal onlyFacetInitializing {
-        __SupportsMetaTx_init(_organizationDelegateApprover);
-    }
+    function __MetaTxFacet_init() internal onlyFacetInitializing { }
 
     function verify(
-        ForwardRequest calldata req,
-        bytes calldata signature,
-        bool shouldRevert
+        ForwardRequest calldata _req,
+        bytes calldata _signature,
+        bool _shouldRevert
     ) public view returns (bool) {
-        address signer = _hashTypedDataV4(
-            keccak256(abi.encode(FORWARD_REQ_TYPEHASH, req.from, req.nonce, req.organizationId, keccak256(req.data)))
-        ).recover(signature);
-        if (MetaTxFacetStorage.layout().nonces[req.from][req.nonce]) {
-            if (!shouldRevert) {
+        address _signer = _hashTypedDataV4(
+            keccak256(
+                abi.encode(FORWARD_REQ_TYPEHASH, _req.from, _req.nonce, _req.organizationId, keccak256(_req.data))
+            )
+        ).recover(_signature);
+        if (MetaTxFacetStorage.layout().nonces[_req.from][_req.nonce]) {
+            if (!_shouldRevert) {
                 return false;
             }
-            revert MetaTxFacetStorage.NonceAlreadyUsedForSender(req.from, req.nonce);
+            revert MetaTxFacetStorage.NonceAlreadyUsedForSender(_req.from, _req.nonce);
         }
         if (
-            signer != req.from
+            _signer != _req.from
                 && !MetaTxFacetStorage.layout().systemDelegateApprover.isDelegateApprovedForSystem(
-                    req.from, req.organizationId, signer
+                    _req.from, _req.organizationId, _signer
                 )
         ) {
-            if (!shouldRevert) {
+            if (!_shouldRevert) {
                 return false;
             }
-            revert MetaTxFacetStorage.UnauthorizedSignerForSender(signer, req.from);
+            revert MetaTxFacetStorage.UnauthorizedSignerForSender(_signer, _req.from);
         }
         return true;
     }
 
-    function execute(ForwardRequest calldata req, bytes calldata signature) public payable returns (bytes memory) {
-        bytes4 functionSelector = LibUtilities.convertBytesToBytes4(req.data);
-        if (functionSelector == msg.sig) {
+    function execute(ForwardRequest calldata _req, bytes calldata _signature) public payable returns (bytes memory) {
+        bytes4 _functionSelector = LibUtilities.convertBytesToBytes4(_req.data);
+        if (_functionSelector == msg.sig) {
             revert MetaTxFacetStorage.CannotCallExecuteFromExecute();
         }
-        verify(req, signature, true);
+        verify(_req, _signature, true);
 
-        MetaTxFacetStorage.Layout storage l = MetaTxFacetStorage.layout();
-        l.nonces[req.from][req.nonce] = true;
-        l.sessionOrganizationId = req.organizationId;
+        MetaTxFacetStorage.Layout storage _l = MetaTxFacetStorage.layout();
+        _l.nonces[_req.from][_req.nonce] = true;
+        _l.sessionOrganizationId = _req.organizationId;
 
-        (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(req.data, req.from));
+        (bool _success, bytes memory _returnData) = address(this).call(abi.encodePacked(_req.data, _req.from));
 
-        if (!success) {
-            if (returnData.length > 0) {
+        if (!_success) {
+            if (_returnData.length > 0) {
                 // bubble up the error
                 assembly {
-                    revert(add(32, returnData), mload(returnData))
+                    revert(add(32, _returnData), mload(_returnData))
                 }
             } else {
-                revert("MetaTx error: execute function reverted");
+                revert("MetaTx: execute reverted");
             }
         }
 
-        if (l.sessionOrganizationId != "") {
+        if (_l.sessionOrganizationId != "") {
             revert MetaTxFacetStorage.SessionOrganizationIdNotConsumed();
         }
-        emit ExecutedMetaTx(req.from, payable(msg.sender), req.data);
-        return returnData;
+        emit ExecutedMetaTx(_req.from, payable(msg.sender), _req.data);
+        return _returnData;
     }
 
     /**
@@ -103,7 +100,7 @@ contract MetaTxFacet is SupportsMetaTx {
         }
         // Do not use _msgSender, as we want the owner themselves to change this.
         LibAccessControlRoles.requireOwner(msg.sender);
-        MetaTxFacetStorage.layout().systemDelegateApprover = ISystem_Delegate_Approver(_organizationDelegateApprover);
+        MetaTxFacetStorage.layout().systemDelegateApprover = ISystemDelegateApprover(_organizationDelegateApprover);
 
         emit DelegateApproverSet(_organizationDelegateApprover);
     }

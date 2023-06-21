@@ -9,62 +9,57 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/I
 import { IERC721Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC721/IERC721Upgradeable.sol";
 import { IERC1155Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
 
+import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/utils/SafeERC20Upgradeable.sol";
+
 import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
-import { LibAccessControlRoles } from "../libraries/LibAccessControlRoles.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
-import {
-    SimpleCraftingStorage, CraftingRecipe, Ingredient, Result, TOKENTYPE
-} from "../crafting/SimpleCraftingStorage.sol";
-import { LibSimpleCraftingStorage } from "../libraries/LibSimpleCraftingStorage.sol";
-import { IERC20Consumer } from "../interfaces/IERC20Consumer.sol";
-import { AccessControlFacet } from "../access/AccessControlFacet.sol";
-import { Modifiers } from "../Modifiers.sol";
-import { LibMeta } from "../libraries/LibMeta.sol";
+import { ISimpleCrafting, CraftingRecipe, Ingredient, Result, TokenType } from "src/interfaces/ISimpleCrafting.sol";
+import { SimpleCraftingStorage } from "src/crafting/SimpleCraftingStorage.sol";
 
-/*
-events
-Create new recipe
-Craft
+import { LibSimpleCrafting } from "src/libraries/LibSimpleCrafting.sol";
+import { IERC20Consumer } from "src/interfaces/IERC20Consumer.sol";
+import { AccessControlFacet } from "src/access/AccessControlFacet.sol";
+import { Modifiers } from "src/Modifiers.sol";
+import { LibMeta } from "src/libraries/LibMeta.sol";
+import { FacetInitializable } from "../utils/FacetInitializable.sol";
 
-*/
-
-interface Ownable {
-    function owner() external view returns (address);
-}
+import { IERC173Upgradeable } from "@openzeppelin/contracts-diamond/interfaces/IERC173Upgradeable.sol";
+import { SupportsMetaTx } from "src/metatx/SupportsMetaTx.sol";
 
 /**
  * @title Simple Crafting Contract
  * @dev Simple contract allows for the creation of a recipe with arbitrary inputs and outputs
  *  by the GuildManager contract.
  */
-contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
-    event CraftingRecipeCreated(uint256 _craftingRecipeId);
-    event CraftingRecipeCrafted(uint256 _craftingRecipeId, address _user);
+contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimpleCrafting, SupportsMetaTx {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    error UserNotPermitted();
-    error RecipeNotAllowed();
-
-    function SimpleCrafting_init() external { }
+    function SimpleCrafting_init() external facetInitializer(keccak256("SimpleCrafting_init")) { }
 
     /**
      * @dev As an allowed admin, set a recipe as allowed for your scope
+     * @param _collection The collection you are signing on behalf of.
+     * @param _recipeId The recipeId to set.
      */
-    function setRecipeToAllowedAsAdmin(address _collection, uint256 _recipeId) public {
+    function setRecipeToAllowedAsAdmin(address _collection, uint256 _recipeId) public supportsMetaTxNoId {
         //Ensure they are an admin of this collection.
         if (
-            LibMeta._msgSender() != Ownable(_collection).owner()
+            LibMeta._msgSender() != IERC173Upgradeable(_collection).owner()
                 && !LibAccessControlRoles.isCollectionAdmin(LibMeta._msgSender(), _collection)
-        ) revert UserNotPermitted();
+        ) revert UserNotPermitted(LibMeta._msgSender());
 
-        LibSimpleCraftingStorage.setCollectionToRecipeIdToAllowed(_collection, _recipeId, true);
+        LibSimpleCrafting.setCollectionToRecipeIdToAllowed(_collection, _recipeId, true);
     }
 
     /**
      * @dev Create a new recipe, anyone can call this.
+     * @param _craftingRecipeInput The creation data for a crafting recipe.
      */
-    function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipeInput) public {
+    function createNewCraftingRecipe(CraftingRecipe calldata _craftingRecipeInput) public supportsMetaTxNoId {
         //Pull the current recipe Id
-        uint256 _currentRecipeId = SimpleCraftingStorage.getState()._currentRecipeId;
+        uint256 _currentRecipeId = SimpleCraftingStorage.getState().currentRecipeId;
 
         //Create a pointer to this recipeId (empty)
         CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage.getState().craftingRecipes[_currentRecipeId];
@@ -84,11 +79,12 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
         emit CraftingRecipeCreated(_currentRecipeId);
 
         //Increment currentRecipeId
-        _currentRecipeId++;
+        SimpleCraftingStorage.getState().currentRecipeId++;
     }
 
     /**
      * @dev Helper function to return a crafting recipe
+     * @param _recipeId The recipeId to return.
      */
     function getCraftingRecipe(uint256 _recipeId) public view returns (CraftingRecipe memory) {
         return SimpleCraftingStorage.getState().craftingRecipes[_recipeId];
@@ -96,8 +92,9 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
 
     /**
      * @dev Craft a given recipeId, recipe must be fully allowed.
+     * @param _recipeId The recipeId to craft.
      */
-    function craft(uint256 _recipeId) public {
+    function craft(uint256 _recipeId) public supportsMetaTxNoId {
         //Create a pointer to this recipe in storage.
         CraftingRecipe storage _craftingRecipe = SimpleCraftingStorage.getState().craftingRecipes[_recipeId];
 
@@ -105,21 +102,21 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
             //Pull all the ingredients
             Ingredient storage _ingredient = _craftingRecipe.ingredients[i];
 
-            if (_ingredient.tokenType == TOKENTYPE.ERC20) {
+            if (_ingredient.tokenType == TokenType.ERC20) {
                 //ERC20
-                IERC20Upgradeable(_ingredient.tokenAddress).transferFrom(
+                IERC20Upgradeable(_ingredient.tokenAddress).safeTransferFrom(
                     LibMeta._msgSender(), address(this), _ingredient.tokenQuantity
                 );
             }
 
-            if (_ingredient.tokenType == TOKENTYPE.ERC721) {
+            if (_ingredient.tokenType == TokenType.ERC721) {
                 //ERC721
                 IERC721Upgradeable(_ingredient.tokenAddress).transferFrom(
                     LibMeta._msgSender(), address(this), _ingredient.tokenId
                 );
             }
 
-            if (_ingredient.tokenType == TOKENTYPE.ERC1155) {
+            if (_ingredient.tokenType == TokenType.ERC1155) {
                 //ERC1155
                 IERC1155Upgradeable(_ingredient.tokenAddress).safeTransferFrom(
                     LibMeta._msgSender(), address(this), _ingredient.tokenId, _ingredient.tokenQuantity, ""
@@ -132,8 +129,8 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
             Result storage _result = _craftingRecipe.results[i];
 
             //Ensure this recipe result has been condoned by its' admin.
-            if (!LibSimpleCraftingStorage.getCollectionToRecipeIdToAllowed(_result.target, _recipeId)) {
-                revert RecipeNotAllowed();
+            if (!LibSimpleCrafting.getCollectionToRecipeIdToAllowed(_result.target, _recipeId)) {
+                revert RecipeNotAllowed(_recipeId);
             }
 
             AddressUpgradeable.functionCall(
@@ -145,15 +142,17 @@ contract SimpleCrafting is ERC1155HolderUpgradeable, AccessControlFacet {
     }
 
     /**
-     * @dev Honestly I do not know what this does, but forge was aggresively telling me to add it.
+     * @dev supportsInterface
+     * @param _interfaceId The interface id.
      */
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         virtual
-        override(ERC1155ReceiverUpgradeable, AccessControlFacet)
+        override(ERC1155ReceiverUpgradeable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        if (_interfaceId == type(ISimpleCrafting).interfaceId) return true;
+        return super.supportsInterface(_interfaceId);
     }
 }

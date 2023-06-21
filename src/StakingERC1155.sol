@@ -24,10 +24,8 @@ struct WithdrawRequest {
 }
 
 contract StakingERC1155 is ERC1155HolderUpgradeable {
-    event ERC1155Deposited(
-        address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId, uint256 _amount
-    );
-    event ERC1155Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId, uint256 _amount);
+    event ERC1155Deposited(address tokenAddress, address depositor, address reciever, uint256 tokenId, uint256 amount);
+    event ERC1155Withdrawn(address tokenAddress, address reciever, uint256 tokenId, uint256 amount);
 
     function initialize() external initializer { }
 
@@ -61,10 +59,10 @@ contract StakingERC1155 is ERC1155HolderUpgradeable {
         }
     }
 
-    function verifyHash(bytes32 _hash, Signature calldata signature) internal pure returns (address) {
-        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+    function verifyHash(bytes32 _hash, Signature calldata _signature) internal pure returns (address) {
+        bytes32 _messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
 
-        return ecrecover(messageDigest, signature.v, signature.r, signature.s);
+        return ecrecover(_messageDigest, _signature.v, _signature.r, _signature.s);
     }
 
     function withdrawERC1155(WithdrawRequest[] calldata _withdrawRequests) public {
@@ -79,9 +77,7 @@ contract StakingERC1155 is ERC1155HolderUpgradeable {
                 //It's stored in the contract
                 //Permissioned by chain
 
-                require(
-                    _ERC1155Stored >= _withdrawRequest.amount, "You don't have a high enough balance of this erc1155."
-                );
+                require(_ERC1155Stored >= _withdrawRequest.amount, "Not enough balance of this item.");
 
                 //Store it.
                 StakingStorage.setERC721TokenStorageData(

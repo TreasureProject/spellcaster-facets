@@ -9,83 +9,83 @@ import { StakingERC1155, WithdrawRequest, Signature } from "../src/StakingERC115
 import { ERC1155Consumer } from "../src/mocks/ERC1155Consumer.sol";
 
 contract StakingERC1155Test is TestBase, ERC1155HolderUpgradeable {
-    StakingERC1155 internal _staking;
-    ERC1155Consumer internal _consumer;
+    StakingERC1155 internal staking;
+    ERC1155Consumer internal consumer;
 
-    uint256 constant _tokenId = 2;
+    uint256 public constant tokenId = 2;
 
     function setUp() public {
-        _staking = new StakingERC1155();
-        _consumer = new ERC1155Consumer();
+        staking = new StakingERC1155();
+        consumer = new ERC1155Consumer();
 
-        _staking.initialize();
-        _consumer.initialize();
+        staking.initialize();
+        consumer.initialize();
 
-        _consumer.setWorldAddress(address(_staking));
-        _consumer.mintArbitrary(deployer, 2, 2);
+        consumer.setWorldAddress(address(staking));
+        consumer.mintArbitrary(deployer, 2, 2);
     }
 
     function toSigHash(
-        uint256 nonce,
-        address token,
-        uint256 tokenId,
-        uint256 amount,
-        address recipient
+        uint256 _nonce,
+        address _token,
+        uint256 _tokenId,
+        uint256 _amount,
+        address _recipient
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(nonce, token, tokenId, amount, recipient));
+        return keccak256(abi.encodePacked(_nonce, _token, _tokenId, _amount, _recipient));
     }
 
     function getIds() internal pure returns (uint256[] memory) {
-        uint256[] memory ids = new uint256[](20);
+        uint256[] memory _ids = new uint256[](20);
         for (uint256 i = 0; i < 20; i++) {
-            ids[i] = i;
+            _ids[i] = i;
         }
-        return ids;
+        return _ids;
     }
 
     function testDepositsAndWithdraws2TokensFromWorld() public {
-        _consumer.setApprovalForAll(address(_staking), true);
-        assertEq(2, _consumer.balanceOf(deployer, _tokenId));
-        uint256[] memory idAndAmount = new uint256[](1);
-        idAndAmount[0] = 2;
-        _staking.depositERC1155(address(_consumer), deployer, idAndAmount, idAndAmount);
+        consumer.setApprovalForAll(address(staking), true);
+        assertEq(2, consumer.balanceOf(deployer, tokenId));
+        uint256[] memory _idAndAmount = new uint256[](1);
+        _idAndAmount[0] = 2;
+        staking.depositERC1155(address(consumer), deployer, _idAndAmount, _idAndAmount);
 
-        assertEq(0, _consumer.balanceOf(deployer, _tokenId));
+        assertEq(0, consumer.balanceOf(deployer, tokenId));
 
-        WithdrawRequest[] memory req = new WithdrawRequest[](1);
-        req[0] = WithdrawRequest({
-            tokenAddress: address(_consumer),
+        WithdrawRequest[] memory _req = new WithdrawRequest[](1);
+        _req[0] = WithdrawRequest({
+            tokenAddress: address(consumer),
             reciever: deployer,
-            tokenId: _tokenId,
+            tokenId: tokenId,
             amount: 2,
             nonce: 0,
             stored: true,
             signature: Signature(0, 0x0, 0x0)
         });
-        _staking.withdrawERC1155(req);
+        staking.withdrawERC1155(_req);
 
-        assertEq(2, _consumer.balanceOf(deployer, _tokenId));
+        assertEq(2, consumer.balanceOf(deployer, tokenId));
     }
 
     function testAllowTrustedWithdraw() public {
-        (address addr, uint256 pk) = makeAddrAndKey("trustedSigner");
-        _consumer.setAdmin(addr, true);
+        (address _addr, uint256 _pk) = makeAddrAndKey("trustedSigner");
+        consumer.setAdmin(_addr, true);
 
-        (uint8 v, bytes32 r, bytes32 s) = signHashEthVRS(pk, toSigHash(0, address(_consumer), _tokenId, 20, deployer));
+        (uint8 _v, bytes32 _r, bytes32 _s) = signHashEthVRS(_pk, toSigHash(0, address(consumer), tokenId, 20, deployer));
 
-        WithdrawRequest[] memory req = new WithdrawRequest[](1);
-        req[0] = WithdrawRequest({
-            tokenAddress: address(_consumer),
+        WithdrawRequest[] memory _req = new WithdrawRequest[](1);
+        _req[0] = WithdrawRequest({
+            tokenAddress: address(consumer),
             reciever: deployer,
-            tokenId: _tokenId,
+            tokenId: tokenId,
             amount: 20,
             nonce: 0,
             stored: false,
-            signature: Signature(v, r, s)
+            signature: Signature(_v, _r, _s)
         });
 
-        _staking.withdrawERC1155(req);
-        assertEq(22, _consumer.balanceOf(deployer, _tokenId));
+        staking.withdrawERC1155(_req);
+        assertEq(22, consumer.balanceOf(deployer, tokenId));
     }
 
     function test() public { }

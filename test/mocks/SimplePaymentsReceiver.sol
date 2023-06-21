@@ -14,8 +14,8 @@ import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 contract SimplePaymentsReceiver is ERC721Upgradeable, PaymentsReceiver {
     uint256 public magicMintPrice = 25 ether;
     uint256 public usdMintPrice = 50;
-    address magicMock = address(0xc0ffee);
-    address ownerMock = address(0xbeef);
+    address public magicMock = address(0xc0ffee);
+    address public ownerMock = address(0xbeef);
 
     function initialize(address _spellcasterPayments) external {
         PaymentsReceiver.PaymentsReceiver_init(_spellcasterPayments);
@@ -23,10 +23,10 @@ contract SimplePaymentsReceiver is ERC721Upgradeable, PaymentsReceiver {
     }
 
     function _acceptStaticMagicPayment(address _payor, uint256 _paymentAmount) internal override {
-        uint256 mints = _calculateNumberOfMints(_paymentAmount, false);
+        uint256 _mints = _calculateNumberOfMints(_paymentAmount, false);
         IERC20Upgradeable(magicMock).transfer(ownerMock, _paymentAmount);
 
-        for (uint256 i = 0; i < mints; i++) {
+        for (uint256 i = 0; i < _mints; i++) {
             _mint(_payor, i);
         }
     }
@@ -36,30 +36,30 @@ contract SimplePaymentsReceiver is ERC721Upgradeable, PaymentsReceiver {
         uint256 _paymentAmount,
         uint256 _priceInUSD
     ) internal override {
-        uint256 mints = _calculateNumberOfMints(_priceInUSD, true);
+        uint256 _mints = _calculateNumberOfMints(_priceInUSD, true);
         IERC20Upgradeable(magicMock).transfer(ownerMock, _paymentAmount);
 
-        for (uint256 i = 0; i < mints; i++) {
+        for (uint256 i = 0; i < _mints; i++) {
             _mint(_payor, i);
         }
     }
 
     function _calculateNumberOfMints(uint256 _paymentAmount, bool _isInUSD) internal view returns (uint256) {
-        uint256 pricePerMint = _isInUSD ? usdMintPrice : magicMintPrice;
-        if (_paymentAmount % pricePerMint != 0) {
+        uint256 _pricePerMint = _isInUSD ? usdMintPrice : magicMintPrice;
+        if (_paymentAmount % _pricePerMint != 0) {
             revert("Invalid payment amount");
         }
-        return _paymentAmount / pricePerMint;
+        return _paymentAmount / _pricePerMint;
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         virtual
         override(ERC721Upgradeable, PaymentsReceiver)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function withdrawMagic() external {

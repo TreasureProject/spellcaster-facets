@@ -49,12 +49,12 @@ enum PriceType {
 interface IPayments {
     /**
      * @dev Emitted when a payment is made
-     * @param _payor The address of the sender of the payment
-     * @param _token The address of the token that was paid. If address(0), then it was gas token
-     * @param _amount The amount of the token that was paid
-     * @param _paymentsReceiver The address of the contract that received the payment. Supports IPaymentsReceiver
+     * @param payor The address of the sender of the payment
+     * @param token The address of the token that was paid. If address(0), then it was gas token
+     * @param amount The amount of the token that was paid
+     * @param paymentsReceiver The address of the contract that received the payment. Supports IPaymentsReceiver
      */
-    event PaymentSent(address _payor, address _token, uint256 _amount, address _paymentsReceiver);
+    event PaymentSent(address payor, address token, uint256 amount, address paymentsReceiver);
 
     /**
      * @dev Make a payment in ERC20 to the recipient

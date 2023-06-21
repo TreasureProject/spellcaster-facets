@@ -1,46 +1,30 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-enum TOKENTYPE {
-    ERC20,
-    ERC721,
-    ERC1155
-}
-
-struct Ingredient {
-    address tokenAddress;
-    TOKENTYPE tokenType;
-    //One or both of these will be used depending on the tokentype.
-    uint256 tokenId;
-    uint256 tokenQuantity;
-}
-
-struct Result {
-    address target;
-    bytes4 selector;
-    bytes params;
-}
-
-struct CraftingRecipe {
-    //Store array of essential ingredients
-    Ingredient[] ingredients;
-    //Store array of outputs
-    Result[] results;
-}
+import { CraftingRecipe } from "../interfaces/ISimpleCrafting.sol";
 
 library SimpleCraftingStorage {
     struct SimpleCraftingState {
+        /**
+         * @dev Store collection -> recipeId -> allowed, whether a collection has permitted a recipe
+         */
         mapping(address => mapping(uint256 => bool)) collectionToRecipeIdToAllowed;
+        /**
+         * @dev Store all crafting recipes
+         */
         mapping(uint256 => CraftingRecipe) craftingRecipes;
-        uint256 _currentRecipeId;
+        uint256 currentRecipeId;
     }
 
-    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("simple.crafting.diamond");
+    bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.simple.crafting");
 
-    function getState() internal pure returns (SimpleCraftingState storage s) {
-        bytes32 position = FACET_STORAGE_POSITION;
+    /**
+     * @dev Returns the state struct at a given storage position.
+     */
+    function getState() internal pure returns (SimpleCraftingState storage l_) {
+        bytes32 _position = FACET_STORAGE_POSITION;
         assembly {
-            s.slot := position
+            l_.slot := _position
         }
     }
 }

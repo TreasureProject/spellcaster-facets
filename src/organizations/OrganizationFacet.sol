@@ -21,7 +21,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
      * @dev Initialize the facet. Can be called externally or internally.
      * Ideally referenced in an initialization script facet
      */
-    function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet")) { }
+    function OrganizationFacet_init() public facetInitializer(keccak256("OrganizationFacet_init")) { }
 
     // =============================================================
     //                        Public functions
@@ -83,6 +83,7 @@ contract OrganizationFacet is FacetInitializable, Modifiers, IOrganizationManage
         if (LibOrganizationManager.getOrganizationInfo(_organizationId).admin == address(0)) {
             revert OrganizationManagerStorage.NonexistantOrganization(_organizationId);
         }
+        LibOrganizationManager.requireOrganizationValid(_organizationId);
         _;
     }
 }

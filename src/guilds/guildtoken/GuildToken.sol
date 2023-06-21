@@ -10,10 +10,7 @@ contract GuildToken is GuildTokenContracts {
     /**
      * @inheritdoc IGuildToken
      */
-    function initialize(
-        bytes32 _organizationId,
-        address _systemDelegateApprover
-    ) external facetInitializer(keccak256("GuildToken")) {
+    function initialize(bytes32 _organizationId) external facetInitializer(keccak256("initialize")) {
         GuildTokenContracts.__GuildTokenContracts_init();
         LibGuildToken.setOrganizationId(_organizationId);
         // The guild manager is the one that creates the GuildToken.
@@ -24,29 +21,19 @@ contract GuildToken is GuildTokenContracts {
 
         // Give admin to the owner. May be revoked to prevent permanent administrative rights as owner
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
-
-        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
      * @inheritdoc IGuildToken
      */
-    function adminMint(
-        address _to,
-        uint256 _id,
-        uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
+    function adminMint(address _to, uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _mint(_to, _id, _amount, "");
     }
 
     /**
      * @inheritdoc IGuildToken
      */
-    function adminBurn(
-        address _account,
-        uint256 _id,
-        uint256 _amount
-    ) external onlyRole(ADMIN_ROLE) whenNotPaused supportsMetaTxNoId {
+    function adminBurn(address _account, uint256 _id, uint256 _amount) external onlyRole(ADMIN_ROLE) whenNotPaused {
         _burn(_account, _id, _amount);
     }
 
@@ -79,14 +66,14 @@ contract GuildToken is GuildTokenContracts {
      * - Guild tokens cannot be transferred while the contract is paused
      */
     function _beforeTokenTransfer(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        address _operator,
+        address _from,
+        address _to,
+        uint256[] memory _ids,
+        uint256[] memory _amounts,
+        bytes memory _data
     ) internal virtual override {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         LibUtilities.requireNotPaused();
         LibAccessControlRoles.requireRole(ADMIN_ROLE, LibMeta._msgSender());
     }

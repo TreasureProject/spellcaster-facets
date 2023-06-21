@@ -18,10 +18,11 @@ struct GuildOrganizationInfo {
     GuildCreationRule creationRule;
     uint8 maxGuildsPerUser;
     uint32 timeoutAfterLeavingGuild;
-    // Slot 4 (200/256)
+    // Slot 4 (202/256)
     address tokenAddress;
     MaxUsersPerGuildRule maxUsersPerGuildRule;
     uint32 maxUsersPerGuildConstant;
+    bool requireTreasureTagForGuilds;
     // Slot 5 (160/256) - customGuildManagerAddress
     address customGuildManagerAddress;
 }
@@ -46,6 +47,7 @@ struct GuildOrganizationUserInfo {
  * @param isSymbolOnChain Indicates if symbolImageData is on chain or is a URL
  * @param currentOwner The current owner of this guild
  * @param usersInGuild Keeps track of the number of users in the guild. This includes MEMBER, ADMIN, and OWNER
+ * @param guildStatus Current guild status (active or terminated)
  */
 struct GuildInfo {
     // Slot 1
@@ -60,17 +62,21 @@ struct GuildInfo {
     uint32 usersInGuild;
     // Slot 5
     mapping(address => GuildUserInfo) addressToGuildUserInfo;
+    // Slot 6 (8/256)
+    GuildStatus guildStatus;
 }
 
 /**
  * @dev Provides information regarding a user in a specific guild
  * @param userStatus Indicates the status of this user (i.e member, admin, invited)
  * @param timeUserJoined The time this user joined this guild
+ * @param memberLevel The member level of this user
  */
 struct GuildUserInfo {
-    // Slot 1 (72/256)
+    // Slot 1 (8+64+8/256)
     GuildUserStatus userStatus;
     uint64 timeUserJoined;
+    uint8 memberLevel;
 }
 
 enum GuildUserStatus {
@@ -92,18 +98,47 @@ enum MaxUsersPerGuildRule {
     CUSTOM_RULE
 }
 
+enum GuildStatus {
+    ACTIVE,
+    TERMINATED
+}
+
 interface IGuildManager {
     /**
      * @dev Sets all necessary state and permissions for the contract
      * @param _guildTokenImplementationAddress The token implementation address for guild token contracts to proxy to
      */
-    function GuildManager_init(address _guildTokenImplementationAddress, address _systemDelegateApprover) external;
+    function GuildManager_init(address _guildTokenImplementationAddress) external;
 
     /**
      * @dev Creates a new guild within the given organization. Must pass the guild creation requirements.
      * @param _organizationId The organization to create the guild within
      */
     function createGuild(bytes32 _organizationId) external;
+
+    /**
+     * @dev Terminates a provided guild
+     * @param _organizationId The organization of the guild
+     * @param _guildId The guild to terminate
+     * @param _reason The reason of termination for the guild
+     */
+    function terminateGuild(bytes32 _organizationId, uint32 _guildId, string calldata _reason) external;
+
+    /**
+     * @dev Grants a given user guild terminator priviliges under a certain guild
+     * @param _account The user to give terminator
+     * @param _organizationId The org they belong to
+     * @param _guildId The guild they belong to
+     */
+    function grantGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) external;
+
+    /**
+     * @dev Grants a given user guild admin priviliges under a certain guild
+     * @param _account The user to give admin
+     * @param _organizationId The org they belong to
+     * @param _guildId The guild they belong to
+     */
+    function grantGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) external;
 
     /**
      * @dev Updates the guild info for the given guild.
@@ -132,6 +167,15 @@ interface IGuildManager {
         string calldata _symbolImageData,
         bool _isSymbolOnChain
     ) external;
+
+    /**
+     * @dev Adjusts a given users member level
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild the user is in
+     * @param _user The user to adjust
+     * @param _memberLevel The memberLevel to adjust to
+     */
+    function adjustMemberLevel(bytes32 _organizationId, uint32 _guildId, address _user, uint8 _memberLevel) external;
 
     /**
      * @dev Invites users to the given guild. Can only be done by admins or the guild owner.
@@ -186,6 +230,13 @@ interface IGuildManager {
     function kickOrRemoveInvitations(bytes32 _organizationId, uint32 _guildId, address[] calldata _users) external;
 
     /**
+     * @dev Returns the current status of a guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to get the status of
+     */
+    function getGuildStatus(bytes32 _organizationId, uint32 _guildId) external view returns (GuildStatus);
+
+    /**
      * @dev Returns whether or not the given user can create a guild within the given organization.
      * @param _organizationId The organization to check
      * @param _user The user to check
@@ -207,33 +258,20 @@ interface IGuildManager {
     ) external view returns (GuildUserStatus);
 
     /**
-     * @dev Creates a new organization and initializes the Guild feature for it.
-     *  This can only be done by admins on the GuildManager contract.
-     * @param _newOrganizationId The id of the organization being created
-     * @param _name The name of the new organization
-     * @param _description The description of the new organization
-     * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
-     * @param _timeoutAfterLeavingGuild The number of seconds a user has to wait before being able to rejoin a guild
-     * @param _guildCreationRule The rule for creating new guilds
-     * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
-     * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
-     * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
-     *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
+     * @dev Returns the guild user info struct of the given user within the given guild.
+     * @param _organizationId The organization the guild is within
+     * @param _guildId The guild to get the info struct of the user within
+     * @param _user The user to get the info struct of
+     * @return The info struct of the user within the guild
      */
-    function createForNewOrganization(
-        bytes32 _newOrganizationId,
-        string calldata _name,
-        string calldata _description,
-        uint8 _maxGuildsPerUser,
-        uint32 _timeoutAfterLeavingGuild,
-        GuildCreationRule _guildCreationRule,
-        MaxUsersPerGuildRule _maxUsersPerGuildRule,
-        uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress
-    ) external;
+    function getGuildMemberInfo(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        address _user
+    ) external view returns (GuildUserInfo memory);
 
     /**
-     * @dev Creates a new organization and initializes the Guild feature for it.
+     * @dev Initializes the Guild feature for the given organization.
      *  This can only be done by admins on the GuildManager contract.
      * @param _organizationId The id of the organization to initialize
      * @param _maxGuildsPerUser The maximum number of guilds a user can join within the organization.
@@ -242,16 +280,18 @@ interface IGuildManager {
      * @param _maxUsersPerGuildRule Indicates how the max number of users per guild is decided
      * @param _maxUsersPerGuildConstant If maxUsersPerGuildRule is set to CONSTANT, this is the max
      * @param _customGuildManagerAddress A contract address that handles custom guild creation requirements (i.e owning specific NFTs).
+     * @param _requireTreasureTagForGuilds Whether this org requires a treasure tag for guilds
      *  This is used for guild creation if @param _guildCreationRule == CUSTOM_RULE
      */
-    function createForExistingOrganization(
+    function initializeForOrganization(
         bytes32 _organizationId,
         uint8 _maxGuildsPerUser,
         uint32 _timeoutAfterLeavingGuild,
         GuildCreationRule _guildCreationRule,
         MaxUsersPerGuildRule _maxUsersPerGuildRule,
         uint32 _maxUsersPerGuildConstant,
-        address _customGuildManagerAddress
+        address _customGuildManagerAddress,
+        bool _requireTreasureTagForGuilds
     ) external;
 
     /**
@@ -288,12 +328,25 @@ interface IGuildManager {
     ) external;
 
     /**
+     * @dev Sets whether an org requires treasure tags for guilds
+     * @param _organizationId The id of the organization to adjust
+     * @param _requireTreasureTagForGuilds Whether treasure tags are required
+     */
+    function setRequireTreasureTagForGuilds(bytes32 _organizationId, bool _requireTreasureTagForGuilds) external;
+
+    /**
      * @dev Sets the contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      * @param _organizationId The id of the organization to set the custom guild manager address for
      * @param _customGuildManagerAddress The contract address that handles custom guild creation requirements (i.e owning specific NFTs).
      *  This is used for guild creation if the saved `guildCreationRule` == CUSTOM_RULE
      */
     function setCustomGuildManagerAddress(bytes32 _organizationId, address _customGuildManagerAddress) external;
+
+    /**
+     * @dev Sets the treasure tag nft address
+     * @param _treasureTagNFTAddress The address of the treasure tag nft contract
+     */
+    function setTreasureTagNFTAddress(address _treasureTagNFTAddress) external;
 
     /**
      * @dev Retrieves the stored info for a given organization. Used to wrap the tuple from

@@ -1,15 +1,17 @@
+.DS_Store
 package-lock.json
-node_modules
+**/node_modules
 .env
 
 #Hardhat files
-cache
-artifacts
+**/cache
+**/artifacts
 
 # forge output folder
-_out
-bin
-cache_hardhat
+**/_out
+**/bin
+**/cache_hardhat
 
 # cargo custom target dir
-_target
+**/_target
+**/target

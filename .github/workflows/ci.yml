@@ -1,0 +1,71 @@
+name: "spellcaster-facets-ci"
+
+env:
+  FOUNDRY_PROFILE: "ci"
+  ARBITRUM_GOERLI_RPC_URL: ""
+  ARBITRUM_MAINNET_RPC_URL: ""
+  DEV_PRIVATE_KEY: "0x0000000000000000000000000000000000000000000000000000000000000000"
+  ARBITRUM_MAINNET_PK: "0x0000000000000000000000000000000000000000000000000000000000000000"
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "prod"
+      - "develop"
+
+jobs:
+
+  lint-build-test:
+    name: Lint+Build+Test
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      matrix:
+        node-version: [18.12.1]
+    
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v3"
+        with:
+          submodules: "recursive"
+
+      - if: ${{ !env.ACT }}
+        name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - uses: moonrepo/setup-rust@v0
+        with:
+          cache-target: release
+      - run: cargo build --release
+        shell: bash
+
+      - if: ${{ !env.ACT }}
+        name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1"
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --network-concurrency 1
+
+      - name: Lint the contracts
+        run: |
+          yarn lint:check
+          echo "## Contract lint result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Build the contracts
+        run: |
+          yarn build
+          echo "## Build result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run tests
+        run: |
+          yarn test
+          echo "## Tests result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY

@@ -14,21 +14,20 @@ import { ERC1155Facet } from "src/token/ERC1155Facet.sol";
 import { MetaTxFacet } from "src/metatx/MetaTxFacet.sol";
 import {
     MetaTxFacetStorage,
-    ISystem_Delegate_Approver,
+    ISystemDelegateApprover,
     ForwardRequest,
     FORWARD_REQ_TYPEHASH
 } from "src/metatx/MetaTxFacetStorage.sol";
 import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libraries/LibAccessControlRoles.sol";
 import { LibMeta } from "../src/libraries/LibMeta.sol";
 
-import "forge-std/console.sol";
-
 contract MetaTxImpl is MetaTxFacet, AccessControlFacet, ERC1155Facet {
     function initialize(address _systemDelegateApprover) external facetInitializer(keccak256("MetaTxImpl")) {
         _setRoleAdmin(ADMIN_ROLE, ADMIN_GRANTER_ROLE);
         _grantRole(ADMIN_ROLE, LibMeta._msgSender());
         _grantRole(ADMIN_GRANTER_ROLE, LibMeta._msgSender());
-        __MetaTxFacet_init(_systemDelegateApprover);
+        __MetaTxFacet_init();
+        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
@@ -52,23 +51,23 @@ contract MetaTxImpl is MetaTxFacet, AccessControlFacet, ERC1155Facet {
         _mint(_msgSender(), _id, _amount, "");
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         override(AccessControlFacet, ERC1155Facet)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
+        address _from,
+        address _to,
+        uint256 _id,
+        uint256 _amount,
+        bytes memory _data
     ) public virtual override {
-        super.safeTransferFrom(from, to, id, amount, data);
+        super.safeTransferFrom(_from, _to, _id, _amount, _data);
     }
 }
 
@@ -76,11 +75,11 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
 
-    MetaTxImpl internal _meta;
+    MetaTxImpl internal meta;
 
     function setUp() public {
-        _meta = new MetaTxImpl();
-        _meta.initialize(address(_delegateApprover));
+        meta = new MetaTxImpl();
+        meta.initialize(address(delegateApprover));
     }
 
     /**
@@ -88,33 +87,33 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
      *  This is to prove that transaction signing authority is working.
      */
     function testMetaTransactionSignerIsSender() public {
-        _meta.grantRole(ADMIN_ROLE, signingAuthority);
+        meta.grantRole(ADMIN_ROLE, signingAuthority);
 
         // Call an admin function on behalf of the admin to prove that AccessControl can be called
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 1,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
 
-        assertEq(_meta.balanceOf(signingAuthority, 1), 1);
+        assertEq(meta.balanceOf(signingAuthority, 1), 1);
 
         // Set 1155 approval through meta tx to prove that any erc1155 function can be called
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 2,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSignature("setApprovalForAll(address,bool)", alice, true)
             }),
-            address(_meta)
+            address(meta)
         );
 
-        assertEq(_meta.isApprovedForAll(signingAuthority, alice), true);
+        assertEq(meta.isApprovedForAll(signingAuthority, alice), true);
     }
 
     /**
@@ -122,47 +121,47 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
      *  This is to prove that delegation is working.
      */
     function testMetaTransactionSignerIsDelegate() public {
-        _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
+        delegateApprover.setDelegateApprovalForSystem(org2, signingAuthority, true);
 
         // Call an admin function on behalf of the admin to prove that AccessControl can be called
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: deployer,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
 
-        assertEq(_meta.balanceOf(deployer, 1), 1);
+        assertEq(meta.balanceOf(deployer, 1), 1);
 
         // Set 1155 approval through meta tx to prove that any erc1155 function can be called
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: deployer,
                 nonce: 2,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSignature("setApprovalForAll(address,bool)", alice, true)
             }),
-            address(_meta)
+            address(meta)
         );
 
-        assertEq(_meta.isApprovedForAll(deployer, alice), true);
+        assertEq(meta.isApprovedForAll(deployer, alice), true);
     }
 
     function testRevertOrganizationIdMismatch() public {
-        _meta.grantRole(ADMIN_ROLE, signingAuthority);
+        meta.grantRole(ADMIN_ROLE, signingAuthority);
 
-        vm.expectRevert(err(MetaTxFacetStorage.SessionOrganizationIdMismatch.selector, _org2, _org1));
+        vm.expectRevert(err(MetaTxFacetStorage.SessionOrganizationIdMismatch.selector, org2, org1));
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
-                organizationId: _org2,
-                data: abi.encodeWithSelector(MetaTxImpl.adminMintForOrg.selector, _org1, 1, 1)
+                organizationId: org2,
+                data: abi.encodeWithSelector(MetaTxImpl.adminMintForOrg.selector, org1, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
     }
 
@@ -172,23 +171,23 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
             ForwardRequest({
                 from: deployer,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
     }
 
     function testRevertInvalidNonce() public {
-        _meta.grantRole(ADMIN_ROLE, signingAuthority);
+        meta.grantRole(ADMIN_ROLE, signingAuthority);
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
 
         vm.expectRevert(err(MetaTxFacetStorage.NonceAlreadyUsedForSender.selector, signingAuthority, 0));
@@ -196,10 +195,10 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
     }
 
@@ -209,38 +208,38 @@ contract MetaTxFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
     }
 
     function testRevertNonApproved1155Sender() public {
-        _meta.grantRole(ADMIN_ROLE, signingAuthority);
+        meta.grantRole(ADMIN_ROLE, signingAuthority);
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: signingAuthority,
                 nonce: 0,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSelector(MetaTxImpl.adminMint.selector, 1, 1)
             }),
-            address(_meta)
+            address(meta)
         );
 
-        _delegateApprover.setDelegateApprovalForSystem(_org2, signingAuthority, true);
+        delegateApprover.setDelegateApprovalForSystem(org2, signingAuthority, true);
 
         vm.expectRevert("ERC1155: caller is not token owner or approved");
         signAndExecuteMetaTx(
             ForwardRequest({
                 from: deployer,
                 nonce: 1,
-                organizationId: _org2,
+                organizationId: org2,
                 data: abi.encodeWithSignature(
                     "safeTransferFrom(address,address,uint256,uint256,bytes)", signingAuthority, alice, 1, 1, ""
                     )
             }),
-            address(_meta)
+            address(meta)
         );
     }
 }

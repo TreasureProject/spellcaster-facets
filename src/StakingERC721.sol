@@ -22,8 +22,8 @@ struct WithdrawRequest {
 }
 
 contract StakingERC721 is Initializable {
-    event ERC721Deposited(address _tokenAddress, address _depositor, address _reciever, uint256 _tokenId);
-    event ERC721Withdrawn(address _tokenAddress, address _reciever, uint256 _tokenId);
+    event ERC721Deposited(address tokenAddress, address depositor, address reciever, uint256 tokenId);
+    event ERC721Withdrawn(address tokenAddress, address reciever, uint256 tokenId);
 
     function initialize() external initializer { }
 
@@ -44,10 +44,10 @@ contract StakingERC721 is Initializable {
         }
     }
 
-    function verifyHash(bytes32 _hash, Signature calldata signature) internal pure returns (address) {
-        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+    function verifyHash(bytes32 _hash, Signature calldata _signature) internal pure returns (address) {
+        bytes32 _messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
 
-        return ecrecover(messageDigest, signature.v, signature.r, signature.s);
+        return ecrecover(_messageDigest, _signature.v, _signature.r, _signature.s);
     }
 
     function withdrawERC721(WithdrawRequest[] calldata _withdrawRequests) public {

@@ -1,24 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { GuildManagerSettings, LibGuildManager, IGuildManager } from "./GuildManagerSettings.sol";
+import {
+    GuildManagerSettings, LibGuildManager, IGuildManager, LibOrganizationManager
+} from "./GuildManagerSettings.sol";
 import { ICustomGuildManager } from "src/interfaces/ICustomGuildManager.sol";
 import { IGuildToken } from "src/interfaces/IGuildToken.sol";
-import { GuildInfo, GuildUserStatus } from "src/interfaces/IGuildManager.sol";
+import { GuildInfo, GuildUserInfo, GuildUserStatus, GuildStatus } from "src/interfaces/IGuildManager.sol";
 import { LibUtilities } from "src/libraries/LibUtilities.sol";
+import { LibAccessControlRoles } from "src/libraries/LibAccessControlRoles.sol";
 
 contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function GuildManager_init(
-        address _guildTokenImplementationAddress,
-        address _systemDelegateApprover
-    ) external facetInitializer(keccak256("GuildManager")) {
+    function GuildManager_init(address _guildTokenImplementationAddress)
+        external
+        facetInitializer(keccak256("GuildManager_init"))
+    {
         __GuildManagerSettings_init();
         LibGuildManager.setGuildTokenBeacon(_guildTokenImplementationAddress);
-
-        __SupportsMetaTx_init(_systemDelegateApprover);
     }
 
     /**
@@ -31,6 +32,41 @@ contract GuildManager is GuildManagerSettings {
         supportsMetaTx(_organizationId)
     {
         LibGuildManager.createGuild(_organizationId);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function terminateGuild(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        string calldata _reason
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.terminateGuild(_organizationId, _guildId, _reason);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function grantGuildTerminator(
+        address _account,
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_TERMINATOR_ROLE");
+        LibAccessControlRoles.grantGuildTerminator(_account, _organizationId, _guildId);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function grantGuildAdmin(
+        address _account,
+        bytes32 _organizationId,
+        uint32 _guildId
+    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_ADMIN_ROLE");
+        LibAccessControlRoles.grantGuildAdmin(_account, _organizationId, _guildId);
     }
 
     /**
@@ -57,6 +93,18 @@ contract GuildManager is GuildManagerSettings {
     ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
         LibGuildManager.requireGuildOwner(_organizationId, _guildId, "UPDATE_SYMBOL");
         LibGuildManager.setGuildSymbol(_organizationId, _guildId, _symbolImageData, _isSymbolOnChain);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function adjustMemberLevel(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        address _user,
+        uint8 _memberLevel
+    ) external whenNotPaused supportsMetaTx(_organizationId) {
+        LibGuildManager.adjustMemberLevel(_organizationId, _guildId, _user, _memberLevel);
     }
 
     /**
@@ -127,10 +175,15 @@ contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function userCanCreateGuild(
-        bytes32 _organizationId,
-        address _user
-    ) public view onlyValidOrganization(_organizationId) returns (bool) {
+    function getGuildStatus(bytes32 _organizationId, uint32 _guildId) public view returns (GuildStatus) {
+        return LibGuildManager.getGuildStatus(_organizationId, _guildId);
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function userCanCreateGuild(bytes32 _organizationId, address _user) public view returns (bool) {
+        LibOrganizationManager.requireOrganizationValid(_organizationId);
         return LibGuildManager.userCanCreateGuild(_organizationId, _user);
     }
 
@@ -143,6 +196,17 @@ contract GuildManager is GuildManagerSettings {
         address _user
     ) public view returns (GuildUserStatus) {
         return LibGuildManager.getGuildUserInfo(_organizationId, _guildId, _user).userStatus;
+    }
+
+    /**
+     * @inheritdoc IGuildManager
+     */
+    function getGuildMemberInfo(
+        bytes32 _organizationId,
+        uint32 _guildId,
+        address _user
+    ) public view returns (GuildUserInfo memory) {
+        return LibGuildManager.getGuildUserInfo(_organizationId, _guildId, _user);
     }
 
     /**

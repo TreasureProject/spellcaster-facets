@@ -22,21 +22,36 @@ abstract contract FacetInitializable {
         if (
             InitializableStorage.layout()._initializing
                 ? !_isConstructor()
-                : FacetInitializableStorage.getState()._initialized[_facetId]
+                : FacetInitializableStorage.getState().initialized[_facetId]
         ) {
             revert FacetInitializableStorage.AlreadyInitialized(_facetId);
         }
-        bool isTopLevelCall = !InitializableStorage.layout()._initializing;
-        if (isTopLevelCall) {
+        bool _isTopLevelCall = !InitializableStorage.layout()._initializing;
+        // Always set facet initialized regardless of if top level call or not.
+        // This is so that we can run through facetReinitializable() if needed, and lower level functions can protect themselves
+        FacetInitializableStorage.getState().initialized[_facetId] = true;
+
+        if (_isTopLevelCall) {
             InitializableStorage.layout()._initializing = true;
-            FacetInitializableStorage.getState()._initialized[_facetId] = true;
         }
 
         _;
 
-        if (isTopLevelCall) {
+        if (_isTopLevelCall) {
             InitializableStorage.layout()._initializing = false;
         }
+    }
+
+    /**
+     * @dev Modifier to trick internal functions that use onlyInitializing / onlyFacetInitializing into thinking
+     *  that the contract is being initialized.
+     *  This should only be called via a diamond initialization script and makes a lot of assumptions.
+     *  Handle with care.
+     */
+    modifier facetReinitializable() {
+        InitializableStorage.layout()._initializing = true;
+        _;
+        InitializableStorage.layout()._initializing = false;
     }
 
     /**
@@ -44,7 +59,7 @@ abstract contract FacetInitializable {
      * {initializer} modifier, directly or indirectly.
      */
     modifier onlyFacetInitializing() {
-        require(InitializableStorage.layout()._initializing, "Initializable: contract is not initializing");
+        require(InitializableStorage.layout()._initializing, "FacetInit: not initializing");
         _;
     }
 
