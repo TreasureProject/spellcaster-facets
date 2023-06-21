@@ -100,7 +100,9 @@ contract CollectionAccessControlFacet is FacetInitializable, EIP712Upgradeable {
      * @param _collection The colletion to make them an admin of.
      */
     function grantCollectionAdmin(address _account, address _collection) external {
-        LibAccessControlRoles.requireCollectionRoleGranter(LibMeta._msgSender(), _collection);
+        if (LibMeta._msgSender() != LibAccessControlRoles.contractOwner()) {
+            LibAccessControlRoles.requireCollectionRoleGranter(LibMeta._msgSender(), _collection);
+        }
         LibAccessControlRoles.grantCollectionAdmin(_account, _collection);
     }
 }

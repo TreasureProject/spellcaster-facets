@@ -9,6 +9,10 @@ abstract contract TestLogging {
         console2.log(_p0);
     }
 
+    function debug(bytes4 _p0) internal view {
+        console2.logBytes4(_p0);
+    }
+
     function debug(string memory _p0) internal view {
         console2.log(_p0);
     }
