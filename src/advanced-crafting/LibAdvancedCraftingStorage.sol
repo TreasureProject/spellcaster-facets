@@ -59,7 +59,6 @@ struct CraftingInfo {
     uint64 recipeId;
     uint64 requestId;
 }
-// Maybe store which inputs were used?
 
 enum CraftingStatus {
     INACTIVE,

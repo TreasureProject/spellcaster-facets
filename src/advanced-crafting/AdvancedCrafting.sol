@@ -20,6 +20,8 @@ contract AdvancedCrafting is AdvancedCraftingBase {
         LibAdvancedCrafting.createRecipe(_organizationId, _recipeArgs);
     }
 
+    function startCrafting() external { }
+
     function deleteRecipe(uint64 _recipeId) external {
         LibAdvancedCrafting.deleteRecipe(_recipeId);
     }
