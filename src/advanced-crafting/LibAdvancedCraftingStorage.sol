@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { CreateRecipeArgs, ResultType, CollectionType, InputType } from "src/interfaces/IAdvancedCrafting.sol";
 
-library AdvancedCraftingStorage {
+library LibAdvancedCraftingStorage {
     struct Layout {
         /**
          * @dev Returns a recipe for the given id

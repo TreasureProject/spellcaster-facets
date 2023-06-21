@@ -16,48 +16,53 @@ import {
     InputType
 } from "src/interfaces/IAdvancedCrafting.sol";
 
-import { AdvancedCraftingStorage, RecipeInfo } from "src/advanced-crafting/AdvancedCraftingStorage.sol";
+import { LibAdvancedCraftingStorage, RecipeInfo } from "src/advanced-crafting/LibAdvancedCraftingStorage.sol";
 
 /**
  * @title Advanced Crafting Library
  * @dev This library is used to implement features that use/update storage data for the Advanced Crafting contracts
  */
 library LibAdvancedCrafting {
-    function getRecipeIdCur() public view returns (uint64) {
-        return AdvancedCraftingStorage.layout().recipeIdCur;
+    function AdvancedCrafting_init() internal {
+        setRecipeIdCur(1);
+        setCraftingIdCur(1);
     }
 
-    function setRecipeIdCur(uint64 _recipeIdCur) public {
-        AdvancedCraftingStorage.layout().recipeIdCur = _recipeIdCur;
+    function getRecipeIdCur() internal view returns (uint64) {
+        return LibAdvancedCraftingStorage.layout().recipeIdCur;
     }
 
-    function getCraftingIdCur() public view returns (uint64) {
-        return AdvancedCraftingStorage.layout().craftingIdCur;
+    function setRecipeIdCur(uint64 _recipeIdCur) internal {
+        LibAdvancedCraftingStorage.layout().recipeIdCur = _recipeIdCur;
     }
 
-    function setCraftingIdCur(uint64 _craftingIdCur) public {
-        AdvancedCraftingStorage.layout().craftingIdCur = _craftingIdCur;
+    function getCraftingIdCur() internal view returns (uint64) {
+        return LibAdvancedCraftingStorage.layout().craftingIdCur;
+    }
+
+    function setCraftingIdCur(uint64 _craftingIdCur) internal {
+        LibAdvancedCraftingStorage.layout().craftingIdCur = _craftingIdCur;
     }
 
     function getRecipeInfo(uint64 _recipeId) internal view returns (RecipeInfo storage) {
-        return AdvancedCraftingStorage.layout().recipeIdToInfo[_recipeId];
+        return LibAdvancedCraftingStorage.layout().recipeIdToInfo[_recipeId];
     }
 
     function requireValidRecipe(uint64 _recipeId) internal view {
-        if (_recipeId == 0 || _recipeId >= AdvancedCraftingStorage.layout().recipeIdCur) {
-            revert AdvancedCraftingStorage.InvalidRecipeId();
+        if (_recipeId == 0 || _recipeId >= LibAdvancedCraftingStorage.layout().recipeIdCur) {
+            revert LibAdvancedCraftingStorage.InvalidRecipeId();
         }
     }
 
     function requireRecipeOwner(uint64 _recipeId, address _user) internal view {
         if (_user != getRecipeInfo(_recipeId).owner) {
-            revert AdvancedCraftingStorage.RecipeOwnerOnly();
+            revert LibAdvancedCraftingStorage.RecipeOwnerOnly();
         }
     }
 
     function createRecipe(bytes32 _organizationId, CreateRecipeArgs calldata _recipeArgs) public {
         if (_recipeArgs.startTime == 0 || (_recipeArgs.endTime != 0 && _recipeArgs.startTime > _recipeArgs.endTime)) {
-            revert AdvancedCraftingStorage.BadRecipeStartEndTime();
+            revert LibAdvancedCraftingStorage.BadRecipeStartEndTime();
         }
 
         uint64 _recipeId = getRecipeIdCur();
@@ -82,10 +87,10 @@ library LibAdvancedCrafting {
         for (uint16 _i = 0; _i < _recipeArgs.inputs.length; _i++) {
             RecipeInputArgs calldata _input = _recipeArgs.inputs[_i];
             if (_input.options.length == 0) {
-                revert AdvancedCraftingStorage.NoInputOptionsSupplied();
+                revert LibAdvancedCraftingStorage.NoInputOptionsSupplied();
             }
             if (_input.amount == 0) {
-                revert AdvancedCraftingStorage.BadInputAmount();
+                revert LibAdvancedCraftingStorage.BadInputAmount();
             }
 
             _recipeInfo.indexToInput[_i].amount = _input.amount;
@@ -97,7 +102,7 @@ library LibAdvancedCrafting {
 
                 if (_inputOption.itemInfo.collectionAddress == address(0) && _inputOption.inputType != InputType.CUSTOM)
                 {
-                    revert AdvancedCraftingStorage.InvalidInputOption();
+                    revert LibAdvancedCraftingStorage.InvalidInputOption();
                 }
 
                 _recipeInfo.indexToInput[_i].indexToInputOption[_j].inputType = _inputOption.inputType;
@@ -121,7 +126,7 @@ library LibAdvancedCrafting {
                 _lootTable.rollAmounts.length == 0 && _lootTable.rollAmounts.length != _lootTable.rollOdds.length
                     && _lootTable.options.length == 0
             ) {
-                revert AdvancedCraftingStorage.BadLootTable();
+                revert LibAdvancedCraftingStorage.BadLootTable();
             }
 
             _recipeInfo.indexToLootTable[_i].rollAmounts = _lootTable.rollAmounts;
@@ -200,7 +205,9 @@ library LibAdvancedCrafting {
 
         _recipeInfo.isRandomRequired = _isRandomRequiredForRecipe;
 
-        emit AdvancedCraftingStorage.RecipeCreated(_recipeId, _organizationId, _recipeArgs, _isRandomRequiredForRecipe);
+        emit LibAdvancedCraftingStorage.RecipeCreated(
+            _recipeId, _organizationId, _recipeArgs, _isRandomRequiredForRecipe
+        );
     }
 
     function deleteRecipe(uint64 _recipeId) public {
@@ -209,6 +216,6 @@ library LibAdvancedCrafting {
 
         getRecipeInfo(_recipeId).endTime = uint64(block.timestamp);
 
-        emit AdvancedCraftingStorage.RecipeDeleted(_recipeId);
+        emit LibAdvancedCraftingStorage.RecipeDeleted(_recipeId);
     }
 }
