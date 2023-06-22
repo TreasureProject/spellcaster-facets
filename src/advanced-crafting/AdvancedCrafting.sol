@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { LibAdvancedCrafting } from "./LibAdvancedCrafting.sol";
+import { StartCraftingParams, LibAdvancedCrafting } from "./LibAdvancedCrafting.sol";
 import { AdvancedCraftingBase } from "./AdvancedCraftingBase.sol";
 import { CreateRecipeArgs } from "src/interfaces/IAdvancedCrafting.sol";
 
@@ -20,7 +20,9 @@ contract AdvancedCrafting is AdvancedCraftingBase {
         LibAdvancedCrafting.createRecipe(_organizationId, _recipeArgs);
     }
 
-    function startCrafting() external { }
+    function startCraftingBatch(StartCraftingParams[] calldata _params) external {
+        LibAdvancedCrafting.startCraftingBatch(_params);
+    }
 
     function deleteRecipe(uint64 _recipeId) external {
         LibAdvancedCrafting.deleteRecipe(_recipeId);

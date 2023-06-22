@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import { CreateRecipeArgs, ResultType, CollectionType, InputType } from "src/interfaces/IAdvancedCrafting.sol";
+import { IRandomizer } from "src/interfaces/IRandomizer.sol";
 
 library LibAdvancedCraftingStorage {
     struct Layout {
+        IRandomizer randomizer;
         /**
          * @dev Returns a recipe for the given id
          */
@@ -36,6 +38,8 @@ library LibAdvancedCraftingStorage {
         uint64 indexed recipeId, bytes32 indexed organizationId, CreateRecipeArgs recipeArgs, bool isRandomRequired
     );
 
+    event CraftingStarted(uint64 indexed recipeId, address indexed user, uint16[] inputOptionsIndices);
+
     event RecipeDeleted(uint64 indexed recipeId);
 
     error InvalidRecipeId();
@@ -51,6 +55,16 @@ library LibAdvancedCraftingStorage {
     error BadInputAmount();
 
     error BadLootTable();
+
+    error RecipeNotApproved();
+
+    error RecipeNotActive();
+
+    error RecipeCraftedTooManyTimes();
+
+    error InvalidNumberOfInputs();
+
+    error DoesNotOwnEnoughItem(address collection, uint256 tokenId, uint256 amount);
 }
 
 struct CraftingInfo {
@@ -84,7 +98,6 @@ enum CraftingStatus {
  * @param isRandomRequired Indicates if the crafting recipe requires a random number.
  * If it does, it will be split into two transactions. The recipe may still be split into two txns regardless if the recipe takes time.
  * @param isRecipeApproved Indicates if all the necessary contractsThatNeedApproved have been approved. This way, no looping needs to be done when the craft occurs.
- * @param recipeHandler If set, this contract will handle custom hooks or custom inputs/outputs for this recipe.
  * @param owner The owner of the recipe
  */
 struct RecipeInfo {
@@ -107,13 +120,11 @@ struct RecipeInfo {
     // Slot 7
     mapping(uint16 => RecipeLootTable) indexToLootTable;
     // Slot 8 (208/256)
+    address owner;
     uint16 numberOfInputs;
     uint16 numberOfLootTables;
     bool isRandomRequired;
     bool isRecipeApproved;
-    address recipeHandler;
-    // Slot 9 (160/256)
-    address owner;
 }
 
 /**

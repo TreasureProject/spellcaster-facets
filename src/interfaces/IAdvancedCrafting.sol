@@ -9,7 +9,6 @@ struct CreateRecipeArgs {
     uint64 endTime;
     uint64 timeToComplete;
     uint32 maxCrafts;
-    address recipeHandler;
     RecipeInputArgs[] inputs;
     RecipeLootTableArgs[] lootTables;
 }
@@ -68,11 +67,7 @@ struct LootTableResultArgs {
 
 enum ResultType
 // The given result is minted
-{
-    MINT,
-    // The recipeHandler handles this inputOption.
-    CUSTOM
-}
+{ MINT }
 
 enum CollectionType {
     ERC1155,
@@ -86,7 +81,5 @@ enum InputType
     // This input is transferred to the crafting contract while the craft occurs
     TRANSFERED,
     // This input is verified to be owned by the user, but not transfered.
-    OWNED,
-    // The recipeHandler handles this inputOption.
-    CUSTOM
+    OWNED
 }

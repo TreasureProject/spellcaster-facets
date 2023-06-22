@@ -5,8 +5,12 @@ import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/Upgradea
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { LibOrganizationManager } from "src/libraries/LibOrganizationManager.sol";
 import { LibMeta } from "src/libraries/LibMeta.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
+import { IERC1155Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {
+    CollectionType,
     CreateRecipeArgs,
     RecipeInputArgs,
     RecipeInputOptionArgs,
@@ -16,13 +20,22 @@ import {
     InputType
 } from "src/interfaces/IAdvancedCrafting.sol";
 
-import { LibAdvancedCraftingStorage, RecipeInfo } from "src/advanced-crafting/LibAdvancedCraftingStorage.sol";
+import {
+    CraftingInfo,
+    RecipeInput,
+    RecipeInputOption,
+    LibAdvancedCraftingStorage,
+    RecipeInfo,
+    ItemInfo
+} from "src/advanced-crafting/LibAdvancedCraftingStorage.sol";
 
 /**
  * @title Advanced Crafting Library
  * @dev This library is used to implement features that use/update storage data for the Advanced Crafting contracts
  */
 library LibAdvancedCrafting {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
     function AdvancedCrafting_init() internal {
         setRecipeIdCur(1);
         setCraftingIdCur(1);
@@ -48,16 +61,49 @@ library LibAdvancedCrafting {
         return LibAdvancedCraftingStorage.layout().recipeIdToInfo[_recipeId];
     }
 
-    function requireValidRecipe(uint64 _recipeId) internal view {
+    function getCraftingInfo(address _user, uint64 _craftingId) internal view returns (CraftingInfo storage) {
+        return LibAdvancedCraftingStorage.layout().userToCraftingIdToInfo[_user][_craftingId];
+    }
+
+    function _requireValidRecipe(uint64 _recipeId) private view {
         if (_recipeId == 0 || _recipeId >= LibAdvancedCraftingStorage.layout().recipeIdCur) {
             revert LibAdvancedCraftingStorage.InvalidRecipeId();
         }
     }
 
-    function requireRecipeOwner(uint64 _recipeId, address _user) internal view {
+    function _requireRecipeOwner(uint64 _recipeId, address _user) private view {
         if (_user != getRecipeInfo(_recipeId).owner) {
             revert LibAdvancedCraftingStorage.RecipeOwnerOnly();
         }
+    }
+
+    function _requireApprovedRecipe(uint64 _recipeId) private view {
+        if (getRecipeInfo(_recipeId).contractsThatNeedApproved.length > 0) {
+            revert LibAdvancedCraftingStorage.RecipeNotApproved();
+        }
+    }
+
+    function _requireActiveRecipe(uint64 _recipeId) private view {
+        RecipeInfo storage _recipeInfo = getRecipeInfo(_recipeId);
+        if (
+            _recipeInfo.startTime < block.timestamp
+                || (_recipeInfo.endTime > 0 && _recipeInfo.endTime < block.timestamp)
+        ) {
+            revert LibAdvancedCraftingStorage.RecipeNotActive();
+        }
+    }
+
+    function _validateAndIncrementRecipeUsage(uint64 _recipeId) private {
+        RecipeInfo storage _recipeInfo = getRecipeInfo(_recipeId);
+        if (_recipeInfo.maxCrafts != 0 && _recipeInfo.currentCrafts >= _recipeInfo.maxCrafts) {
+            revert LibAdvancedCraftingStorage.RecipeCraftedTooManyTimes();
+        }
+
+        _recipeInfo.currentCrafts++;
+    }
+
+    function _requestRandomNumber() private returns (uint64) {
+        return uint64(LibAdvancedCraftingStorage.layout().randomizer.requestRandomNumber());
     }
 
     function createRecipe(bytes32 _organizationId, CreateRecipeArgs calldata _recipeArgs) public {
@@ -77,11 +123,6 @@ library LibAdvancedCrafting {
         _recipeInfo.maxCrafts = _recipeArgs.maxCrafts;
         _recipeInfo.owner = LibMeta._msgSender();
 
-        if (_recipeArgs.recipeHandler != address(0)) {
-            _recipeInfo.recipeHandler = _recipeArgs.recipeHandler;
-            _recipeInfo.contractsThatNeedApproved.push(_recipeArgs.recipeHandler);
-        }
-
         _recipeInfo.numberOfInputs = uint16(_recipeArgs.inputs.length);
         // Input validation
         for (uint16 _i = 0; _i < _recipeArgs.inputs.length; _i++) {
@@ -99,11 +140,6 @@ library LibAdvancedCrafting {
 
             for (uint16 _j = 0; _j < _input.options.length; _j++) {
                 RecipeInputOptionArgs calldata _inputOption = _input.options[_j];
-
-                if (_inputOption.itemInfo.collectionAddress == address(0) && _inputOption.inputType != InputType.CUSTOM)
-                {
-                    revert LibAdvancedCraftingStorage.InvalidInputOption();
-                }
 
                 _recipeInfo.indexToInput[_i].indexToInputOption[_j].inputType = _inputOption.inputType;
                 _recipeInfo.indexToInput[_i].indexToInputOption[_j].timeReduction = _inputOption.timeReduction;
@@ -211,11 +247,141 @@ library LibAdvancedCrafting {
     }
 
     function deleteRecipe(uint64 _recipeId) public {
-        requireValidRecipe(_recipeId);
-        requireRecipeOwner(_recipeId, LibMeta._msgSender());
+        _requireValidRecipe(_recipeId);
+        _requireRecipeOwner(_recipeId, LibMeta._msgSender());
 
         getRecipeInfo(_recipeId).endTime = uint64(block.timestamp);
 
         emit LibAdvancedCraftingStorage.RecipeDeleted(_recipeId);
     }
+
+    function startCraftingBatch(StartCraftingParams[] calldata _params) internal {
+        require(_params.length > 0, "Bad length");
+
+        for (uint256 i = 0; i < _params.length; i++) {
+            (uint64 _craftingId, bool _isRecipeInstant) = _startCrafting(_params[i]);
+            if (_isRecipeInstant) {
+                // No random is required if _isRecipeInstant == true.
+                // Safe to pass in 0.
+                //
+                _endCraftingPostValidation(_craftingId, 0);
+            }
+        }
+    }
+
+    // Verifies recipe info, inputs, and transfers those inputs.
+    // Returns if this recipe can be completed instantly
+    function _startCrafting(StartCraftingParams calldata _craftingParams) private returns (uint64, bool) {
+        _requireValidRecipe(_craftingParams.recipeId);
+        _requireApprovedRecipe(_craftingParams.recipeId);
+        _requireActiveRecipe(_craftingParams.recipeId);
+
+        _validateAndIncrementRecipeUsage(_craftingParams.recipeId);
+
+        uint64 _craftingId = getCraftingIdCur();
+        setCraftingIdCur(_craftingId + 1);
+
+        RecipeInfo storage _recipeInfo = getRecipeInfo(_craftingParams.recipeId);
+
+        uint64 _totalTimeReduction = _validateAndHandleInputs(_recipeInfo, _craftingParams);
+
+        CraftingInfo storage _userCrafting = getCraftingInfo(LibMeta._msgSender(), _craftingId);
+
+        if (_recipeInfo.timeToComplete > _totalTimeReduction) {
+            _userCrafting.timeOfCompletion = uint64(block.timestamp + _recipeInfo.timeToComplete - _totalTimeReduction);
+        }
+
+        if (_recipeInfo.isRandomRequired) {
+            _userCrafting.requestId = _requestRandomNumber();
+        }
+
+        _userCrafting.recipeId = _craftingParams.recipeId;
+
+        // Indicates if this recipe will complete in the same txn as the startCrafting txn.
+        bool _isRecipeInstant = !_recipeInfo.isRandomRequired && _userCrafting.timeOfCompletion == 0;
+
+        emit LibAdvancedCraftingStorage.CraftingStarted(
+            _craftingParams.recipeId, LibMeta._msgSender(), _craftingParams.inputOptionsIndices
+        );
+
+        return (_craftingId, _isRecipeInstant);
+    }
+
+    function _validateAndHandleInputs(
+        RecipeInfo storage _recipeInfo,
+        StartCraftingParams calldata _craftingParams
+    ) private returns (uint64 totalTimeReduction_) {
+        // Because the inputs can have a given "amount" of inputs that must be supplied,
+        // the input index provided, and those in the recipe may not be identical.
+        uint8 _paramInputIndex;
+
+        for (uint16 _i = 0; _i < _recipeInfo.numberOfInputs; _i++) {
+            RecipeInput storage _recipeInput = _recipeInfo.indexToInput[_i];
+
+            for (uint256 _j = 0; _j < _recipeInput.amount; _j++) {
+                require(_paramInputIndex < _craftingParams.inputOptionsIndices.length, "Bad number of inputs");
+                uint16 _index = _craftingParams.inputOptionsIndices[_paramInputIndex];
+                _paramInputIndex++;
+
+                if (_index >= _recipeInput.numberOfInputOptions) {
+                    revert("Bad Input index");
+                }
+
+                // J must equal 0. If they are trying to skip an optional amount, it MUST be the first input supplied for the RecipeInput
+                if (_j == 0 && _index == type(uint16).max && !_recipeInput.isRequired) {
+                    // Break out of the amount loop. They are not providing any of the input
+                    break;
+                } else if (_index == type(uint16).max) {
+                    revert("Supplied no input to required input");
+                } else {
+                    RecipeInputOption storage _inputOption = _recipeInput.indexToInputOption[_index];
+
+                    totalTimeReduction_ += _inputOption.timeReduction;
+
+                    if (_inputOption.inputType == InputType.BURNED) {
+                        _transferAsset(_inputOption.itemInfo, LibMeta._msgSender(), address(0xdead));
+                    } else if (_inputOption.inputType == InputType.TRANSFERED) {
+                        _transferAsset(_inputOption.itemInfo, LibMeta._msgSender(), address(this));
+                    } else {
+                        // OWNED
+                        _verifyOwnership(_inputOption.itemInfo, LibMeta._msgSender());
+                    }
+                }
+            }
+        }
+    }
+
+    function _transferAsset(ItemInfo storage _itemInfo, address _from, address _to) private {
+        if (_itemInfo.collectionType == CollectionType.ERC1155) {
+            IERC1155Upgradeable(_itemInfo.collectionAddress).safeTransferFrom(
+                _from, _to, _itemInfo.tokenId, _itemInfo.amount, ""
+            );
+        } else {
+            // ERC20
+            IERC20Upgradeable(_itemInfo.collectionAddress).safeTransferFrom(_from, _to, _itemInfo.amount);
+        }
+    }
+
+    function _verifyOwnership(ItemInfo storage _itemInfo, address _user) private view {
+        uint256 _amountOwned;
+        if (_itemInfo.collectionType == CollectionType.ERC1155) {
+            _amountOwned = IERC1155Upgradeable(_itemInfo.collectionAddress).balanceOf(_user, _itemInfo.tokenId);
+        } else {
+            // ERC20
+            _amountOwned = IERC20Upgradeable(_itemInfo.collectionAddress).balanceOf(_user);
+        }
+
+        if (_amountOwned < _itemInfo.amount) {
+            revert LibAdvancedCraftingStorage.DoesNotOwnEnoughItem(
+                _itemInfo.collectionAddress, _itemInfo.tokenId, _itemInfo.amount
+            );
+        }
+    }
+
+    function _endCraftingPostValidation(uint64 _craftingId, uint256 _randomNumber) private { }
+}
+
+struct StartCraftingParams {
+    uint64 recipeId;
+    uint16[] inputOptionsIndices;
 }
