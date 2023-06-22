@@ -24,6 +24,10 @@ contract AdvancedCrafting is AdvancedCraftingBase {
         LibAdvancedCrafting.startCraftingBatch(_params);
     }
 
+    function endCraftingBatch(uint64[] calldata _craftingIds) external {
+        LibAdvancedCrafting.endCraftingBatch(_craftingIds);
+    }
+
     function deleteRecipe(uint64 _recipeId) external {
         LibAdvancedCrafting.deleteRecipe(_recipeId);
     }

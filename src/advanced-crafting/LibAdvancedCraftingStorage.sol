@@ -38,7 +38,11 @@ library LibAdvancedCraftingStorage {
         uint64 indexed recipeId, bytes32 indexed organizationId, CreateRecipeArgs recipeArgs, bool isRandomRequired
     );
 
-    event CraftingStarted(uint64 indexed recipeId, address indexed user, uint16[] inputOptionsIndices);
+    event CraftingStarted(
+        uint64 indexed recipeId, uint64 indexed craftingId, address indexed user, uint16[] inputOptionsIndices
+    );
+
+    event CraftingEnded(uint64 indexed craftingId, LootTableOutcome[] outcomes);
 
     event RecipeDeleted(uint64 indexed recipeId);
 
@@ -67,11 +71,26 @@ library LibAdvancedCraftingStorage {
     error DoesNotOwnEnoughItem(address collection, uint256 tokenId, uint256 amount);
 }
 
+// For event
+//
+struct LootTableOutcome {
+    LootTableOptionOutcome[] outcomes;
+}
+
+// For event
+//
+struct LootTableOptionOutcome {
+    ItemInfo[] mintedItems;
+}
+
 struct CraftingInfo {
+    address user;
     CraftingStatus status;
     uint64 timeOfCompletion;
     uint64 recipeId;
     uint64 requestId;
+    ItemInfo[] inputsToTransferBack;
+    mapping(address => mapping(uint256 => uint256)) collectionToItemIdToAmountProvided;
 }
 
 enum CraftingStatus {

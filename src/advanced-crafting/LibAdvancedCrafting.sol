@@ -8,6 +8,7 @@ import { LibMeta } from "src/libraries/LibMeta.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/IERC20Upgradeable.sol";
 import { IERC1155Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC1155/IERC1155Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-diamond/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-diamond/utils/AddressUpgradeable.sol";
 
 import {
     CollectionType,
@@ -21,12 +22,20 @@ import {
 } from "src/interfaces/IAdvancedCrafting.sol";
 
 import {
+    LootTableOutcome,
+    LootTableOptionOutcome,
     CraftingInfo,
     RecipeInput,
     RecipeInputOption,
     LibAdvancedCraftingStorage,
     RecipeInfo,
-    ItemInfo
+    RecipeLootTable,
+    ItemInfo,
+    RecipeLootTableOption,
+    LootTableOdds,
+    CraftingStatus,
+    LootTableResult,
+    LootTableBoostOdds
 } from "src/advanced-crafting/LibAdvancedCraftingStorage.sol";
 
 /**
@@ -104,6 +113,10 @@ library LibAdvancedCrafting {
 
     function _requestRandomNumber() private returns (uint64) {
         return uint64(LibAdvancedCraftingStorage.layout().randomizer.requestRandomNumber());
+    }
+
+    function _revealRandomNumber(uint64 _requestId) private view returns (uint256) {
+        return LibAdvancedCraftingStorage.layout().randomizer.revealRandomNumber(_requestId);
     }
 
     function createRecipe(bytes32 _organizationId, CreateRecipeArgs calldata _recipeArgs) public {
@@ -282,10 +295,9 @@ library LibAdvancedCrafting {
         setCraftingIdCur(_craftingId + 1);
 
         RecipeInfo storage _recipeInfo = getRecipeInfo(_craftingParams.recipeId);
-
-        uint64 _totalTimeReduction = _validateAndHandleInputs(_recipeInfo, _craftingParams);
-
         CraftingInfo storage _userCrafting = getCraftingInfo(LibMeta._msgSender(), _craftingId);
+
+        uint64 _totalTimeReduction = _validateAndHandleInputs(_userCrafting, _recipeInfo, _craftingParams);
 
         if (_recipeInfo.timeToComplete > _totalTimeReduction) {
             _userCrafting.timeOfCompletion = uint64(block.timestamp + _recipeInfo.timeToComplete - _totalTimeReduction);
@@ -296,18 +308,20 @@ library LibAdvancedCrafting {
         }
 
         _userCrafting.recipeId = _craftingParams.recipeId;
+        _userCrafting.status = CraftingStatus.ACTIVE;
 
         // Indicates if this recipe will complete in the same txn as the startCrafting txn.
         bool _isRecipeInstant = !_recipeInfo.isRandomRequired && _userCrafting.timeOfCompletion == 0;
 
         emit LibAdvancedCraftingStorage.CraftingStarted(
-            _craftingParams.recipeId, LibMeta._msgSender(), _craftingParams.inputOptionsIndices
+            _craftingParams.recipeId, _craftingId, LibMeta._msgSender(), _craftingParams.inputOptionsIndices
         );
 
         return (_craftingId, _isRecipeInstant);
     }
 
     function _validateAndHandleInputs(
+        CraftingInfo storage _craftingInfo,
         RecipeInfo storage _recipeInfo,
         StartCraftingParams calldata _craftingParams
     ) private returns (uint64 totalTimeReduction_) {
@@ -336,11 +350,17 @@ library LibAdvancedCrafting {
                 } else {
                     RecipeInputOption storage _inputOption = _recipeInput.indexToInputOption[_index];
 
+                    _craftingInfo.collectionToItemIdToAmountProvided[_inputOption.itemInfo.collectionAddress][_inputOption
+                        .itemInfo
+                        .tokenId] += _inputOption.itemInfo.amount;
+
                     totalTimeReduction_ += _inputOption.timeReduction;
 
                     if (_inputOption.inputType == InputType.BURNED) {
                         _transferAsset(_inputOption.itemInfo, LibMeta._msgSender(), address(0xdead));
                     } else if (_inputOption.inputType == InputType.TRANSFERED) {
+                        _craftingInfo.inputsToTransferBack.push(_inputOption.itemInfo);
+
                         _transferAsset(_inputOption.itemInfo, LibMeta._msgSender(), address(this));
                     } else {
                         // OWNED
@@ -378,7 +398,184 @@ library LibAdvancedCrafting {
         }
     }
 
-    function _endCraftingPostValidation(uint64 _craftingId, uint256 _randomNumber) private { }
+    function endCraftingBatch(uint64[] calldata _craftingIds) internal {
+        require(_craftingIds.length > 0, "Bad length");
+
+        for (uint256 _i = 0; _i < _craftingIds.length; _i++) {
+            _endCrafting(_craftingIds[_i]);
+        }
+    }
+
+    function _endCrafting(uint64 _craftingId) private {
+        CraftingInfo storage _craftingInfo = getCraftingInfo(LibMeta._msgSender(), _craftingId);
+        require(_craftingInfo.user == LibMeta._msgSender(), "Not your crafting instance");
+        require(block.timestamp >= _craftingInfo.timeOfCompletion, "Crafting is not complete");
+        require(_craftingInfo.status == CraftingStatus.ACTIVE, "Bad crafting status");
+
+        uint256 _randomNumber;
+        if (_craftingInfo.requestId > 0) {
+            _randomNumber = _revealRandomNumber(_craftingInfo.requestId);
+        }
+
+        _endCraftingPostValidation(_craftingId, _randomNumber);
+    }
+
+    function _endCraftingPostValidation(uint64 _craftingId, uint256 _randomNumber) private {
+        CraftingInfo storage _craftingInfo = getCraftingInfo(LibMeta._msgSender(), _craftingId);
+        RecipeInfo storage _recipeInfo = getRecipeInfo(_craftingInfo.recipeId);
+
+        _craftingInfo.status = CraftingStatus.FINISHED;
+
+        LootTableOutcome[] memory _outcomes = new LootTableOutcome[](_recipeInfo.numberOfLootTables);
+
+        for (uint16 _i = 0; _i < _recipeInfo.numberOfLootTables; _i++) {
+            // If needed, get a fresh random for the next output decision.
+            if (_i != 0 && _randomNumber != 0) {
+                _randomNumber = uint256(keccak256(abi.encodePacked(_randomNumber, _randomNumber)));
+            }
+
+            _outcomes[_i] = _determineAndMintLootTable(_recipeInfo.indexToLootTable[_i], _craftingInfo, _randomNumber);
+        }
+
+        for (uint256 i = 0; i < _craftingInfo.inputsToTransferBack.length; i++) {
+            ItemInfo storage _inputToTransferBack = _craftingInfo.inputsToTransferBack[i];
+
+            _transferAsset(_inputToTransferBack, address(this), LibMeta._msgSender());
+        }
+
+        emit LibAdvancedCraftingStorage.CraftingEnded(_craftingId, _outcomes);
+    }
+
+    function _determineAndMintLootTable(
+        RecipeLootTable storage _lootTable,
+        CraftingInfo storage _craftingInfo,
+        uint256 _randomNumber
+    ) private returns (LootTableOutcome memory _outcome) {
+        uint8 _rollAmount = _determineRollAmount(_lootTable, _craftingInfo, _randomNumber);
+
+        _randomNumber = uint256(keccak256(abi.encodePacked(_randomNumber, _randomNumber)));
+
+        _outcome.outcomes = new LootTableOptionOutcome[](_rollAmount);
+
+        for (uint256 _i = 0; _i < _rollAmount; _i++) {
+            if (_i != 0 && _randomNumber != 0) {
+                _randomNumber = uint256(keccak256(abi.encodePacked(_randomNumber, _randomNumber)));
+            }
+
+            RecipeLootTableOption storage _selectedOption =
+                _determineLootTableOption(_lootTable, _craftingInfo, _randomNumber);
+            _randomNumber = uint256(keccak256(abi.encodePacked(_randomNumber, _randomNumber)));
+
+            _outcome.outcomes[_i] = _mintLootTableOption(_selectedOption);
+        }
+    }
+
+    function _determineLootTableOption(
+        RecipeLootTable storage _lootTable,
+        CraftingInfo storage _craftingInfo,
+        uint256 _randomNumber
+    ) private view returns (RecipeLootTableOption storage) {
+        if (_lootTable.numberOfOptions == 1) {
+            return _lootTable.indexToOption[0];
+        } else {
+            uint256 _lootTableOptionResult = _randomNumber % 100000;
+            uint32 _topRange = 0;
+            for (uint16 _j = 0; _j < _lootTable.numberOfOptions; _j++) {
+                RecipeLootTableOption storage _outputOption = _lootTable.indexToOption[_j];
+                uint32 _adjustedOdds = _adjustLootTableOdds(_outputOption.optionOdds, _craftingInfo);
+                _topRange += _adjustedOdds;
+                if (_lootTableOptionResult < _topRange) {
+                    return _outputOption;
+                }
+            }
+        }
+
+        revert("No RecipeLootTableOption found");
+    }
+
+    // Determines how many "rolls" the user has for the passed in loot table.
+    function _determineRollAmount(
+        RecipeLootTable storage _lootTable,
+        CraftingInfo storage _craftingInfo,
+        uint256 _randomNumber
+    ) private view returns (uint8) {
+        uint8 _rollAmount;
+        if (_lootTable.rollAmounts.length == 1) {
+            _rollAmount = _lootTable.rollAmounts[0];
+        } else {
+            uint256 _rollAmountResult = _randomNumber % 100000;
+            uint32 _topRange = 0;
+
+            for (uint16 _i = 0; _i < _lootTable.rollAmounts.length; _i++) {
+                uint32 _adjustedOdds = _adjustLootTableOdds(_lootTable.rollIndexToOdds[_i], _craftingInfo);
+                _topRange += _adjustedOdds;
+                if (_rollAmountResult < _topRange) {
+                    _rollAmount = _lootTable.rollAmounts[_i];
+                    break;
+                }
+            }
+        }
+        return _rollAmount;
+    }
+
+    function _mintLootTableOption(RecipeLootTableOption storage _selectedOption)
+        private
+        returns (LootTableOptionOutcome memory _outcome)
+    {
+        _outcome.mintedItems = new ItemInfo[](_selectedOption.numberOfResults);
+
+        for (uint16 _i; _i < _selectedOption.numberOfResults; _i++) {
+            LootTableResult storage _result = _selectedOption.indexToResults[_i];
+
+            if (_result.collectionType == CollectionType.ERC1155) {
+                AddressUpgradeable.functionCall(
+                    _result.collectionAddress,
+                    abi.encodePacked(
+                        _result.mintSelector, abi.encode(LibMeta._msgSender()), _result.tokenId, _result.amount
+                    )
+                );
+            } else {
+                // ERC20
+                AddressUpgradeable.functionCall(
+                    _result.collectionAddress,
+                    abi.encodePacked(_result.mintSelector, abi.encode(LibMeta._msgSender()), _result.amount)
+                );
+            }
+
+            _outcome.mintedItems[_i] =
+                ItemInfo(_result.tokenId, _result.amount, _result.collectionType, _result.collectionAddress);
+        }
+    }
+
+    function _adjustLootTableOdds(
+        LootTableOdds storage _lootTableOdds,
+        CraftingInfo storage _craftingInfo
+    ) private view returns (uint32) {
+        if (_lootTableOdds.numberOfBoostOdds == 0) {
+            return _lootTableOdds.baseOdds;
+        }
+
+        int32 _trueOdds = int32(_lootTableOdds.baseOdds);
+
+        for (uint16 _i = 0; _i < _lootTableOdds.numberOfBoostOdds; _i++) {
+            LootTableBoostOdds storage _boostOdds = _lootTableOdds.indexToBoostOdds[_i];
+            uint256 _amountProvided =
+                _craftingInfo.collectionToItemIdToAmountProvided[_boostOdds.collectionAddress][_boostOdds.tokenId];
+            if (_amountProvided < _boostOdds.minimumAmount) {
+                continue;
+            }
+
+            _trueOdds += _boostOdds.boostOddChanges;
+        }
+
+        if (_trueOdds > 100000) {
+            return 100000;
+        } else if (_trueOdds < 0) {
+            return 0;
+        } else {
+            return uint32(_trueOdds);
+        }
+    }
 }
 
 struct StartCraftingParams {
