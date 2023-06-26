@@ -60,18 +60,6 @@ contract GuildManager is GuildManagerSettings {
     /**
      * @inheritdoc IGuildManager
      */
-    function grantGuildAdmin(
-        address _account,
-        bytes32 _organizationId,
-        uint32 _guildId
-    ) external contractsAreSet whenNotPaused supportsMetaTx(_organizationId) {
-        LibGuildManager.requireGuildOwner(_organizationId, _guildId, "GRANT_ADMIN_ROLE");
-        LibAccessControlRoles.grantGuildAdmin(_account, _organizationId, _guildId);
-    }
-
-    /**
-     * @inheritdoc IGuildManager
-     */
     function updateGuildInfo(
         bytes32 _organizationId,
         uint32 _guildId,
