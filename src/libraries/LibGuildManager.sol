@@ -247,7 +247,6 @@ library LibGuildManager {
         _l.organizationIdToGuildIdToInfo[_organizationId][_newGuildId].guildStatus = GuildStatus.ACTIVE;
 
         LibAccessControlRoles.grantGuildTerminator(LibMeta._msgSender(), _organizationId, _newGuildId);
-        LibAccessControlRoles.grantGuildAdmin(LibMeta._msgSender(), _organizationId, _newGuildId);
 
         emit GuildManagerStorage.GuildCreated(_organizationId, _newGuildId);
 
@@ -372,11 +371,12 @@ library LibGuildManager {
         uint32 _guildId,
         address _user,
         uint8 _memberLevel
-    ) internal onlyActiveGuild(_organizationId, _guildId) {
+    )
+        internal
+        onlyGuildOwnerOrAdmin(_organizationId, _guildId, "ADJUST_MEMBER_LEVEL")
+        onlyActiveGuild(_organizationId, _guildId)
+    {
         require(_memberLevel > 0 && _memberLevel < 6, "Not a valid member level.");
-
-        //Make this require the specific role.
-        LibAccessControlRoles.requireGuildAdmin(LibMeta._msgSender(), _organizationId, _guildId);
 
         GuildUserInfo storage _userInfo = getGuildUserInfo(_organizationId, _guildId, _user);
 

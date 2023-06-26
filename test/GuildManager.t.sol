@@ -523,10 +523,15 @@ contract GuildManagerTest is TestBase, DiamondManager, ERC1155HolderUpgradeable 
         assertEq(1, manager.getGuildMemberInfo(org1, guild1, leet).memberLevel);
 
         vm.prank(leet);
-        vm.expectRevert(err(LibAccessControlRoles.IsNotGuildAdmin.selector, leet, org1, guild1));
+        vm.expectRevert(err(GuildManagerStorage.NotGuildOwnerOrAdmin.selector, leet, "ADJUST_MEMBER_LEVEL"));
         manager.adjustMemberLevel(org1, guild1, leet, 3);
 
-        manager.grantGuildAdmin(leet, org1, guild1);
+        address[] memory _toMakeAdmin = new address[](1);
+        _toMakeAdmin[0] = leet;
+        bool[] memory _isAdmin = new bool[](1);
+        _isAdmin[0] = true;
+
+        manager.changeGuildAdmins(org1, guild1, _toMakeAdmin, _isAdmin);
 
         vm.prank(leet);
         manager.adjustMemberLevel(org1, guild1, leet, 3);

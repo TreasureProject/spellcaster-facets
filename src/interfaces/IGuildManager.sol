@@ -133,14 +133,6 @@ interface IGuildManager {
     function grantGuildTerminator(address _account, bytes32 _organizationId, uint32 _guildId) external;
 
     /**
-     * @dev Grants a given user guild admin priviliges under a certain guild
-     * @param _account The user to give admin
-     * @param _organizationId The org they belong to
-     * @param _guildId The guild they belong to
-     */
-    function grantGuildAdmin(address _account, bytes32 _organizationId, uint32 _guildId) external;
-
-    /**
      * @dev Updates the guild info for the given guild.
      * @param _organizationId The organization the guild is within
      * @param _guildId The guild to update
