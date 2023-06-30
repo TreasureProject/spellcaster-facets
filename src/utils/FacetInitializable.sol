@@ -19,11 +19,7 @@ abstract contract FacetInitializable {
     modifier facetInitializer(bytes32 _facetId) {
         // Allow infinite constructor initializations to support multiple inheritance.
         // Otherwise, this contract/facet must not have been previously initialized.
-        if (
-            InitializableStorage.layout()._initializing
-                ? !_isConstructor()
-                : FacetInitializableStorage.getState().initialized[_facetId]
-        ) {
+        if (!_isConstructor() && FacetInitializableStorage.getState().initialized[_facetId]) {
             revert FacetInitializableStorage.AlreadyInitialized(_facetId);
         }
         bool _isTopLevelCall = !InitializableStorage.layout()._initializing;
