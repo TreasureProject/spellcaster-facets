@@ -1,18 +1,18 @@
 mod bytes;
 
+use ethabi::Token;
+use itertools::Itertools;
+use rustc_hex::FromHex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::process;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use rustc_hex::FromHex;
-use itertools::Itertools;
-use ethabi::Token;
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
 struct Abi {
-    methodIdentifiers: HashMap<String, String>
+    methodIdentifiers: HashMap<String, String>,
 }
 
 fn main() {
@@ -30,14 +30,17 @@ fn main() {
     file_path.push_str(contract_name);
     file_path.push_str(".json");
 
-    let contents = fs::read_to_string(file_path)
-        .expect("Should have been able to read the file");
+    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     let abi: Abi = serde_json::from_str(&contents).unwrap();
 
     let mut token_vec: Vec<Token> = Vec::<Token>::new();
 
     for (key, val) in abi.methodIdentifiers.iter().sorted() {
-        if key == "init(bytes)" || (key == "supportsInterface(bytes4)" && !contract_name.to_lowercase().contains("loupe")) {
+        if key == "init(bytes)"
+            || key == "eip712Domain()"
+            || (key == "supportsInterface(bytes4)"
+                && !contract_name.to_lowercase().contains("loupe"))
+        {
             continue;
         }
 
@@ -49,3 +52,4 @@ fn main() {
 
     println!("{}", bytes::Bytes::from(encoded));
 }
+
