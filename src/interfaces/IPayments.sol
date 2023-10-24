@@ -89,6 +89,21 @@ interface IPayments {
     ) external;
 
     /**
+     * @dev Make a payment in a USD-backed token (USDC, USDT, etc.) to the recipient priced in another erc20 token
+     * (MAGIC, ARB, etc)
+     * @param _recipient The address of the payor to take the payment from
+     * @param _usdToken The address of the USD-backed token to take
+     * @param _paymentAmountInPricedToken The desired payment amount, priced in another erc20 token
+     * @param _pricedERC20 The address of the ERC20 that the payment amount is priced in
+     */
+    function makeUsdPaymentByPricedToken(
+        address _recipient,
+        address _usdToken,
+        uint256 _paymentAmountInPricedToken,
+        address _pricedERC20
+    ) external;
+
+    /**
      * @dev Take payment in gas tokens (ETH, MATIC, etc.) priced in another token (USD/ERC20)
      * @param _recipient The address to send the payment to
      * @param _paymentAmountInPricedToken The desired payment amount, priced in another token, depending on what `_priceType` is
@@ -161,6 +176,19 @@ interface IPayments {
         address _paymentToken,
         uint256 _paymentAmountInPricedToken,
         PriceType _priceType,
+        address _pricedERC20
+    ) external view returns (uint256 paymentAmount_);
+
+    /**
+     * @dev Calculates the price of the input token relative to the output token
+     * @param _usdToken The token to convert from. If address(0), then the input is in gas tokens
+     * @param _paymentAmountInPricedToken The desired payment amount, priced in either the `_pricedERC20`, gas token, or USD depending on `_priceType`
+     *      used to calculate the output amount
+     * @param _pricedERC20 The token to convert to. If address(0), then the output is in gas tokens or USD, depending on `_priceType`
+     */
+    function calculateUsdPaymentAmountByPricedToken(
+        address _usdToken,
+        uint256 _paymentAmountInPricedToken,
         address _pricedERC20
     ) external view returns (uint256 paymentAmount_);
 

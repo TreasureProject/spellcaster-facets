@@ -18,6 +18,14 @@ import { MockV3Aggregator } from "@chainlink/contracts/src/v0.8/tests/MockV3Aggr
 import { PaymentsFacet, PaymentsStorage, PriceType } from "src/payments/PaymentsFacet.sol";
 import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 
+contract PaymentFacetInit {
+    function init(address _usdc, address _usdt) external {
+        PaymentsStorage.Layout storage _layout = PaymentsStorage.layout();
+        _layout.usdcAddress = _usdc;
+        _layout.usdtAddress = _usdt;
+    }
+}
+
 contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable {
     using DiamondUtils for Diamond;
     using AddressUpgradeable for address;
@@ -55,6 +63,7 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
     int256 public magicToEthPrice = 906.84 ether;
 
     ERC20MockDecimals internal mockUSDC = new ERC20MockDecimals(6);
+    ERC20MockDecimals internal mockUSDT = new ERC20MockDecimals(6);
     ERC20MockDecimals internal mockWETH = new ERC20MockDecimals(18);
     ERC20MockDecimals internal mockMagic = new ERC20MockDecimals(18);
 
@@ -65,7 +74,7 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         ethMagicPriceFeed = new MockV3Aggregator(18, magicToEthPrice);
 
         FacetInfo[] memory _facetInfo = new FacetInfo[](1);
-        Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](1);
+        Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](2);
 
         _facetInfo[0] = FacetInfo(address(new PaymentsFacet()), "PaymentsFacet", IDiamondCut.FacetCutAction.Add);
         _initializations[0] = Diamond.Initialization({
@@ -73,6 +82,10 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
             initData: abi.encodeWithSelector(
                 PaymentsFacet.PaymentsFacet_init.selector, address(ethUsdPriceFeed), address(mockMagic)
                 )
+        });
+        _initializations[1] = Diamond.Initialization({
+            initContract: address(new PaymentFacetInit()),
+            initData: abi.encodeWithSelector(PaymentFacetInit.init.selector, address(mockUSDC), address(mockUSDT))
         });
 
         init(_facetInfo, _initializations);
@@ -174,6 +187,21 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
         assertEq(_magicGasTokenAmount, _expectedMagicAmountFromGasToken);
     }
 
+    function testRevertCalculateInvalidUsdToken() public {
+        vm.expectRevert(err(PaymentsStorage.InvalidUsdToken.selector, address(mockMagic)));
+        payments.calculateUsdPaymentAmountByPricedToken(address(mockMagic), 1 ether, address(mockUSDC));
+    }
+
+    function testCalculateUSDByPricedToken() public {
+        uint256 _magicAmount = 10 ether;
+        uint256 _expectedUSDAmount = _magicAmount * uint256(usdToMagicPrice) / 10 ** 18;
+
+        uint256 _usdAmount =
+            payments.calculateUsdPaymentAmountByPricedToken(address(mockUSDC), _magicAmount, address(mockMagic));
+
+        assertEq(_usdAmount, _expectedUSDAmount);
+    }
+
     function testIsValidPriceType() public {
         assertTrue(payments.isValidPriceType(address(mockMagic), PriceType.STATIC, address(0)));
         assertTrue(payments.isValidPriceType(address(mockMagic), PriceType.PRICED_IN_USD, address(0)));
@@ -211,7 +239,7 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
                 address(0)
             )
         );
-        vm.expectEmit(true, true, false, false, receiverAddress);
+        vm.expectEmit(true, true, false, true, receiverAddress);
         emit PaymentReceived(deployer, address(0), _paymentAmount, _paymentAmount, PriceType.STATIC, address(0));
         payments.makeStaticGasTokenPayment{ value: _paymentAmount }(receiverAddress, _paymentAmount);
 
@@ -219,5 +247,34 @@ contract PaymentsFacetTest is TestBase, DiamondManager, ERC1155HolderUpgradeable
 
         assertEq(receiverAddress.balance, _paymentAmount);
         assertEq(mockMagic.balanceOf(receiverAddress), _paymentAmount);
+    }
+
+    function testMakeUsdPaymentByPricedToken() public {
+        uint256 _magicAmount = 10 ether;
+        uint256 _paymentAmount = _magicAmount * uint256(usdToMagicPrice) / 10 ** 18;
+
+        vm.deal(deployer, _paymentAmount);
+        mockUSDC.mint(deployer, _paymentAmount);
+        mockUSDC.approve(address(payments), _paymentAmount);
+
+        assertEq(mockUSDC.balanceOf(receiverAddress), 0);
+
+        vm.expectCall(
+            receiverAddress,
+            abi.encodeWithSelector(
+                PaymentsReceiver.acceptERC20.selector,
+                deployer,
+                address(mockUSDC),
+                _paymentAmount,
+                _magicAmount,
+                PriceType.PRICED_IN_ERC20,
+                address(mockMagic)
+            )
+        );
+        vm.expectEmit(true, true, false, true, receiverAddress);
+        emit PaymentReceived(
+            deployer, address(mockUSDC), _paymentAmount, _magicAmount, PriceType.PRICED_IN_ERC20, address(mockMagic)
+        );
+        payments.makeUsdPaymentByPricedToken(receiverAddress, address(mockUSDC), _magicAmount, address(mockMagic));
     }
 }
