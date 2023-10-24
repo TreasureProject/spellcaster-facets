@@ -36,6 +36,14 @@ library LibPayments {
         magicAddress_ = PaymentsStorage.layout().magicAddress;
     }
 
+    function getUsdcAddress() internal view returns (address usdcAddress_) {
+        usdcAddress_ = PaymentsStorage.layout().usdcAddress;
+    }
+
+    function getUsdtAddress() internal view returns (address usdtAddress_) {
+        usdtAddress_ = PaymentsStorage.layout().usdtAddress;
+    }
+
     /**
      * @param _priceFeedAddr The address of the price feed to set
      */
@@ -57,5 +65,19 @@ library LibPayments {
      */
     function setMagicAddress(address _magicAddress) internal {
         PaymentsStorage.layout().magicAddress = _magicAddress;
+    }
+
+    /**
+     * @param _usdcAddress The address of the $USDC token
+     */
+    function setUsdcAddress(address _usdcAddress) internal {
+        PaymentsStorage.layout().usdcAddress = _usdcAddress;
+    }
+
+    /**
+     * @param _usdtAddress The address of the $USDT token
+     */
+    function setUsdtAddress(address _usdtAddress) internal {
+        PaymentsStorage.layout().usdtAddress = _usdtAddress;
     }
 }

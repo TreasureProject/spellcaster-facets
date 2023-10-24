@@ -110,6 +110,29 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     /**
      * @inheritdoc IPayments
      */
+    function makeUsdPaymentByPricedToken(
+        address _recipient,
+        address _usdToken,
+        uint256 _paymentAmountInPricedToken,
+        address _pricedERC20
+    ) external nonReentrant onlyReceiver(_recipient) {
+        if (_usdToken != LibPayments.getUsdcAddress() && _usdToken != LibPayments.getUsdtAddress()) {
+            revert PaymentsStorage.InvalidUsdToken(_usdToken);
+        }
+        ERC20Info storage _quoteInfo = LibPayments.getERC20Info(_pricedERC20);
+        AggregatorV3Interface _priceFeed = _quoteInfo.usdAggregator;
+        if (address(_priceFeed) == address(0)) {
+            revert PaymentsStorage.NonexistantPriceFeed(_pricedERC20, PriceType.PRICED_IN_USD, address(0));
+        }
+        uint256 _price =
+            _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, _quoteInfo.decimals, false);
+
+        _sendERC20(_recipient, _usdToken, _price, _paymentAmountInPricedToken, PriceType.PRICED_IN_ERC20, _pricedERC20);
+    }
+
+    /**
+     * @inheritdoc IPayments
+     */
     function makeGasTokenPaymentByPriceType(
         address _recipient,
         uint256 _paymentAmountInPricedToken,
@@ -242,6 +265,26 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     /**
+     * @inheritdoc IPayments
+     */
+    function calculateUsdPaymentAmountByPricedToken(
+        address _usdToken,
+        uint256 _paymentAmountInPricedToken,
+        address _pricedERC20
+    ) external view override returns (uint256 paymentAmount_) {
+        if (_usdToken != LibPayments.getUsdcAddress() && _usdToken != LibPayments.getUsdtAddress()) {
+            revert PaymentsStorage.InvalidUsdToken(_usdToken);
+        }
+        ERC20Info storage _quoteInfo = LibPayments.getERC20Info(_pricedERC20);
+        AggregatorV3Interface _priceFeed = _quoteInfo.usdAggregator;
+        if (address(_priceFeed) == address(0)) {
+            revert PaymentsStorage.NonexistantPriceFeed(_pricedERC20, PriceType.PRICED_IN_USD, address(0));
+        }
+        paymentAmount_ =
+            _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, _quoteInfo.decimals, false);
+    }
+
+    /**
      * @dev Sends payment and invokes the acceptance function on the recipient
      */
     function _sendERC20(
@@ -308,20 +351,36 @@ contract PaymentsFacet is ReentrancyGuardUpgradeable, FacetInitializable, Modifi
     }
 
     /**
-     * @dev returns the given _price in the given decimal format after converting the _price into the related value from the _price feed
-     * @param _paymentAmountInPricedToken The _price to convert to the value from the given _price feed
-     * @param _priceFeed The _price feed to use to convert the _price
-     * @param _paymentDecimals The number of decimals to format the _price as
-     * @return paymentAmount_ The _price in the given decimal format
+     * @dev returns the given _price in the given decimal format after converting the _price into the related value from the _price feed.
+     *  Assumes that the payment amount is in the base token
      */
     function _pricedTokenToPaymentAmount(
         uint256 _paymentAmountInPricedToken,
         AggregatorV3Interface _priceFeed,
         uint8 _paymentDecimals
     ) internal view returns (uint256 paymentAmount_) {
-        //  Because fixed precision is e18, value will be 5494505494505494505 and needs to be converted to payment token decimal
+        paymentAmount_ = _pricedTokenToPaymentAmount(_paymentAmountInPricedToken, _priceFeed, _paymentDecimals, true);
+    }
+
+    /**
+     * @dev returns the given _price in the given decimal format after converting the _price into the related value from the _price feed
+     * @param _paymentAmountInPricedToken The _price to convert to the value from the given _price feed
+     * @param _priceFeed The _price feed to use to convert the _price
+     * @param _paymentDecimals The number of decimals to format the _price as
+     * @param _isPriceInBaseToken Whether or not the _price is in the base token or the quote token from the price feed
+     * @return paymentAmount_ The _price in the given decimal format
+     */
+    function _pricedTokenToPaymentAmount(
+        uint256 _paymentAmountInPricedToken,
+        AggregatorV3Interface _priceFeed,
+        uint8 _paymentDecimals,
+        bool _isPriceInBaseToken
+    ) internal view returns (uint256 paymentAmount_) {
+        //  Because fixed precision is e18, value needs to be converted to payment token decimal
         // NOTE: It is assumed that the  _paymentAmountInPricedToken and the _price feed's _price are in the same decimal unit
-        UD60x18 _priceFP = ud(_paymentAmountInPricedToken).div(ud(uint256(_getQuotePrice(_priceFeed))));
+        UD60x18 _priceFP = _isPriceInBaseToken
+            ? ud(_paymentAmountInPricedToken).div(ud(uint256(_getQuotePrice(_priceFeed))))
+            : ud(_paymentAmountInPricedToken).mul(ud(uint256(_getQuotePrice(_priceFeed))));
         // Lastly, we must convert the _price into the payment token's decimal amount
         if (_paymentDecimals > 18) {
             // Add digits equal to the difference of fp's 18 decimals and the payment token's decimals

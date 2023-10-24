@@ -23,6 +23,14 @@ library PaymentsStorage {
          * @dev The address of the $MAGIC contract
          */
         address magicAddress;
+        /**
+         * @dev The address of the $USDC contract
+         */
+        address usdcAddress;
+        /**
+         * @dev The address of the $USDT contract
+         */
+        address usdtAddress;
     }
 
     bytes32 internal constant FACET_STORAGE_POSITION = keccak256("spellcaster.storage.payments");
@@ -41,6 +49,11 @@ library PaymentsStorage {
      * @param pricedToken The address of the token or gas token pair to the `paymentToken`
      */
     error NonexistantPriceFeed(address paymentToken, PriceType priceType, address pricedToken);
+
+    /**
+     * @dev Emitted when a token is given that isn't a USD token
+     */
+    error InvalidUsdToken(address token);
 
     /**
      * @dev Emitted when a type is given that hasn't been implemented
