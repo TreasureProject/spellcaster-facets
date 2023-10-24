@@ -44,7 +44,7 @@ library LibGuildManager {
         GuildManagerStorage.Layout storage _l = GuildManagerStorage.layout();
 
         if (address(_l.guildTokenBeacon) == address(0)) {
-            _l.guildTokenBeacon = new UpgradeableBeacon(_beaconImplAddress);
+            _l.guildTokenBeacon = new UpgradeableBeacon(_beaconImplAddress, address(this));
         } else if (_l.guildTokenBeacon.implementation() != _beaconImplAddress) {
             _l.guildTokenBeacon.upgradeTo(_beaconImplAddress);
         }
