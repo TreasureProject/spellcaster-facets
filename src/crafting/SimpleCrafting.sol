@@ -25,7 +25,7 @@ import { Modifiers } from "src/Modifiers.sol";
 import { LibMeta } from "src/libraries/LibMeta.sol";
 import { FacetInitializable } from "../utils/FacetInitializable.sol";
 
-import { IERC173Upgradeable } from "@openzeppelin/contracts-diamond/interfaces/IERC173Upgradeable.sol";
+import { IERC5313Upgradeable } from "@openzeppelin/contracts-diamond/interfaces/IERC5313Upgradeable.sol";
 import { SupportsMetaTx } from "src/metatx/SupportsMetaTx.sol";
 
 /**
@@ -46,7 +46,7 @@ contract SimpleCrafting is FacetInitializable, ERC1155HolderUpgradeable, ISimple
     function setRecipeToAllowedAsAdmin(address _collection, uint256 _recipeId) public supportsMetaTxNoId {
         //Ensure they are an admin of this collection.
         if (
-            LibMeta._msgSender() != IERC173Upgradeable(_collection).owner()
+            LibMeta._msgSender() != IERC5313Upgradeable(_collection).owner()
                 && !LibAccessControlRoles.isCollectionAdmin(LibMeta._msgSender(), _collection)
         ) revert UserNotPermitted(LibMeta._msgSender());
 
