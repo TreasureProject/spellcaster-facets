@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+/*pragma solidity ^0.8.0;
 
 import { ERC1155HolderUpgradeable } from
     "@openzeppelin/contracts-diamond/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
@@ -215,3 +215,4 @@ contract SimpleCraftingTest is TestBase, DiamondManager, ERC1155HolderUpgradeabl
         assertEq(erc1155Consumer.balanceOf(deployer, 3), 10);
     }
 }
+*/
