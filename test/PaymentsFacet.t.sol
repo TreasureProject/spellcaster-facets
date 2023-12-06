@@ -15,7 +15,8 @@ import { LibAccessControlRoles, ADMIN_ROLE, ADMIN_GRANTER_ROLE } from "src/libra
 import { LibMeta } from "src/libraries/LibMeta.sol";
 
 import { MockV3Aggregator } from "@chainlink/contracts/src/v0.8/tests/MockV3Aggregator.sol";
-import { PaymentsFacet, PaymentsStorage, PriceType } from "src/payments/PaymentsFacet.sol";
+import { PaymentsFacet } from "src/payments/PaymentsFacet.sol";
+import { PaymentsStorage, PriceType } from "src/payments/PaymentsStorage.sol";
 import { PaymentsReceiver } from "src/payments/PaymentsReceiver.sol";
 
 contract PaymentFacetInit {

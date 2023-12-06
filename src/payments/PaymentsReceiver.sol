@@ -41,7 +41,31 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         emit PaymentReceived(
             _payor, _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20
         );
+        _acceptERC20(_payor, _paymentERC20, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+    }
 
+    /**
+     * @inheritdoc IPaymentsReceiver
+     */
+    function acceptGasToken(
+        address _payor,
+        uint256 _paymentAmount,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) external payable override onlySpellcasterPayments {
+        emit PaymentReceived(_payor, address(0), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+        _acceptGasToken(_payor, _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
+    }
+
+    function _acceptERC20(
+        address _payor,
+        address _paymentERC20,
+        uint256 _paymentAmount,
+        uint256 _paymentAmountInPricedToken,
+        PriceType _priceType,
+        address _pricedERC20
+    ) internal {
         if (
             _priceType == PriceType.STATIC || (_priceType == PriceType.PRICED_IN_ERC20 && _pricedERC20 == _paymentERC20)
         ) {
@@ -80,18 +104,13 @@ contract PaymentsReceiver is FacetInitializable, IPaymentsReceiver, IERC165Upgra
         }
     }
 
-    /**
-     * @inheritdoc IPaymentsReceiver
-     */
-    function acceptGasToken(
+    function _acceptGasToken(
         address _payor,
         uint256 _paymentAmount,
         uint256 _paymentAmountInPricedToken,
         PriceType _priceType,
         address _pricedERC20
-    ) external payable override onlySpellcasterPayments {
-        emit PaymentReceived(_payor, address(0), _paymentAmount, _paymentAmountInPricedToken, _priceType, _pricedERC20);
-
+    ) internal {
         if (msg.value != _paymentAmount) {
             revert PaymentsReceiverStorage.IncorrectPaymentAmount(msg.value, _paymentAmountInPricedToken);
         }
