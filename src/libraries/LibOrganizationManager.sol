@@ -71,7 +71,7 @@ library LibOrganizationManager {
 
     function requireOrganizationAdmin(address _sender, bytes32 _organizationId) internal view {
         if (_sender != getOrganizationInfo(_organizationId).admin) {
-            revert OrganizationManagerStorage.NotOrganizationAdmin(LibMeta._msgSender());
+            revert OrganizationManagerStorage.NotOrganizationAdmin(_sender);
         }
     }
 
