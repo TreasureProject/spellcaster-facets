@@ -40,6 +40,10 @@ contract OffchainAssetVault is OffchainAssetVaultBase {
         }
     }
 
+    function isNonceUsed(uint256 _nonce) external view returns (bool) {
+        return LibOffchainAssetVault.isNonceUsed(_nonce);
+    }
+
     function _requireValidSignature(WithdrawArgs calldata _withdraw, bytes calldata _signature) internal view {
         LibOffchainAssetVaultStorage.Layout storage _l = LibOffchainAssetVaultStorage.layout();
         address _signer = _hashTypedDataV4(

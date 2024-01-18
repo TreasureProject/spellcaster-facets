@@ -83,6 +83,10 @@ library LibOffchainAssetVault {
         LibOffchainAssetVaultStorage.layout().usedNonces[_nonce] = true;
     }
 
+    function isNonceUsed(uint256 _nonce) internal view returns (bool used_) {
+        used_ = LibOffchainAssetVaultStorage.layout().usedNonces[_nonce];
+    }
+
     function getAuthoritySigner() internal view returns (address signer_) {
         LibOffchainAssetVaultStorage.Layout storage _l = LibOffchainAssetVaultStorage.layout();
         signer_ = _l.vaultManager.getAuthoritySigner(_l.orgId, _l.vaultId);
