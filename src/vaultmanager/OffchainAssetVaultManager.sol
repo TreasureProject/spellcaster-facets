@@ -58,7 +58,7 @@ contract OffchainAssetVaultManager is OffchainAssetVaultManagerBase {
         return LibOffchainAssetVaultManager.getVaultInfo(_orgId, _vaultId).authoritySigner;
     }
 
-    function getVaultBeaconAddress() internal view returns (address beacon_) {
+    function getVaultBeaconAddress() external view returns (address beacon_) {
         beacon_ = address(LibOffchainAssetVaultManagerStorage.layout().assetVaultBeacon);
     }
 }
