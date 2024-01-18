@@ -31,7 +31,7 @@ library LibOffchainAssetVaultManager {
 
         if (address(_l.assetVaultBeacon) == address(0)) {
             _l.assetVaultBeacon = new UpgradeableBeacon(_beaconImplAddress, address(this));
-        } else if (_l.assetVaultBeacon.implementation() != _beaconImplAddress) {
+        } else if (_l.assetVaultBeacon.implementation() != _beaconImplAddress && _beaconImplAddress != address(0)) {
             _l.assetVaultBeacon.upgradeTo(_beaconImplAddress);
         }
     }
