@@ -36,7 +36,11 @@ contract OffchainAssetVault is OffchainAssetVaultBase {
             _requireValidSignature(_withdraws[i], _signatures[i]);
             // throws if nonce already used
             LibOffchainAssetVault.useNonce(_withdraws[i].nonce);
-            LibOffchainAssetVault.withdraw(_withdraws[i]);
+            if (_withdraws[i].isMint) {
+                LibOffchainAssetVault.mint(_withdraws[i]);
+            } else {
+                LibOffchainAssetVault.withdraw(_withdraws[i]);
+            }
         }
     }
 
@@ -55,7 +59,8 @@ contract OffchainAssetVault is OffchainAssetVaultBase {
                     _withdraw.amount,
                     _withdraw.kind,
                     _withdraw.to,
-                    _withdraw.nonce
+                    _withdraw.nonce,
+                    _withdraw.isMint
                 )
             )
         ).recover(_signature);

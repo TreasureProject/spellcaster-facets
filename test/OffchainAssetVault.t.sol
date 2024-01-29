@@ -19,24 +19,33 @@ import { OffchainAssetVaultManager } from "src/vaultmanager/OffchainAssetVaultMa
 import { OffchainAssetVault } from "src/vault/OffchainAssetVault.sol";
 import { IOffchainAssetVault, AssetKind, WithdrawArgs } from "src/interfaces/IOffchainAssetVault.sol";
 
+contract ERC20AdminMintable is ERC20MockDecimals {
+    constructor(uint8 _decimals) ERC20MockDecimals(_decimals) { }
+
+    function adminMint(address _to, uint256 _amount) external {
+        _mint(_to, _amount);
+    }
+}
+
 contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using DiamondUtils for Diamond;
 
-    bytes32 internal constant WITHDRAW_ARGS_TYPEHASH =
-        keccak256("WithdrawArgs(address asset,uint96 tokenId,uint88 amount,uint8 kind,address to,uint256 nonce)");
+    bytes32 internal constant WITHDRAW_ARGS_TYPEHASH = keccak256(
+        "WithdrawArgs(address asset,uint96 tokenId,uint88 amount,uint8 kind,address to,uint248 nonce,bool isMint)"
+    );
 
     OffchainAssetVaultManager internal manager;
     OffchainAssetVault internal vault1;
     uint64 internal vault1Id;
 
-    ERC20MockDecimals internal erc20;
+    ERC20AdminMintable internal erc20;
     ERC721Mock internal erc721;
     ERC1155Mock internal erc1155;
 
     function setUp() public {
         erc721 = new ERC721Mock();
         erc1155 = new ERC1155Mock();
-        erc20 = new ERC20MockDecimals(18);
+        erc20 = new ERC20AdminMintable(18);
 
         FacetInfo[] memory _facetInfo = new FacetInfo[](2);
         Diamond.Initialization[] memory _initializations = new Diamond.Initialization[](1);
@@ -66,7 +75,14 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
         hash_ = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    WITHDRAW_ARGS_TYPEHASH, _args.asset, _args.tokenId, _args.amount, _args.kind, _args.to, _args.nonce
+                    WITHDRAW_ARGS_TYPEHASH,
+                    _args.asset,
+                    _args.tokenId,
+                    _args.amount,
+                    _args.kind,
+                    _args.to,
+                    _args.nonce,
+                    _args.isMint
                 )
             ),
             bytes(string.concat("OffchainAssetVault-", StringsUpgradeable.toString(vault1Id))),
@@ -89,7 +105,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 5 ether,
             kind: AssetKind.ERC20,
             to: address(this),
-            nonce: 0
+            nonce: 0,
+            isMint: false
         });
         bytes memory _sig = signHash(signingPK, withdrawHash(_args));
 
@@ -117,7 +134,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 5,
             kind: AssetKind.ERC1155,
             to: address(this),
-            nonce: 0
+            nonce: 0,
+            isMint: false
         });
         bytes memory _sig = signHash(signingPK, withdrawHash(_args));
 
@@ -146,7 +164,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 0,
             kind: AssetKind.ERC721,
             to: address(this),
-            nonce: 0
+            nonce: 0,
+            isMint: false
         });
         bytes memory _sig = signHash(signingPK, withdrawHash(_args));
 
@@ -175,7 +194,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 0,
             kind: AssetKind.ERC721,
             to: address(this),
-            nonce: 0
+            nonce: 0,
+            isMint: false
         });
         bytes memory _sig = signHash(signingPK, withdrawHash(_args));
 
@@ -187,7 +207,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 5,
             kind: AssetKind.ERC1155,
             to: address(this),
-            nonce: 1
+            nonce: 1,
+            isMint: false
         });
 
         bytes[] memory _sigArr = new bytes[](2);
@@ -215,7 +236,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 5 ether,
             kind: AssetKind.ERC20,
             to: address(this),
-            nonce: 0
+            nonce: 0,
+            isMint: false
         });
         bytes memory _sig = signHash(12345, withdrawHash(_args));
 
@@ -234,7 +256,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 5 ether,
             kind: AssetKind.ERC1155,
             to: address(this),
-            nonce: 1
+            nonce: 1,
+            isMint: false
         });
         _sigArr[0] = signHash(12345, withdrawHash(_argsArr[0]));
 
@@ -247,7 +270,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 0,
             kind: AssetKind.ERC721,
             to: address(this),
-            nonce: 2
+            nonce: 2,
+            isMint: false
         });
         _sigArr[0] = signHash(12345, withdrawHash(_argsArr[0]));
 
@@ -261,7 +285,8 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
             amount: 0,
             kind: AssetKind.ERC721,
             to: address(this),
-            nonce: 3
+            nonce: 3,
+            isMint: false
         });
         _argsArr2[1] = _args;
         _sigArr = new bytes[](2);
@@ -270,5 +295,32 @@ contract OffchainAssetVaultTest is TestBase, DiamondManager, ERC1155HolderUpgrad
 
         vm.expectRevert(IOffchainAssetVault.InvalidAuthoritySignature.selector);
         vault1.withdraw(_argsArr2, _sigArr);
+    }
+
+    function test_mint_erc20_validsig_success() public {
+        WithdrawArgs memory _args = WithdrawArgs({
+            asset: address(erc20),
+            tokenId: 0,
+            amount: 5 ether,
+            kind: AssetKind.ERC20,
+            to: address(this),
+            nonce: 0,
+            isMint: true
+        });
+        bytes memory _sig = signHash(signingPK, withdrawHash(_args));
+
+        WithdrawArgs[] memory _argsArr = new WithdrawArgs[](1);
+        _argsArr[0] = _args;
+
+        bytes[] memory _sigArr = new bytes[](1);
+        _sigArr[0] = _sig;
+
+        vault1.withdraw(_argsArr, _sigArr);
+
+        assertEq(0 ether, erc20.balanceOf(address(vault1)));
+        assertEq(5 ether, erc20.balanceOf(address(this)));
+
+        vm.expectRevert(abi.encodeWithSelector(IOffchainAssetVault.NonceUsed.selector, _args.nonce));
+        vault1.withdraw(_argsArr, _sigArr);
     }
 }

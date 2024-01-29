@@ -11,6 +11,12 @@ import { IOffchainAssetVault, WithdrawArgs, AssetKind } from "src/interfaces/IOf
 
 import { LibOffchainAssetVaultStorage } from "src/vault/LibOffchainAssetVaultStorage.sol";
 
+interface IAdminMintable {
+    function adminMint(address _to, uint256 _tokenId) external;
+    function adminMint(address _to, uint256 _tokenId, uint256 _amount) external;
+    function adminMint(address _to, uint256 _tokenId, uint256 _amount, bytes calldata _data) external;
+}
+
 /**
  * @title OffchainAssetVault Library
  * @dev This library is used to implement features that use/update storage data for the OffchainAssetVault contracts
@@ -61,16 +67,30 @@ library LibOffchainAssetVault {
      */
     function withdraw(WithdrawArgs calldata _withdraw) internal {
         if (_withdraw.kind == AssetKind.ERC721) {
-            // todo withdraw 721
             IERC721Upgradeable(_withdraw.asset).safeTransferFrom(address(this), _withdraw.to, _withdraw.tokenId);
         } else if (_withdraw.kind == AssetKind.ERC1155) {
-            // todo withdraw 1155
             IERC1155Upgradeable(_withdraw.asset).safeTransferFrom(
                 address(this), _withdraw.to, _withdraw.tokenId, _withdraw.amount, ""
             );
         } else if (_withdraw.kind == AssetKind.ERC20) {
-            // todo withdraw 20
             IERC20Upgradeable(_withdraw.asset).safeTransfer(_withdraw.to, _withdraw.amount);
+        } else {
+            revert IOffchainAssetVault.InvalidAssetKind();
+        }
+    }
+
+    /**
+     * @dev Mints an asset to the specified address. Assumes permissions have been checked.
+     *     Also assumes that this contract has been approved to mint the required assets through `adminMint`
+     * @param _withdraw The withdraw arguments for minting an asset.
+     */
+    function mint(WithdrawArgs calldata _withdraw) internal {
+        if (_withdraw.kind == AssetKind.ERC721) {
+            IAdminMintable(_withdraw.asset).adminMint(_withdraw.to, _withdraw.tokenId);
+        } else if (_withdraw.kind == AssetKind.ERC1155) {
+            IAdminMintable(_withdraw.asset).adminMint(_withdraw.to, _withdraw.tokenId, _withdraw.amount, "");
+        } else if (_withdraw.kind == AssetKind.ERC20) {
+            IAdminMintable(_withdraw.asset).adminMint(_withdraw.to, _withdraw.amount);
         } else {
             revert IOffchainAssetVault.InvalidAssetKind();
         }

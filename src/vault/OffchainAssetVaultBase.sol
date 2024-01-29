@@ -28,8 +28,9 @@ abstract contract OffchainAssetVaultBase is
      * @dev The typehash of the ForwardRequest struct used when signing the meta transaction
      *  This must match the ForwardRequest struct, and must not have extra whitespace or it will invalidate the signature
      */
-    bytes32 public constant WITHDRAW_ARGS_TYPEHASH =
-        keccak256("WithdrawArgs(address asset,uint96 tokenId,uint88 amount,uint8 kind,address to,uint256 nonce)");
+    bytes32 public constant WITHDRAW_ARGS_TYPEHASH = keccak256(
+        "WithdrawArgs(address asset,uint96 tokenId,uint88 amount,uint8 kind,address to,uint248 nonce,bool isMint)"
+    );
 
     function __OffchainAssetVaultBase_init(uint64 _vaultId) internal onlyFacetInitializing {
         __EIP712_init(string.concat("OffchainAssetVault-", StringsUpgradeable.toString(_vaultId)), "1.0.0");

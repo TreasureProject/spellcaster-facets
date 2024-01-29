@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  * @param kind The kind of asset to withdraw. Used to avoid checking on-chain using supportsInterface.
  * @param to The address to send the asset to.
  * @param nonce The nonce of the withdrawal to prevent replay attacks.
+ * @param isMint Whether or not the withdrawal is a mint vs a transfer.
  */
 struct WithdrawArgs {
     // Slot 1 - address (uint160) + uint96
@@ -18,7 +19,8 @@ struct WithdrawArgs {
     AssetKind kind;
     address to;
     // Slot 3
-    uint256 nonce;
+    uint248 nonce;
+    bool isMint;
 }
 
 enum AssetKind {
