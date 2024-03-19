@@ -58,7 +58,25 @@ contract OffchainAssetVaultManager is OffchainAssetVaultManagerBase {
         return LibOffchainAssetVaultManager.getVaultInfo(_orgId, _vaultId).authoritySigner;
     }
 
+    function updateVault(
+        bytes32 _orgId,
+        uint64 _vaultId,
+        address _owner,
+        address _authoritySigner
+    ) public whenNotPaused onlyOrganizationAdmin(_orgId) supportsMetaTx(_orgId) {
+        LibOffchainAssetVaultManager.updateVault(_orgId, _vaultId, _owner, _authoritySigner);
+    }
+
     function getVaultBeaconAddress() external view returns (address beacon_) {
         beacon_ = address(LibOffchainAssetVaultManagerStorage.layout().assetVaultBeacon);
+    }
+
+    // =============================================================
+    //                         MODIFIERS
+    // =============================================================
+
+    modifier onlyOrganizationAdmin(bytes32 _organizationId) {
+        LibOrganizationManager.requireOrganizationAdmin(msg.sender, _organizationId);
+        _;
     }
 }

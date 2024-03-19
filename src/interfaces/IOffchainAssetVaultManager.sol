@@ -16,6 +16,9 @@ interface IOffchainAssetVaultManager {
     event VaultCreated(
         bytes32 indexed orgId, uint64 indexed vaultId, address vaultAddress, address owner, address authoritySigner
     );
+    event VaultUpdated(
+        bytes32 indexed orgId, uint64 indexed vaultId, address vaultAddress, address owner, address authoritySigner
+    );
 
     function OffchainAssetVaultManager_init(address _vaultImpl) external;
     function createVault(

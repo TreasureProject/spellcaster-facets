@@ -40,6 +40,24 @@ library LibOffchainAssetVaultManager {
         info_ = LibOffchainAssetVaultManagerStorage.layout().vaultInfo[_orgId][vaultId_];
     }
 
+    function updateVault(bytes32 _orgId, uint64 vaultId_, address _owner, address _authoritySigner) internal {
+        LibOffchainAssetVaultManagerStorage.Layout storage _l = LibOffchainAssetVaultManagerStorage.layout();
+
+        require(vaultId_ > 0, "Cannot modify invalid vaultId.");
+        require(vaultId_ < _l.vaultIds[_orgId], "Cannot modify invalid vaultId.");
+        require(_owner != address(0), "Cannot set owner to null address.");
+        require(_authoritySigner != address(0), "Cannot set authoritySigner to null address.");
+
+        VaultInfo storage _info = _l.vaultInfo[_orgId][vaultId_];
+
+        _info.owner = _owner;
+        _info.authoritySigner = _authoritySigner;
+
+        emit IOffchainAssetVaultManager.VaultUpdated(
+            _orgId, vaultId_, _info.assetVault, _info.owner, _info.authoritySigner
+        );
+    }
+
     // =============================================================
     //                       Create Functions
     // =============================================================
